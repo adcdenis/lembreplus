@@ -26,6 +26,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
         return 'Anual';
     }
   }
+  String _pluralize(int value, String singular, String plural) => value == 1 ? singular : plural;
   
   TimeDiffComponents _calendarComponents(DateTime a, DateTime b) {
     // Usa diferença de calendário normalizada em horário local
@@ -242,12 +243,22 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                           ]),
                                           const SizedBox(height: 12),
                                           Wrap(spacing: 6, runSpacing: 6, children: [
-                                            if (comps.years > 0) _CounterBox(value: comps.years, label: 'Anos', tint: tint),
-                                            if (comps.months > 0) _CounterBox(value: comps.months, label: 'Meses', tint: tint),
-                                            _CounterBox(value: days, label: 'Dias', tint: tint),
-                                            _CounterBox(value: hours, label: 'Horas', tint: tint),
-                                            _CounterBox(value: mins, label: 'Mins', tint: tint),
-                                            _CounterBox(value: secs, label: 'Segs', tint: tint),
+                                            if (comps.years > 0)
+                                              _CounterBox(
+                                                value: comps.years,
+                                                label: _pluralize(comps.years, 'Ano', 'Anos'),
+                                                tint: tint,
+                                              ),
+                                            if (comps.months > 0)
+                                              _CounterBox(
+                                                value: comps.months,
+                                                label: _pluralize(comps.months, 'Mês', 'Meses'),
+                                                tint: tint,
+                                              ),
+                                            _CounterBox(value: days, label: _pluralize(days, 'Dia', 'Dias'), tint: tint),
+                                            _CounterBox(value: hours, label: _pluralize(hours, 'Hora', 'Horas'), tint: tint),
+                                            _CounterBox(value: mins, label: _pluralize(mins, 'Minuto', 'Minutos'), tint: tint),
+                                            _CounterBox(value: secs, label: _pluralize(secs, 'Segundo', 'Segundos'), tint: tint),
                                           ]),
                                           const SizedBox(height: 12),
                                           Text(
