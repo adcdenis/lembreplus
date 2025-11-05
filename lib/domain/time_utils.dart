@@ -1,5 +1,75 @@
 import 'recurrence.dart';
 
+class TimeDiffComponents {
+  final int years;
+  final int months;
+  final int days;
+  final int hours;
+  final int minutes;
+  final int seconds;
+  const TimeDiffComponents({
+    required this.years,
+    required this.months,
+    required this.days,
+    required this.hours,
+    required this.minutes,
+    required this.seconds,
+  });
+}
+
+/// Calcula a diferença entre duas datas em componentes de calendário
+/// normalizados (anos, meses, dias, horas, minutos, segundos).
+/// Todos os componentes retornados são não negativos.
+TimeDiffComponents calendarDiff(DateTime start, DateTime end) {
+  // Garante ordem
+  if (end.isBefore(start)) {
+    final tmp = start;
+    start = end;
+    end = tmp;
+  }
+
+  var years = end.year - start.year;
+  var months = end.month - start.month;
+  var days = end.day - start.day;
+  var hours = end.hour - start.hour;
+  var minutes = end.minute - start.minute;
+  var seconds = end.second - start.second;
+
+  if (seconds < 0) {
+    seconds += 60;
+    minutes -= 1;
+  }
+  if (minutes < 0) {
+    minutes += 60;
+    hours -= 1;
+  }
+  if (hours < 0) {
+    hours += 24;
+    days -= 1;
+  }
+  if (days < 0) {
+    // Pega dias do mês anterior ao 'end'
+    final prevMonth = end.month == 1 ? 12 : end.month - 1;
+    final prevYear = end.month == 1 ? end.year - 1 : end.year;
+    final dim = _daysInMonth(prevYear, prevMonth);
+    days += dim;
+    months -= 1;
+  }
+  if (months < 0) {
+    months += 12;
+    years -= 1;
+  }
+
+  return TimeDiffComponents(
+    years: years,
+    months: months,
+    days: days,
+    hours: hours,
+    minutes: minutes,
+    seconds: seconds,
+  );
+}
+
 Duration timeToEvent(DateTime eventDate, {DateTime? now}) {
   final reference = now ?? DateTime.now();
   return eventDate.difference(reference);

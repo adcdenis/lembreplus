@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+// ignore: deprecated_member_use, avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 
 import 'package:lembreplus/data/database/app_database.dart';
@@ -54,7 +55,7 @@ class BackupServiceImpl implements BackupService {
     final bytes = utf8.encode(json);
     final blob = html.Blob([bytes], 'application/json');
     final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
+    html.AnchorElement(href: url)
       ..download = 'lembre_backup.json'
       ..click();
     html.Url.revokeObjectUrl(url);

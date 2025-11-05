@@ -126,17 +126,17 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
               ),
             ),
             const SizedBox(height: 20),
-            Row(children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _onSubmit,
-                  icon: const Icon(Icons.save),
-                  label: Text(isEdit ? 'Salvar' : 'Criar'),
+              Row(children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _onSubmit,
+                    icon: const Icon(Icons.save),
+                    label: Text(isEdit ? 'Salvar' : 'Criar'),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              TextButton(onPressed: () => context.pop(), child: const Text('Cancelar')),
-            ]),
+                const SizedBox(width: 12),
+                TextButton(onPressed: () => context.go('/counters'), child: const Text('Cancelar')),
+              ]),
           ],
         ),
       ),

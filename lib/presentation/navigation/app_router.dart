@@ -11,7 +11,7 @@ import '../widgets/app_shell.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/',
+    initialLocation: '/counters',
     routes: <RouteBase>[
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),

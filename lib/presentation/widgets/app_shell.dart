@@ -105,11 +105,46 @@ class _AppDrawer extends StatelessWidget {
                 ),
               ),
             ),
-            ListTile(leading: const Text('📋', style: TextStyle(fontSize: 20)), title: const Text('Dashboard'), onTap: () => onNavigateIndex(0)),
-            ListTile(leading: const Text('🧮', style: TextStyle(fontSize: 20)), title: const Text('Contadores'), onTap: () => onNavigateIndex(1)),
-            ListTile(leading: const Text('📊', style: TextStyle(fontSize: 20)), title: const Text('Resumo'), onTap: () => onNavigateIndex(2)),
-            ListTile(leading: const Text('📈', style: TextStyle(fontSize: 20)), title: const Text('Relatórios'), onTap: () => onNavigateIndex(3)),
-            ListTile(leading: const Text('🔄', style: TextStyle(fontSize: 20)), title: const Text('Backup'), onTap: () => onNavigateIndex(4)),
+            ListTile(
+              leading: const Text('📋', style: TextStyle(fontSize: 20)),
+              title: const Text('Dashboard'),
+              onTap: () {
+                Navigator.of(context).pop();
+                onNavigateIndex(0);
+              },
+            ),
+            ListTile(
+              leading: const Text('🧮', style: TextStyle(fontSize: 20)),
+              title: const Text('Contadores'),
+              onTap: () {
+                Navigator.of(context).pop();
+                onNavigateIndex(1);
+              },
+            ),
+            ListTile(
+              leading: const Text('📊', style: TextStyle(fontSize: 20)),
+              title: const Text('Resumo'),
+              onTap: () {
+                Navigator.of(context).pop();
+                onNavigateIndex(2);
+              },
+            ),
+            ListTile(
+              leading: const Text('📈', style: TextStyle(fontSize: 20)),
+              title: const Text('Relatórios'),
+              onTap: () {
+                Navigator.of(context).pop();
+                onNavigateIndex(3);
+              },
+            ),
+            ListTile(
+              leading: const Text('🔄', style: TextStyle(fontSize: 20)),
+              title: const Text('Backup'),
+              onTap: () {
+                Navigator.of(context).pop();
+                onNavigateIndex(4);
+              },
+            ),
           ],
         ),
       ),

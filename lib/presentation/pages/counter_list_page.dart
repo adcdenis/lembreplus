@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lembreplus/state/providers.dart';
 import 'package:lembreplus/domain/recurrence.dart';
+import 'package:lembreplus/domain/time_utils.dart';
 
 class CounterListPage extends ConsumerStatefulWidget {
   const CounterListPage({super.key});
@@ -24,6 +25,10 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
       case Recurrence.yearly:
         return 'Anual';
     }
+  }
+  
+  TimeDiffComponents _calendarComponents(DateTime a, DateTime b) {
+    return calendarDiff(a, b);
   }
   String _search = '';
   String? _selectedCategory;
@@ -49,13 +54,17 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
             const SizedBox(height: 12),
             Row(children: [
               Expanded(
-                child: TextField(
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.search),
-                    hintText: 'Buscar por descrição ou nome...',
-                    border: OutlineInputBorder(),
+                child: SizedBox(
+                  height: 48,
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.search),
+                      hintText: 'Buscar por descrição ou nome...',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                    onChanged: (v) => setState(() => _search = v.trim().toLowerCase()),
                   ),
-                  onChanged: (v) => setState(() => _search = v.trim().toLowerCase()),
                 ),
               ),
               const SizedBox(width: 12),
@@ -85,8 +94,12 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
 
                   return SizedBox(
                     width: 240,
+                    height: 48,
                     child: InputDecorator(
-                      decoration: const InputDecoration(border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String?>(
                           isExpanded: true,
@@ -138,11 +151,11 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                           Widget buildCard(int index) {
                             final c = filtered[index];
                             final isFuture = c.eventDate.isAfter(now);
-                            final diff = isFuture ? c.eventDate.difference(now) : now.difference(c.eventDate);
-                            final days = diff.inDays;
-                            final hours = diff.inHours % 24;
-                            final mins = diff.inMinutes % 60;
-                            final secs = diff.inSeconds % 60;
+                            final comps = _calendarComponents(now, c.eventDate);
+                            final days = comps.days;
+                            final hours = comps.hours;
+                            final mins = comps.minutes;
+                            final secs = comps.seconds;
                             final tint = isFuture ? Colors.blue[50]! : Colors.red[50]!;
 
                             return Card(
@@ -214,6 +227,8 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                           ]),
                                           const SizedBox(height: 12),
                                           Wrap(spacing: 12, runSpacing: 12, children: [
+                                            if (comps.years > 0) _CounterBox(value: comps.years, label: 'Anos', tint: tint),
+                                            if (comps.months > 0) _CounterBox(value: comps.months, label: 'Meses', tint: tint),
                                             _CounterBox(value: days, label: 'Dias', tint: tint),
                                             _CounterBox(value: hours, label: 'Horas', tint: tint),
                                             _CounterBox(value: mins, label: 'Mins', tint: tint),
