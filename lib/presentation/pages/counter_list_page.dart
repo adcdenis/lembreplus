@@ -1,14 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:lembreplus/state/providers.dart';
+import 'package:lembreplus/domain/recurrence.dart';
 
-class CounterListPage extends ConsumerWidget {
+class CounterListPage extends ConsumerStatefulWidget {
   const CounterListPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CounterListPage> createState() => _CounterListPageState();
+}
+
+class _CounterListPageState extends ConsumerState<CounterListPage> {
+  String _labelForRecurrence(Recurrence r) {
+    switch (r) {
+      case Recurrence.none:
+        return 'Nenhuma';
+      case Recurrence.weekly:
+        return 'Semanal';
+      case Recurrence.monthly:
+        return 'Mensal';
+      case Recurrence.yearly:
+        return 'Anual';
+    }
+  }
+  String _search = '';
+  String? _selectedCategory;
+
+  @override
+  Widget build(BuildContext context) {
     final countersAsync = ref.watch(countersProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
     final repo = ref.watch(counterRepositoryProvider);
 
     return Scaffold(
@@ -24,60 +47,216 @@ class CounterListPage extends ConsumerWidget {
           children: [
             const Text('Contadores', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
-            countersAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text('Erro ao carregar: $e'),
-              data: (items) {
-                if (items.isEmpty) {
-                  return const Text('Nenhum contador cadastrado.');
-                }
-                return Expanded(
-                  child: ListView.separated(
-                    itemCount: items.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final c = items[index];
-                      return ListTile(
-                        title: Text(c.name),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (c.description != null && c.description!.isNotEmpty)
-                              Text(c.description!),
-                            Text('Data: ${c.eventDate}')
-                          ],
+            Row(children: [
+              Expanded(
+                child: TextField(
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.search),
+                    hintText: 'Buscar por descrição ou nome...',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (v) => setState(() => _search = v.trim().toLowerCase()),
+                ),
+              ),
+              const SizedBox(width: 12),
+              countersAsync.when(
+                loading: () => const SizedBox(width: 200, height: 48, child: Center(child: CircularProgressIndicator())),
+                error: (e, _) => const SizedBox(),
+                data: (items) {
+                  // Conjunta categorias presentes nos contadores
+                  final presentCats = <String>{
+                    for (final c in items)
+                      if ((c.category ?? '').trim().isNotEmpty) (c.category!)
+                  };
+
+                  // Map de nomes amigáveis se existirem no provider de categorias
+                  final catsData = categoriesAsync.asData?.value ?? const [];
+                  final nameByNormalized = {
+                    for (final cat in catsData) cat.normalized: cat.name,
+                  };
+
+                  final dropdownItems = <DropdownMenuItem<String?>>[
+                    const DropdownMenuItem<String?>(value: null, child: Text('Todas as categorias')),
+                    ...presentCats.map((norm) => DropdownMenuItem<String?>(
+                          value: norm,
+                          child: Text(nameByNormalized[norm] ?? norm),
+                        )),
+                  ];
+
+                  return SizedBox(
+                    width: 240,
+                    child: InputDecorator(
+                      decoration: const InputDecoration(border: OutlineInputBorder()),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String?>(
+                          isExpanded: true,
+                          value: _selectedCategory,
+                          items: dropdownItems,
+                          onChanged: (v) => setState(() => _selectedCategory = v),
                         ),
-                        onTap: () => context.go('/counter/${c.id}'),
-                        trailing: Wrap(spacing: 8, children: [
-                          IconButton(
-                            tooltip: 'Editar',
-                            icon: const Icon(Icons.edit),
-                            onPressed: () => context.go('/counter/${c.id}/edit'),
-                          ),
-                          IconButton(
-                            tooltip: 'Excluir',
-                            icon: const Icon(Icons.delete),
-                            onPressed: () async {
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text('Excluir contador'),
-                                  content: const Text('Tem certeza que deseja excluir? Esta ação não pode ser desfeita.'),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
-                                    TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Excluir')),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ]),
+            const SizedBox(height: 16),
+            countersAsync.when(
+              loading: () => const Expanded(child: Center(child: CircularProgressIndicator())),
+              error: (e, _) => Expanded(child: Text('Erro ao carregar: $e')),
+              data: (items) {
+                var filtered = items.where((c) {
+                  final matchesSearch = _search.isEmpty ||
+                      c.name.toLowerCase().contains(_search) ||
+                      (c.description?.toLowerCase().contains(_search) ?? false);
+                  final matchesCat = _selectedCategory == null || (c.category ?? '') == _selectedCategory;
+                  return matchesSearch && matchesCat;
+                }).toList();
+
+                if (filtered.isEmpty) {
+                  return const Expanded(child: Center(child: Text('Nenhum contador encontrado.')));
+                }
+
+                // Rebuild a cada segundo para contagem dinâmica
+                return Expanded(
+                  child: StreamBuilder<DateTime>(
+                    stream: Stream<DateTime>.periodic(const Duration(seconds: 1), (_) => DateTime.now()),
+                    initialData: DateTime.now(),
+                    builder: (context, snap) {
+                      final now = snap.data ?? DateTime.now();
+
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          final width = constraints.maxWidth;
+                          int crossAxisCount = 1;
+                          if (width >= 1400) {
+                            crossAxisCount = 3;
+                          } else if (width >= 900) {
+                            crossAxisCount = 2;
+                          }
+
+                          Widget buildCard(int index) {
+                            final c = filtered[index];
+                            final isFuture = c.eventDate.isAfter(now);
+                            final diff = isFuture ? c.eventDate.difference(now) : now.difference(c.eventDate);
+                            final days = diff.inDays;
+                            final hours = diff.inHours % 24;
+                            final mins = diff.inMinutes % 60;
+                            final secs = diff.inSeconds % 60;
+                            final tint = isFuture ? Colors.blue[50]! : Colors.red[50]!;
+
+                            return Card(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              elevation: 0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                                ),
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(c.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                                              ),
+                                              Wrap(spacing: 8, children: [
+                                                IconButton(
+                                                  tooltip: 'Editar',
+                                                  icon: const Icon(Icons.edit),
+                                                  onPressed: () => context.go('/counter/${c.id}/edit'),
+                                                ),
+                                                IconButton(
+                                                  tooltip: 'Excluir',
+                                                  icon: const Icon(Icons.delete),
+                                                  onPressed: () async {
+                                                    final confirm = await showDialog<bool>(
+                                                      context: context,
+                                                      builder: (ctx) => AlertDialog(
+                                                        title: const Text('Excluir contador'),
+                                                        content: const Text('Tem certeza que deseja excluir? Esta ação não pode ser desfeita.'),
+                                                        actions: [
+                                                          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+                                                          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Excluir')),
+                                                        ],
+                                                      ),
+                                                    );
+                                                    if (confirm == true) {
+                                                      await repo.delete(c.id!);
+                                                      if (context.mounted) {
+                                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contador excluído')));
+                                                      }
+                                                    }
+                                                  },
+                                                ),
+                                              ]),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Wrap(spacing: 8, runSpacing: 6, children: [
+                                            if ((c.category ?? '').isNotEmpty)
+                                              Chip(label: Text(c.category!), visualDensity: VisualDensity.compact),
+                                            () {
+                                              final rec = Recurrence.fromString(c.recurrence);
+                                              if (rec == Recurrence.none) return const SizedBox.shrink();
+                                              return Chip(
+                                                label: Text(_labelForRecurrence(rec)),
+                                                visualDensity: VisualDensity.compact,
+                                              );
+                                            }(),
+                                          ]),
+                                          const SizedBox(height: 12),
+                                          Wrap(spacing: 12, runSpacing: 12, children: [
+                                            _CounterBox(value: days, label: 'Dias', tint: tint),
+                                            _CounterBox(value: hours, label: 'Horas', tint: tint),
+                                            _CounterBox(value: mins, label: 'Mins', tint: tint),
+                                            _CounterBox(value: secs, label: 'Segs', tint: tint),
+                                          ]),
+                                          const SizedBox(height: 12),
+                                          Text(
+                                            () {
+                                              final formatted = DateFormat('dd/MM/yyyy HH:mm').format(c.eventDate);
+                                              return isFuture ? 'Evento em $formatted' : 'Desde $formatted';
+                                            }(),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ],
                                 ),
-                              );
-                              if (confirm == true) {
-                                await repo.delete(c.id!);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contador excluído')));
-                                }
-                              }
-                            },
-                          ),
-                        ]),
+                              ),
+                            );
+                          }
+
+                          if (crossAxisCount == 1) {
+                            // Em telas estreitas, use ListView para permitir altura variável dos cards
+                            return ListView.separated(
+                              itemCount: filtered.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 16),
+                              itemBuilder: (context, index) => buildCard(index),
+                            );
+                          }
+
+                          // Para múltiplas colunas, mantenha GridView com uma razão mais alta
+                          final aspectRatio = crossAxisCount == 2 ? 2.4 : 2.8;
+                          return GridView.builder(
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              childAspectRatio: aspectRatio,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) => buildCard(index),
+                          );
+                        },
                       );
                     },
                   ),
@@ -86,6 +265,32 @@ class CounterListPage extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CounterBox extends StatelessWidget {
+  final int value;
+  final String label;
+  final Color tint;
+  const _CounterBox({required this.value, required this.label, required this.tint});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: tint,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$value', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(label),
+        ],
       ),
     );
   }

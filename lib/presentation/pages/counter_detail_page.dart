@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lembreplus/state/providers.dart';
+import 'package:lembreplus/domain/recurrence.dart';
 
 class CounterDetailPage extends ConsumerWidget {
   final int counterId;
@@ -38,7 +39,22 @@ class CounterDetailPage extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text('Categoria: ${c.category ?? '-'}'),
                 const SizedBox(height: 8),
-                Text('Recorrência: ${c.recurrence ?? 'Nenhuma'}'),
+                () {
+                  final rec = Recurrence.fromString(c.recurrence);
+                  final label = () {
+                    switch (rec) {
+                      case Recurrence.none:
+                        return 'Nenhuma';
+                      case Recurrence.weekly:
+                        return 'Semanal';
+                      case Recurrence.monthly:
+                        return 'Mensal';
+                      case Recurrence.yearly:
+                        return 'Anual';
+                    }
+                  }();
+                  return Text('Recorrência: $label');
+                }(),
                 const SizedBox(height: 24),
                 Row(children: [
                   ElevatedButton.icon(
