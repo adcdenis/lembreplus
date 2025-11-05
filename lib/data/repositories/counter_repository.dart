@@ -10,17 +10,49 @@ class CounterRepository {
         id: r.id,
         name: r.name,
         description: r.description,
-        eventDate: r.eventDate,
+        // Reconstrói como horário local "ingênuo" a partir dos componentes,
+        // evitando offsets de +3h/-3h vindos de interpretações UTC diferentes.
+        eventDate: DateTime(
+          r.eventDate.year,
+          r.eventDate.month,
+          r.eventDate.day,
+          r.eventDate.hour,
+          r.eventDate.minute,
+          r.eventDate.second,
+          r.eventDate.millisecond,
+          r.eventDate.microsecond,
+        ),
         category: r.category,
         recurrence: r.recurrence,
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
+        createdAt: DateTime(
+          r.createdAt.year,
+          r.createdAt.month,
+          r.createdAt.day,
+          r.createdAt.hour,
+          r.createdAt.minute,
+          r.createdAt.second,
+          r.createdAt.millisecond,
+          r.createdAt.microsecond,
+        ),
+        updatedAt: r.updatedAt == null
+            ? null
+            : DateTime(
+                r.updatedAt!.year,
+                r.updatedAt!.month,
+                r.updatedAt!.day,
+                r.updatedAt!.hour,
+                r.updatedAt!.minute,
+                r.updatedAt!.second,
+                r.updatedAt!.millisecond,
+                r.updatedAt!.microsecond,
+              ),
       );
 
   CountersCompanion _toCompanion(Counter c) => CountersCompanion(
         id: c.id != null ? Value(c.id!) : const Value.absent(),
         name: Value(c.name),
         description: Value(c.description),
+        // Persiste como hora local (parede) para manter semântica do usuário
         eventDate: Value(c.eventDate),
         category: Value(c.category),
         recurrence: Value(c.recurrence),

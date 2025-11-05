@@ -21,6 +21,9 @@ class TimeDiffComponents {
 /// normalizados (anos, meses, dias, horas, minutos, segundos).
 /// Todos os componentes retornados são não negativos.
 TimeDiffComponents calendarDiff(DateTime start, DateTime end) {
+  // Normaliza ambos para o mesmo timezone (local) para evitar desvios de horas
+  start = start.toLocal();
+  end = end.toLocal();
   // Garante ordem
   if (end.isBefore(start)) {
     final tmp = start;
@@ -70,6 +73,31 @@ TimeDiffComponents calendarDiff(DateTime start, DateTime end) {
   );
 }
 
+/// Calcula a diferença absoluta como duração normalizada (dias, horas, minutos, segundos).
+/// Usa UTC para evitar discrepâncias de timezone. Meses/anos retornam zero.
+TimeDiffComponents durationDiff(DateTime start, DateTime end) {
+  // Unifica em horário LOCAL para evitar discrepâncias quando uma das datas vier em UTC
+  // e a outra em local (cenário comum ao ler/gravar em diferentes plataformas).
+  final a = start.toLocal();
+  final b = end.toLocal();
+  var d = b.difference(a);
+  if (d.isNegative) d = d.abs();
+
+  final days = d.inDays;
+  final hours = d.inHours - days * 24;
+  final minutes = d.inMinutes - d.inHours * 60;
+  final seconds = d.inSeconds - d.inMinutes * 60;
+
+  return TimeDiffComponents(
+    years: 0,
+    months: 0,
+    days: days,
+    hours: hours,
+    minutes: minutes,
+    seconds: seconds,
+  );
+}
+
 Duration timeToEvent(DateTime eventDate, {DateTime? now}) {
   final reference = now ?? DateTime.now();
   return eventDate.difference(reference);
@@ -81,6 +109,9 @@ bool isPast(DateTime eventDate, {DateTime? now}) {
 }
 
 DateTime nextRecurringDate(DateTime base, Recurrence recurrence, DateTime now) {
+  // Normaliza para timezone local para consistência
+  base = base.toLocal();
+  now = now.toLocal();
   if (recurrence == Recurrence.none) {
     return base;
   }

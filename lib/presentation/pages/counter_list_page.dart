@@ -28,6 +28,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
   }
   
   TimeDiffComponents _calendarComponents(DateTime a, DateTime b) {
+    // Usa diferença de calendário normalizada em horário local
     return calendarDiff(a, b);
   }
   String _search = '';
@@ -150,8 +151,23 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
 
                           Widget buildCard(int index) {
                             final c = filtered[index];
-                            final isFuture = c.eventDate.isAfter(now);
-                            final comps = _calendarComponents(now, c.eventDate);
+                            final rec = Recurrence.fromString(c.recurrence);
+                            // Usa reconstrução ingênua local para garantir semântica de parede
+                            final baseLocal = DateTime(
+                              c.eventDate.year,
+                              c.eventDate.month,
+                              c.eventDate.day,
+                              c.eventDate.hour,
+                              c.eventDate.minute,
+                              c.eventDate.second,
+                              c.eventDate.millisecond,
+                              c.eventDate.microsecond,
+                            );
+                            final effectiveDate = rec == Recurrence.none
+                                ? baseLocal
+                                : nextRecurringDate(baseLocal, rec, now);
+                            final isFuture = effectiveDate.isAfter(now);
+                            final comps = _calendarComponents(now, effectiveDate);
                             final days = comps.days;
                             final hours = comps.hours;
                             final mins = comps.minutes;
@@ -217,7 +233,6 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                             if ((c.category ?? '').isNotEmpty)
                                               Chip(label: Text(c.category!), visualDensity: VisualDensity.compact),
                                             () {
-                                              final rec = Recurrence.fromString(c.recurrence);
                                               if (rec == Recurrence.none) return const SizedBox.shrink();
                                               return Chip(
                                                 label: Text(_labelForRecurrence(rec)),
@@ -226,7 +241,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                             }(),
                                           ]),
                                           const SizedBox(height: 12),
-                                          Wrap(spacing: 12, runSpacing: 12, children: [
+                                          Wrap(spacing: 6, runSpacing: 6, children: [
                                             if (comps.years > 0) _CounterBox(value: comps.years, label: 'Anos', tint: tint),
                                             if (comps.months > 0) _CounterBox(value: comps.months, label: 'Meses', tint: tint),
                                             _CounterBox(value: days, label: 'Dias', tint: tint),
@@ -237,7 +252,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                           const SizedBox(height: 12),
                                           Text(
                                             () {
-                                              final formatted = DateFormat('dd/MM/yyyy HH:mm').format(c.eventDate);
+                                              final formatted = DateFormat('dd/MM/yyyy HH:mm').format(effectiveDate);
                                               return isFuture ? 'Evento em $formatted' : 'Desde $formatted';
                                             }(),
                                           ),
@@ -294,17 +309,17 @@ class _CounterBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: tint,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('$value', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          Text(label),
+          Text('$value', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(fontSize: 12)),
         ],
       ),
     );
