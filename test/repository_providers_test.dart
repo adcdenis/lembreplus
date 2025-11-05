@@ -110,13 +110,13 @@ void main() {
       await categoriesRepo.create(model.Category(name: 'Geral', normalized: 'geral'));
       await historiesRepo.create(hist.CounterHistory(counterId: id, snapshot: '1', operation: 'create', timestamp: DateTime.now()));
 
-      final countersStream = container.read(countersProvider.stream);
-      final categoriesStream = container.read(categoriesProvider.stream);
-      final historyStream = container.read(historyProvider(id).stream);
+      final countersFuture = container.read(countersProvider.future);
+      final categoriesFuture = container.read(categoriesProvider.future);
+      final historyFuture = container.read(historyProvider(id).future);
 
-      final c = await countersStream.first;
-      final cat = await categoriesStream.first;
-      final h = await historyStream.first;
+      final c = await countersFuture;
+      final cat = await categoriesFuture;
+      final h = await historyFuture;
 
       expect(c.length, 1);
       expect(cat.length, 1);
