@@ -48,6 +48,10 @@ class AppDatabase extends _$AppDatabase {
   Future<CounterRow?> getCounterById(int id) => (select(counters)..where((t) => t.id.equals(id))).getSingleOrNull();
   Future<bool> updateCounter(CountersCompanion entry) => update(counters).replace(entry);
   Future<int> deleteCounter(int id) => (delete(counters)..where((t) => t.id.equals(id))).go();
+  Future<int> countCountersByCategoryName(String name) async {
+    final rows = await (select(counters)..where((t) => t.category.equals(name))).get();
+    return rows.length;
+  }
   Stream<List<CounterRow>> watchAllCounters() => select(counters).watch();
   Future<void> upsertCounterRaw({
     required int id,
@@ -75,6 +79,8 @@ class AppDatabase extends _$AppDatabase {
   Future<int> insertCategory(CategoriesCompanion entry) => into(categories).insert(entry);
   Future<List<CategoryRow>> getAllCategories() => select(categories).get();
   Future<CategoryRow?> getCategoryById(int id) => (select(categories)..where((t) => t.id.equals(id))).getSingleOrNull();
+  Future<CategoryRow?> getCategoryByNormalized(String normalized) =>
+      (select(categories)..where((t) => t.normalized.equals(normalized))).getSingleOrNull();
   Future<bool> updateCategory(CategoriesCompanion entry) => update(categories).replace(entry);
   Future<int> deleteCategory(int id) => (delete(categories)..where((t) => t.id.equals(id))).go();
   Stream<List<CategoryRow>> watchAllCategories() => select(categories).watch();

@@ -1,13 +1,8 @@
+// ignore_for_file: deprecated_member_use
 import 'package:drift/drift.dart';
-import 'package:drift/wasm.dart';
+import 'package:drift/web.dart';
 
 LazyDatabase openConnection() {
-  return LazyDatabase(() async {
-    final result = await WasmDatabase.open(
-      databaseName: 'lembreplus',
-      sqlite3Uri: Uri.parse('sqlite3.wasm'),
-      driftWorkerUri: Uri.parse('drift_worker.js'),
-    );
-    return result.resolvedExecutor;
-  });
+  // Usar IndexedDB diretamente no ambiente web de desenvolvimento para evitar erros de WebAssembly
+  return LazyDatabase(() async => WebDatabase('lembreplus'));
 }

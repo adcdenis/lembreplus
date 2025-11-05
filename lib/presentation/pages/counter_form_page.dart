@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lembreplus/data/models/counter.dart' as model;
 import 'package:lembreplus/state/providers.dart';
 import 'package:lembreplus/domain/recurrence.dart';
+import 'package:lembreplus/data/models/category.dart' as cat;
+import 'package:lembreplus/domain/category_utils.dart';
 
 class CounterFormPage extends ConsumerStatefulWidget {
   final int? counterId;
@@ -59,6 +61,9 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.counterId != null;
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final countersAsync = ref.watch(countersProvider);
+    final categoryRepo = ref.read(categoryRepositoryProvider);
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Form(
@@ -79,9 +84,182 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
               maxLines: 2,
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _categoryCtrl,
-              decoration: const InputDecoration(labelText: 'Categoria', border: OutlineInputBorder()),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Categoria', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                // Autocomplete para listar e buscar categorias existentes
+                Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue tv) {
+                    final q = tv.text.trim().toLowerCase();
+                    return categoriesAsync.maybeWhen(
+                      data: (cats) {
+                        if (q.isEmpty) return cats.map((c) => c.name);
+                        final nq = normalizeCategory(q);
+                        return cats
+                            .where((c) => c.name.toLowerCase().contains(q) || c.normalized.contains(nq))
+                            .map((c) => c.name);
+                      },
+                      orElse: () => const []);
+                  },
+                  fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+                    // Sincroniza com o controller do formulário
+                    textController.text = _categoryCtrl.text;
+                    textController.selection = _categoryCtrl.selection;
+                    textController.addListener(() {
+                      _categoryCtrl
+                        ..text = textController.text
+                        ..selection = textController.selection;
+                      setState(() {});
+                    });
+                    return TextFormField(
+                      controller: textController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        hintText: 'Selecione ou digite uma categoria',
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_categoryCtrl.text.isNotEmpty)
+                              IconButton(
+                                tooltip: 'Limpar',
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  setState(() => _categoryCtrl.clear());
+                                },
+                              ),
+                            IconButton(
+                              tooltip: 'Criar nova categoria',
+                              icon: const Icon(Icons.add),
+                              onPressed: () async {
+                                final name = _categoryCtrl.text.trim();
+                                if (name.isEmpty) return;
+                                final normalized = normalizeCategory(name);
+                                // Evita duplicação no client-side
+                                final exists = categoriesAsync.maybeWhen(
+                                  data: (cats) => cats.any((c) => c.normalized == normalized),
+                                  orElse: () => false,
+                                );
+                                if (exists) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Categoria "$name" já existe')),
+                                  );
+                                  return;
+                                }
+                                await categoryRepo.create(cat.Category(name: name, normalized: normalized));
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Categoria "$name" criada')),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  onSelected: (value) {
+                    setState(() => _categoryCtrl.text = value);
+                  },
+                ),
+                const SizedBox(height: 8),
+                // Chips das categorias existentes para seleção rápida
+                categoriesAsync.when(
+                  data: (cats) {
+                    if (cats.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    final usedNames = countersAsync.maybeWhen(
+                      data: (ctrs) => ctrs
+                          .map((c) => c.category?.trim())
+                          .whereType<String>()
+                          .map((name) => normalizeCategory(name))
+                          .toSet(),
+                      orElse: () => <String>{},
+                    );
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: cats.map((c) {
+                          final selected = _categoryCtrl.text.trim() == c.name;
+                          final isUsed = usedNames.contains(c.normalized);
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: InputChip(
+                              label: Text(c.name),
+                              selected: selected,
+                              onPressed: () => setState(() => _categoryCtrl.text = c.name),
+                              onDeleted: isUsed
+                                  ? null
+                                  : () async {
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          title: const Text('Excluir categoria'),
+                                          content: Text('Excluir "${c.name}"? Esta ação não pode ser desfeita.'),
+                                          actions: [
+                                            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+                                            FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Excluir')),
+                                          ],
+                                        ),
+                                      );
+                                      if (confirm != true) return;
+                                      final ok = await categoryRepo.deleteIfUnused(c);
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text(ok ? 'Categoria "${c.name}" excluída' : 'Não é possível excluir: em uso')),
+                                      );
+                                    },
+                              deleteIcon: isUsed ? const Icon(Icons.block) : const Icon(Icons.delete),
+                              tooltip: isUsed ? 'Em uso' : 'Excluir',
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    );
+                  },
+                  loading: () => const LinearProgressIndicator(minHeight: 2),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+                const SizedBox(height: 4),
+                // Botão de criação rápida quando texto não pertence a nenhuma categoria
+                Builder(builder: (context) {
+                  final input = _categoryCtrl.text.trim();
+                  final exists = categoriesAsync.maybeWhen(
+                    data: (cats) => cats.any((c) => c.name.toLowerCase() == input.toLowerCase()),
+                    orElse: () => false,
+                  );
+                  if (input.isNotEmpty && !exists) {
+                    return TextButton.icon(
+                      onPressed: () async {
+                        final normalized = normalizeCategory(input);
+                        final exists = categoriesAsync.maybeWhen(
+                          data: (cats) => cats.any((c) => c.normalized == normalized),
+                          orElse: () => false,
+                        );
+                        if (exists) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Categoria "$input" já existe')),
+                          );
+                          return;
+                        }
+                        await categoryRepo.create(cat.Category(name: input, normalized: normalized));
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Categoria "$input" criada')),
+                        );
+                      },
+                      icon: const Icon(Icons.add),
+                      label: Text('Criar "$input"'),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
+              ],
             ),
             const SizedBox(height: 12),
             Row(children: [
@@ -172,10 +350,10 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
         createdAt: now,
         updatedAt: now,
       );
-      final id = await repo.create(c);
+      await repo.create(c);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contador criado com sucesso')));
-      context.go('/counter/$id');
+      context.go('/counters');
     } else {
       final now = DateTime.now();
       final c = model.Counter(
@@ -191,7 +369,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
       final ok = await repo.update(c);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok ? 'Contador atualizado' : 'Falha ao atualizar')));
-      context.go('/counter/${widget.counterId}');
+      context.go('/counters');
     }
   }
 }

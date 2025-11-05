@@ -14,11 +14,30 @@ class CategoryRepository {
         normalized: Value(c.normalized),
       );
 
-  Future<int> create(Category c) => db.insertCategory(_toCompanion(c));
+  Future<int> create(Category c) async {
+    // Evita duplicação: se já existir por normalized, retorna o id existente
+    final existing = await db.getCategoryByNormalized(c.normalized);
+    if (existing != null) return existing.id;
+    return db.insertCategory(_toCompanion(c));
+  }
   Future<List<Category>> all() async => (await db.getAllCategories()).map(_mapRow).toList();
   Future<Category?> byId(int id) async {
     final r = await db.getCategoryById(id);
     return r == null ? null : _mapRow(r);
+  }
+  Future<Category?> byNormalized(String normalized) async {
+    final r = await db.getCategoryByNormalized(normalized);
+    return r == null ? null : _mapRow(r);
+  }
+  Future<bool> isUsed(Category c) async {
+    final count = await db.countCountersByCategoryName(c.name);
+    return count > 0;
+  }
+  Future<bool> deleteIfUnused(Category c) async {
+    if (c.id == null) return false;
+    if (await isUsed(c)) return false;
+    await db.deleteCategory(c.id!);
+    return true;
   }
   Future<bool> update(Category c) => db.updateCategory(_toCompanion(c));
   Future<int> delete(int id) => db.deleteCategory(id);
