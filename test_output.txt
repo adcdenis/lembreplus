@@ -1,0 +1,14 @@
+00:00 +0: loading C:/Users/admin/Documents/trae_projects/lembreplus/test/domain_category_utils_test.dart
+00:00 +0: C:/Users/admin/Documents/trae_projects/lembreplus/test/domain_category_utils_test.dart: normalizeCategory removes accents, spaces and special chars
+00:00 +1: C:/Users/admin/Documents/trae_projects/lembreplus/test/domain_category_utils_test.dart: normalizeCategory collapses multiple hyphens
+00:00 +2: C:/Users/admin/Documents/trae_projects/lembreplus/test/domain_time_utils_test.dart: timeToEvent & isPast future event returns positive duration
+00:00 +3: C:/Users/admin/Documents/trae_projects/lembreplus/test/domain_time_utils_test.dart: timeToEvent & isPast past event returns negative duration
+00:00 +4: C:/Users/admin/Documents/trae_projects/lembreplus/test/domain_time_utils_test.dart: nextRecurringDate weekly recurrence advances to next week when past
+00:00 +5: C:/Users/admin/Documents/trae_projects/lembreplus/test/domain_time_utils_test.dart: nextRecurringDate monthly recurrence clamps day (Jan 31 -> Feb 28 non-leap)
+00:00 +6: C:/Users/admin/Documents/trae_projects/lembreplus/test/domain_time_utils_test.dart: nextRecurringDate yearly recurrence next year when date passed
+00:01 +7: C:/Users/admin/Documents/trae_projects/lembreplus/test/repository_providers_test.dart: Repositories and Providers CounterRepository CRUD and stream
+00:01 +8: C:/Users/admin/Documents/trae_projects/lembreplus/test/repository_providers_test.dart: Repositories and Providers CategoryRepository CRUD and stream
+00:01 +9: C:/Users/admin/Documents/trae_projects/lembreplus/test/repository_providers_test.dart: Repositories and Providers HistoryRepository insert and watchByCounter
+00:01 +10: C:/Users/admin/Documents/trae_projects/lembreplus/test/repository_providers_test.dart: Repositories and Providers Providers stream integration
+00:02 +11: C:/Users/admin/Documents/trae_projects/lembreplus/test/widget_test.dart: App exibe título Lembre+
+00:02 +12: All tests passed!

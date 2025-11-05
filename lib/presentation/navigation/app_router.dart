@@ -1,0 +1,69 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../pages/dashboard_page.dart';
+import '../pages/counter_detail_page.dart';
+import '../pages/counter_form_page.dart';
+import '../pages/counter_list_page.dart';
+import '../pages/summary_page.dart';
+import '../pages/reports_page.dart';
+import '../pages/backup_page.dart';
+import '../widgets/app_shell.dart';
+
+class AppRouter {
+  static final GoRouter router = GoRouter(
+    initialLocation: '/',
+    routes: <RouteBase>[
+      ShellRoute(
+        builder: (context, state, child) => AppShell(child: child),
+        routes: [
+          GoRoute(
+            path: '/',
+            name: 'dashboard',
+            pageBuilder: (context, state) => const MaterialPage(child: DashboardPage()),
+          ),
+          GoRoute(
+            path: '/counters',
+            name: 'counters',
+            pageBuilder: (context, state) => const MaterialPage(child: CounterListPage()),
+          ),
+          GoRoute(
+            path: '/counter/new',
+            name: 'counter_new',
+            pageBuilder: (context, state) => const MaterialPage(child: CounterFormPage()),
+          ),
+          GoRoute(
+            path: '/counter/:id',
+            name: 'counter_detail',
+            pageBuilder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+              return MaterialPage(child: CounterDetailPage(counterId: id));
+            },
+          ),
+          GoRoute(
+            path: '/counter/:id/edit',
+            name: 'counter_edit',
+            pageBuilder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+              return MaterialPage(child: CounterFormPage(counterId: id));
+            },
+          ),
+          GoRoute(
+            path: '/summary',
+            name: 'summary',
+            pageBuilder: (context, state) => const MaterialPage(child: SummaryPage()),
+          ),
+          GoRoute(
+            path: '/reports',
+            name: 'reports',
+            pageBuilder: (context, state) => const MaterialPage(child: ReportsPage()),
+          ),
+          GoRoute(
+            path: '/backup',
+            name: 'backup',
+            pageBuilder: (context, state) => const MaterialPage(child: BackupPage()),
+          ),
+        ],
+      ),
+    ],
+  );
+}
