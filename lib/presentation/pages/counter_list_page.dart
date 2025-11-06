@@ -43,10 +43,9 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
     final repo = ref.watch(counterRepositoryProvider);
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => context.go('/counter/new'),
-        icon: const Icon(Icons.add),
-        label: const Text('Novo contador'),
+        child: const Icon(Icons.add),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -268,24 +267,38 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                             }(),
                                           ]),
                                           const SizedBox(height: 12),
-                                          Wrap(spacing: 6, runSpacing: 6, children: [
-                                            if (comps.years > 0)
-                                              _CounterBox(
-                                                value: comps.years,
-                                                label: _pluralize(comps.years, 'Ano', 'Anos'),
-                                                tint: tint,
-                                              ),
-                                            if (comps.months > 0)
-                                              _CounterBox(
-                                                value: comps.months,
-                                                label: _pluralize(comps.months, 'Mês', 'Meses'),
-                                                tint: tint,
-                                              ),
-                                            _CounterBox(value: days, label: _pluralize(days, 'Dia', 'Dias'), tint: tint),
-                                            _CounterBox(value: hours, label: _pluralize(hours, 'Hora', 'Horas'), tint: tint),
-                                            _CounterBox(value: mins, label: _pluralize(mins, 'Minuto', 'Minutos'), tint: tint),
-                                            _CounterBox(value: secs, label: _pluralize(secs, 'Segundo', 'Segundos'), tint: tint),
-                                          ]),
+                                          FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            alignment: Alignment.centerLeft,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                if (comps.years > 0) ...[
+                                                  _CounterBox(
+                                                    value: comps.years,
+                                                    label: _pluralize(comps.years, 'Ano', 'Anos'),
+                                                    tint: tint,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                ],
+                                                if (comps.months > 0) ...[
+                                                  _CounterBox(
+                                                    value: comps.months,
+                                                    label: _pluralize(comps.months, 'Mês', 'Meses'),
+                                                    tint: tint,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                ],
+                                                _CounterBox(value: days, label: _pluralize(days, 'Dia', 'Dias'), tint: tint),
+                                                const SizedBox(width: 4),
+                                                _CounterBox(value: hours, label: _pluralize(hours, 'Hora', 'Horas'), tint: tint),
+                                                const SizedBox(width: 4),
+                                                _CounterBox(value: mins, label: _pluralize(mins, 'Minuto', 'Minutos'), tint: tint),
+                                                const SizedBox(width: 4),
+                                                _CounterBox(value: secs, label: _pluralize(secs, 'Segundo', 'Segundos'), tint: tint),
+                                              ],
+                                            ),
+                                          ),
                                           const SizedBox(height: 12),
                                           Text(
                                             () {
@@ -348,24 +361,29 @@ class _CounterBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [tint.withValues(alpha: 0.85), tint.withValues(alpha: 0.5)],
         ),
         boxShadow: [
-          BoxShadow(color: tint.withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 4)),
+          BoxShadow(color: tint.withValues(alpha: 0.28), blurRadius: 4, offset: const Offset(0, 2)),
         ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('$value', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: scheme.onSurface)),
-          const SizedBox(height: 3),
-          Text(label, style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+          Text('$value', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: scheme.onSurface)),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 10, color: scheme.onSurfaceVariant),
+          ),
         ],
       ),
     );

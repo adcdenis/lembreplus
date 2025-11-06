@@ -183,3 +183,11 @@ Notas rápidas
 - Para publicar na Play Store, configure assinatura de release (keystore e key.properties ) e a seção de signingConfigs no android/app/build.gradle.kts . Posso te guiar nessa configuração se quiser.
 
 Nota: As plataformas Web e Desktop foram desabilitadas via `flutter config` para garantir execução apenas em dispositivos móveis.
+
+
+flutter emulators --launch s24
+flutter emulators
+flutter emulators --create --name s24 
+flutter emulators --launch s24 
+flutter devices 
+flutter run -d emulator-5554 

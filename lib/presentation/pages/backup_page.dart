@@ -19,8 +19,11 @@ class BackupPage extends ConsumerWidget {
           const SizedBox(height: 12),
           const Text('Exportar e importar dados locais (JSON).'),
           const SizedBox(height: 24),
-          Row(children: [
-            ElevatedButton.icon(
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              ElevatedButton.icon(
               onPressed: () async {
                 final res = await backup.export();
                 if (context.mounted) {
@@ -29,10 +32,9 @@ class BackupPage extends ConsumerWidget {
               },
               icon: const Icon(Icons.backup_outlined),
               label: const Text('Exportar para JSON'),
-            ),
-            const SizedBox(width: 12),
-            if (!kIsWeb)
-              ElevatedButton.icon(
+              ),
+              if (!kIsWeb)
+                ElevatedButton.icon(
                 onPressed: () async {
                   try {
                     final path = await backup.exportPath();
@@ -51,9 +53,8 @@ class BackupPage extends ConsumerWidget {
                 },
                 icon: const Icon(Icons.share_outlined),
                 label: const Text('Exportar e compartilhar'),
-              ),
-            if (!kIsWeb) const SizedBox(width: 12),
-            OutlinedButton.icon(
+                ),
+              OutlinedButton.icon(
               onPressed: () async {
                 try {
                   final imported = await backup.import();
@@ -68,8 +69,9 @@ class BackupPage extends ConsumerWidget {
               },
               icon: const Icon(Icons.restore),
               label: const Text('Importar de JSON'),
-            ),
-          ]),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           const Text('Nome do arquivo: lembre_backup_YYYYMMDD_HHMMSS.json (com carimbo de data/hora).'),
           const SizedBox(height: 8),
