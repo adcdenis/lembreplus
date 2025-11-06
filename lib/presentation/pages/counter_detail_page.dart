@@ -57,9 +57,9 @@ class CounterDetailPage extends ConsumerWidget {
                 }(),
                 const SizedBox(height: 24),
                 Row(children: [
-                  ElevatedButton.icon(
+                  FilledButton.icon(
                     onPressed: () => context.go('/counter/${c.id}/edit'),
-                    icon: const Icon(Icons.edit),
+                    icon: const Text('📝', style: TextStyle(fontSize: 20)),
                     label: const Text('Editar'),
                   ),
                   const SizedBox(width: 12),
@@ -84,7 +84,7 @@ class CounterDetailPage extends ConsumerWidget {
                         }
                       }
                     },
-                    icon: const Icon(Icons.delete),
+                    icon: const Text('🗑️', style: TextStyle(fontSize: 20)),
                     label: const Text('Excluir'),
                   ),
                 ]),

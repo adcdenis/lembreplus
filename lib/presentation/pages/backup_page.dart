@@ -23,18 +23,18 @@ class BackupPage extends ConsumerWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
-              ElevatedButton.icon(
+              FilledButton.icon(
               onPressed: () async {
                 final res = await backup.export();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res)));
                 }
               },
-              icon: const Icon(Icons.backup_outlined),
+              icon: const Text('📤', style: TextStyle(fontSize: 20)),
               label: const Text('Exportar para JSON'),
               ),
               if (!kIsWeb)
-                ElevatedButton.icon(
+                FilledButton.icon(
                 onPressed: () async {
                   try {
                     final path = await backup.exportPath();
@@ -51,7 +51,7 @@ class BackupPage extends ConsumerWidget {
                     }
                   }
                 },
-                icon: const Icon(Icons.share_outlined),
+                icon: const Text('🔗', style: TextStyle(fontSize: 20)),
                 label: const Text('Exportar e compartilhar'),
                 ),
               OutlinedButton.icon(
@@ -67,7 +67,7 @@ class BackupPage extends ConsumerWidget {
                   }
                 }
               },
-              icon: const Icon(Icons.restore),
+              icon: const Text('📥', style: TextStyle(fontSize: 20)),
               label: const Text('Importar de JSON'),
               ),
             ],
@@ -206,7 +206,7 @@ class BackupPage extends ConsumerWidget {
                             }
                           }
                         },
-                        icon: const Icon(Icons.restore),
+                        icon: const Text('📥', style: TextStyle(fontSize: 20)),
                         label: const Text('Importar'),
                       ),
                     );

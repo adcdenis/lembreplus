@@ -108,8 +108,3 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-
-flutter_launcher_icons:
-  android: true
-  ios: false
-  image_path_android: "web/icons/icons8-passado-96.png"

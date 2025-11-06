@@ -32,11 +32,11 @@ class AppShell extends StatelessWidget {
                     ? NavigationRailLabelType.none
                     : NavigationRailLabelType.all,
                 destinations: const [
-                  NavigationRailDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: Text('Dashboard')),
-                  NavigationRailDestination(icon: Icon(Icons.list_alt_outlined), selectedIcon: Icon(Icons.list_alt), label: Text('Contadores')),
-                  NavigationRailDestination(icon: Icon(Icons.summarize_outlined), selectedIcon: Icon(Icons.summarize), label: Text('Resumo')),
-                  NavigationRailDestination(icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart), label: Text('Relatórios')),
-                  NavigationRailDestination(icon: Icon(Icons.backup_outlined), selectedIcon: Icon(Icons.backup), label: Text('Backup')),
+                  NavigationRailDestination(icon: Text('📋', style: TextStyle(fontSize: 20)), selectedIcon: Text('📋', style: TextStyle(fontSize: 20)), label: Text('Dashboard')),
+                  NavigationRailDestination(icon: Text('🧮', style: TextStyle(fontSize: 20)), selectedIcon: Text('🧮', style: TextStyle(fontSize: 20)), label: Text('Contadores')),
+                  NavigationRailDestination(icon: Text('📊', style: TextStyle(fontSize: 20)), selectedIcon: Text('📊', style: TextStyle(fontSize: 20)), label: Text('Resumo')),
+                  NavigationRailDestination(icon: Text('📈', style: TextStyle(fontSize: 20)), selectedIcon: Text('📈', style: TextStyle(fontSize: 20)), label: Text('Relatórios')),
+                  NavigationRailDestination(icon: Text('🔄', style: TextStyle(fontSize: 20)), selectedIcon: Text('🔄', style: TextStyle(fontSize: 20)), label: Text('Backup')),
                 ],
               ),
               const VerticalDivider(width: 1),

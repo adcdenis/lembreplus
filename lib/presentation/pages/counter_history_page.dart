@@ -133,7 +133,7 @@ class CounterHistoryPage extends ConsumerWidget {
                       dense: true,
                       trailing: IconButton.filledTonal(
                         tooltip: 'Excluir item do histórico',
-                        icon: const Icon(Icons.delete),
+                        icon: const Text('🗑️', style: TextStyle(fontSize: 20)),
                         onPressed: () async {
                           if (h.id == null) return;
                           final confirm = await showDialog<bool>(

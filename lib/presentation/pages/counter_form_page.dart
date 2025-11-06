@@ -375,7 +375,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                             ),
                           );
                         },
-                        icon: const Icon(Icons.add),
+                        icon: const Text('➕', style: TextStyle(fontSize: 20)),
                         label: Text('Criar "$input"'),
                       );
                     }
@@ -458,9 +458,9 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: FilledButton.icon(
                     onPressed: _onSubmit,
-                    icon: const Icon(Icons.save),
+                    icon: const Text('💾', style: TextStyle(fontSize: 20)),
                     label: Text(isEdit ? 'Salvar' : 'Criar'),
                   ),
                 ),

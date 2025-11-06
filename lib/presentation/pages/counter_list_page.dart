@@ -45,7 +45,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.go('/counter/new'),
-        child: const Icon(Icons.add),
+        child: const Text('➕', style: TextStyle(fontSize: 24)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -60,7 +60,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                   height: 48,
                   child: TextField(
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search),
+                      prefixIcon: const Text('🔎', style: TextStyle(fontSize: 18)),
                       hintText: 'Buscar por descrição ou nome...',
                       filled: true,
                       fillColor: scheme.surfaceContainerHighest,
@@ -208,7 +208,13 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                         children: [
                                           Row(
                                             children: [
-                                              Icon(isFuture ? Icons.schedule : Icons.history, color: isFuture ? scheme.primary : scheme.error),
+                                              Text(
+                                                isFuture ? '🗓️' : '🕰️',
+                                                style: TextStyle(
+                                                  fontSize: 20,
+                                                  color: isFuture ? scheme.primary : scheme.error,
+                                                ),
+                                              ),
                                               const SizedBox(width: 8),
                                               Expanded(
                                                 child: Text(c.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
@@ -216,12 +222,12 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                               Wrap(spacing: 8, children: [
                                                 IconButton.filledTonal(
                                                   tooltip: 'Histórico',
-                                                  icon: const Icon(Icons.history),
+                                                  icon: const Text('📜', style: TextStyle(fontSize: 20)),
                                                   onPressed: () => context.go('/counter/${c.id}/history'),
                                                 ),
                                                 IconButton.filledTonal(
                                                   tooltip: 'Excluir',
-                                                  icon: const Icon(Icons.delete),
+                                                  icon: const Text('🗑️', style: TextStyle(fontSize: 20)),
                                                   onPressed: () async {
                                                     final confirm = await showDialog<bool>(
                                                       context: context,
@@ -249,7 +255,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                           Wrap(spacing: 8, runSpacing: 6, children: [
                                             if ((c.category ?? '').isNotEmpty)
                                               Chip(
-                                                avatar: Icon(Icons.label, size: 16, color: scheme.onSecondaryContainer),
+                                                avatar: Text('🏷️', style: TextStyle(fontSize: 14, color: scheme.onSecondaryContainer)),
                                                 label: Text(c.category!),
                                                 visualDensity: VisualDensity.compact,
                                                 backgroundColor: scheme.secondaryContainer,
@@ -258,7 +264,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                             () {
                                               if (rec == Recurrence.none) return const SizedBox.shrink();
                                               return Chip(
-                                                avatar: Icon(Icons.repeat, size: 16, color: scheme.onTertiaryContainer),
+                                                avatar: Text('🔁', style: TextStyle(fontSize: 16, color: scheme.onTertiaryContainer)),
                                                 label: Text(_labelForRecurrence(rec)),
                                                 visualDensity: VisualDensity.compact,
                                                 backgroundColor: scheme.tertiaryContainer,

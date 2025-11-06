@@ -21,24 +21,24 @@ class DashboardPage extends StatelessWidget {
             const Text('Bem-vindo ao Lembre+. Use o menu para navegar.'),
             const SizedBox(height: 24),
             Wrap(spacing: 12, runSpacing: 12, children: [
-              ElevatedButton.icon(
+              FilledButton.icon(
                 onPressed: () => context.go('/counters'),
-                icon: const Icon(Icons.list_alt),
+                icon: const Text('🧮', style: TextStyle(fontSize: 20)),
                 label: const Text('Contadores'),
               ),
-              ElevatedButton.icon(
+              FilledButton.icon(
                 onPressed: () => context.go('/summary'),
-                icon: const Icon(Icons.summarize),
+                icon: const Text('📊', style: TextStyle(fontSize: 20)),
                 label: const Text('Resumo'),
               ),
-              ElevatedButton.icon(
+              FilledButton.icon(
                 onPressed: () => context.go('/reports'),
-                icon: const Icon(Icons.bar_chart),
+                icon: const Text('📈', style: TextStyle(fontSize: 20)),
                 label: const Text('Relatórios'),
               ),
-              ElevatedButton.icon(
+              FilledButton.icon(
                 onPressed: () => context.go('/backup'),
-                icon: const Icon(Icons.backup),
+                icon: const Text('🔄', style: TextStyle(fontSize: 20)),
                 label: const Text('Backup'),
               ),
             ]),

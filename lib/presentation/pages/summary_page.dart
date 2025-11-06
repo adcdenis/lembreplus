@@ -76,14 +76,14 @@ class SummaryPage extends ConsumerWidget {
                   spacing: 12,
                   runSpacing: 12,
                   children: [
-                    _statCard(context, title: 'Esta Semana', value: weekCount, color: cs.primaryContainer, icon: Icons.date_range),
-                    _statCard(context, title: 'Este Mês', value: monthCount, color: cs.secondaryContainer, icon: Icons.calendar_month),
-                    _statCard(context, title: 'Próxima Semana', value: nextWeekCount, color: cs.tertiaryContainer, icon: Icons.next_plan),
-                    _statCard(context, title: 'Vencidos', value: past, color: cs.errorContainer, icon: Icons.warning_amber_rounded),
-                    _statCard(context, title: 'Total de Itens', value: total, color: cs.surfaceContainerHighest, icon: Icons.list_alt),
-                    _statCard(context, title: 'Eventos Passados', value: past, color: cs.surfaceContainerHighest, icon: Icons.history),
-                    _statCard(context, title: 'Eventos Futuros', value: future, color: cs.surfaceContainerHighest, icon: Icons.event),
-                    _statCard(context, title: 'Recorrentes', value: recurring, color: cs.surfaceContainerHighest, icon: Icons.repeat),
+                    _statCard(context, title: 'Esta Semana', value: weekCount, color: cs.primaryContainer, emoji: '📅'),
+                    _statCard(context, title: 'Este Mês', value: monthCount, color: cs.secondaryContainer, emoji: '🗓️'),
+                    _statCard(context, title: 'Próxima Semana', value: nextWeekCount, color: cs.tertiaryContainer, emoji: '⏭️'),
+                    _statCard(context, title: 'Vencidos', value: past, color: cs.errorContainer, emoji: '⚠️'),
+                    _statCard(context, title: 'Total de Itens', value: total, color: cs.surfaceContainerHighest, emoji: '📋'),
+                    _statCard(context, title: 'Eventos Passados', value: past, color: cs.surfaceContainerHighest, emoji: '🕰️'),
+                    _statCard(context, title: 'Eventos Futuros', value: future, color: cs.surfaceContainerHighest, emoji: '🗓️'),
+                    _statCard(context, title: 'Recorrentes', value: recurring, color: cs.surfaceContainerHighest, emoji: '🔁'),
                   ],
                 ),
 
@@ -95,7 +95,7 @@ class SummaryPage extends ConsumerWidget {
                   final leftPanel = _panelCard(
                     context,
                     title: 'Próximos Eventos',
-                    icon: Icons.upcoming,
+                    emoji: '⏳',
                     child: Column(
                       children: [
                         for (final t in nextTen)
@@ -112,7 +112,7 @@ class SummaryPage extends ConsumerWidget {
                   final middlePanel = _panelCard(
                     context,
                     title: 'Distribuição por Categoria',
-                    icon: Icons.stacked_bar_chart,
+                    emoji: '📊',
                     child: Column(
                       children: [
                         for (final e in categoryEntries)
@@ -129,7 +129,7 @@ class SummaryPage extends ConsumerWidget {
                   final rightPanel = _panelCard(
                     context,
                     title: 'Proporção por Categoria',
-                    icon: Icons.donut_large,
+                    emoji: '🥧',
                     child: SizedBox(
                       height: 220,
                       child: _DonutChart(data: byCategory, total: total),
@@ -161,7 +161,7 @@ class SummaryPage extends ConsumerWidget {
     );
   }
 
-  Widget _statCard(BuildContext context, {required String title, required int value, required Color color, required IconData icon}) {
+  Widget _statCard(BuildContext context, {required String title, required int value, required Color color, required String emoji}) {
     final cs = Theme.of(context).colorScheme;
     return Card(
       elevation: 0,
@@ -174,7 +174,7 @@ class SummaryPage extends ConsumerWidget {
           padding: const EdgeInsets.all(12.0),
           child: Row(
             children: [
-              Icon(icon, color: cs.onSurfaceVariant),
+              Text(emoji, style: const TextStyle(fontSize: 20)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -194,7 +194,7 @@ class SummaryPage extends ConsumerWidget {
     );
   }
 
-  Widget _panelCard(BuildContext context, {required String title, required IconData icon, required Widget child}) {
+  Widget _panelCard(BuildContext context, {required String title, required String emoji, required Widget child}) {
     final cs = Theme.of(context).colorScheme;
     return Card(
       elevation: 0,
@@ -205,7 +205,7 @@ class SummaryPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [Icon(icon), const SizedBox(width: 8), Text(title, style: const TextStyle(fontWeight: FontWeight.w600))]),
+            Row(children: [Text(emoji, style: const TextStyle(fontSize: 18)), const SizedBox(width: 8), Text(title, style: const TextStyle(fontWeight: FontWeight.w600))]),
             const SizedBox(height: 12),
             child,
           ],
@@ -236,7 +236,7 @@ class SummaryPage extends ConsumerWidget {
               Row(children: [
                 Text(df.format(date), style: TextStyle(color: cs.onSurfaceVariant)),
                 const SizedBox(width: 12),
-                if (category != null) Chip(label: Text(category), visualDensity: VisualDensity.compact, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                if (category != null) Chip(avatar: const Text('🏷️'), label: Text(category), visualDensity: VisualDensity.compact, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
               ]),
             ]),
           ),
