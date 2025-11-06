@@ -493,6 +493,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
     final repo = ref.read(counterRepositoryProvider);
+    final categoryRepo = ref.read(categoryRepositoryProvider);
     final dt = DateTime(
       _date.year,
       _date.month,
@@ -500,6 +501,15 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
       _time.hour,
       _time.minute,
     );
+
+    // Garante que a categoria digitada exista na tabela de categorias
+    final catName = _categoryCtrl.text.trim();
+    if (catName.isNotEmpty) {
+      final normalized = normalizeCategory(catName);
+      await categoryRepo.create(
+        cat.Category(name: catName, normalized: normalized),
+      );
+    }
 
     if (widget.counterId == null) {
       final now = DateTime.now();
