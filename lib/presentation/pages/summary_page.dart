@@ -71,21 +71,32 @@ class SummaryPage extends ConsumerWidget {
                 Text('Visão completa dos seus contadores e eventos', style: TextStyle(color: cs.onSurface.withValues(alpha: 0.7))),
                 const SizedBox(height: 16),
 
-                // Cards principais
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    _statCard(context, title: 'Esta Semana', value: weekCount, color: cs.primaryContainer, emoji: '📅'),
-                    _statCard(context, title: 'Este Mês', value: monthCount, color: cs.secondaryContainer, emoji: '🗓️'),
-                    _statCard(context, title: 'Próxima Semana', value: nextWeekCount, color: cs.tertiaryContainer, emoji: '⏭️'),
-                    _statCard(context, title: 'Vencidos', value: past, color: cs.errorContainer, emoji: '⚠️'),
-                    _statCard(context, title: 'Total de Itens', value: total, color: cs.surfaceContainerHighest, emoji: '📋'),
-                    _statCard(context, title: 'Eventos Passados', value: past, color: cs.surfaceContainerHighest, emoji: '🕰️'),
-                    _statCard(context, title: 'Eventos Futuros', value: future, color: cs.surfaceContainerHighest, emoji: '🗓️'),
-                    _statCard(context, title: 'Recorrentes', value: recurring, color: cs.surfaceContainerHighest, emoji: '🔁'),
-                  ],
-                ),
+                // Cards principais (grid: garante 2 colunas no mobile)
+                LayoutBuilder(builder: (context, constraints) {
+                  final isNarrow = constraints.maxWidth < 600;
+                  final cross = isNarrow ? 2 : 4;
+                  final extent = isNarrow ? 110.0 : 110.0;
+                  return GridView(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: cross,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      mainAxisExtent: extent,
+                    ),
+                    children: [
+                      _statCard(context, title: 'Esta Semana', value: weekCount, color: cs.primaryContainer, emoji: '📅', width: double.infinity),
+                      _statCard(context, title: 'Este Mês', value: monthCount, color: cs.secondaryContainer, emoji: '🗓️', width: double.infinity),
+                      _statCard(context, title: 'Próxima Semana', value: nextWeekCount, color: cs.tertiaryContainer, emoji: '⏭️', width: double.infinity),
+                      _statCard(context, title: 'Vencidos', value: past, color: cs.errorContainer, emoji: '⚠️', width: double.infinity),
+                      _statCard(context, title: 'Total de Itens', value: total, color: cs.surfaceContainerHighest, emoji: '📋', width: double.infinity),
+                      _statCard(context, title: 'Eventos Passados', value: past, color: cs.surfaceContainerHighest, emoji: '🕰️', width: double.infinity),
+                      _statCard(context, title: 'Eventos Futuros', value: future, color: cs.surfaceContainerHighest, emoji: '🗓️', width: double.infinity),
+                      _statCard(context, title: 'Recorrentes', value: recurring, color: cs.surfaceContainerHighest, emoji: '🔁', width: double.infinity),
+                    ],
+                  );
+                }),
 
                 const SizedBox(height: 16),
 
@@ -161,27 +172,28 @@ class SummaryPage extends ConsumerWidget {
     );
   }
 
-  Widget _statCard(BuildContext context, {required String title, required int value, required Color color, required String emoji}) {
+  Widget _statCard(BuildContext context, {required String title, required int value, required Color color, required String emoji, required double width}) {
     final cs = Theme.of(context).colorScheme;
     return Card(
       elevation: 0,
       color: color,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: cs.outline.withValues(alpha: 0.12))),
       child: SizedBox(
-        width: 240,
+        width: width,
         height: 90,
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Row(
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 20)),
+              Text(emoji, style: const TextStyle(fontSize: 18)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
                     Text('$value', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
                   ],
