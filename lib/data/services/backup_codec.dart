@@ -25,6 +25,84 @@ class BackupCodec {
     };
   }
 
+  /// Valida a estrutura e tipos do JSON de backup.
+  /// Retorna uma lista de mensagens de erro; vazia se válido.
+  static List<String> validate(Map<String, dynamic> data) {
+    final errors = <String>[];
+
+    void requireKey<T>(String key, bool Function(dynamic) typeCheck, {String? ctx}) {
+      if (!data.containsKey(key)) {
+        errors.add('[${ctx ?? 'root'}] chave obrigatória ausente: $key');
+        return;
+      }
+      final v = data[key];
+      if (!typeCheck(v)) {
+        errors.add('[${ctx ?? 'root'}] tipo inválido para $key: ${v.runtimeType}');
+      }
+    }
+
+    requireKey<int>('version', (v) => v is int);
+    requireKey<List>('counters', (v) => v is List);
+    requireKey<List>('categories', (v) => v is List);
+    requireKey<List>('history', (v) => v is List);
+
+    // Counters
+    final counters = (data['counters'] as List<dynamic>? ?? []);
+    for (var i = 0; i < counters.length; i++) {
+      final m = counters[i];
+      if (m is! Map<String, dynamic>) {
+        errors.add('[counters[$i]] não é um objeto');
+        continue;
+      }
+      if (m['id'] is! num) errors.add('[counters[$i]] id obrigatorio (num)');
+      if (m['name'] is! String) errors.add('[counters[$i]] name obrigatorio (string)');
+      if (m['description'] != null && m['description'] is! String) errors.add('[counters[$i]] description opcional (string)');
+      if (m['eventDate'] == null) {
+        errors.add('[counters[$i]] eventDate obrigatorio');
+      } else {
+        try { _dateFromJson(m['eventDate']); } catch (_) { errors.add('[counters[$i]] eventDate inválido'); }
+      }
+      if (m['category'] != null && m['category'] is! String) errors.add('[counters[$i]] category opcional (string)');
+      if (m['recurrence'] != null && m['recurrence'] is! String) errors.add('[counters[$i]] recurrence opcional (string)');
+      if (m['createdAt'] == null) {
+        errors.add('[counters[$i]] createdAt obrigatorio');
+      } else {
+        try { _dateFromJson(m['createdAt']); } catch (_) { errors.add('[counters[$i]] createdAt inválido'); }
+      }
+      if (m['updatedAt'] != null) {
+        try { _dateFromJson(m['updatedAt']); } catch (_) { errors.add('[counters[$i]] updatedAt inválido'); }
+      }
+    }
+
+    // Categories
+    final categories = (data['categories'] as List<dynamic>? ?? []);
+    for (var i = 0; i < categories.length; i++) {
+      final m = categories[i];
+      if (m is! Map<String, dynamic>) { errors.add('[categories[$i]] não é um objeto'); continue; }
+      if (m['id'] is! num) errors.add('[categories[$i]] id obrigatorio (num)');
+      if (m['name'] is! String) errors.add('[categories[$i]] name obrigatorio (string)');
+      if (m['normalized'] is! String) errors.add('[categories[$i]] normalized obrigatorio (string)');
+    }
+
+    // History
+    final history = (data['history'] as List<dynamic>? ?? []);
+    for (var i = 0; i < history.length; i++) {
+      final m = history[i];
+      if (m is! Map<String, dynamic>) { errors.add('[history[$i]] não é um objeto'); continue; }
+      if (m['id'] is! num) errors.add('[history[$i]] id obrigatorio (num)');
+      if (m['counterId'] is! num) errors.add('[history[$i]] counterId obrigatorio (num)');
+      if (m['snapshot'] is! String) errors.add('[history[$i]] snapshot obrigatorio (string)');
+      if (m['operation'] is! String) errors.add('[history[$i]] operation obrigatorio (string)');
+      if (m['timestamp'] == null) {
+        errors.add('[history[$i]] timestamp obrigatorio');
+      } else {
+        try { _dateFromJson(m['timestamp']); } catch (_) { errors.add('[history[$i]] timestamp inválido'); }
+      }
+    }
+
+    return errors;
+  }
+
   /// Restaura dados a partir de um Map JSON.
   static Future<void> restore(AppDatabase db, Map<String, dynamic> data) async {
     final counters = (data['counters'] as List<dynamic>? ?? []);

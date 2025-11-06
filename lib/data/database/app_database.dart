@@ -103,6 +103,7 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<CounterHistoryRow>> watchHistoryForCounter(int counterId) =>
       (select(counterHistory)..where((t) => t.counterId.equals(counterId))).watch();
   Future<List<CounterHistoryRow>> getAllHistory() => select(counterHistory).get();
+  Future<int> deleteHistory(int id) => (delete(counterHistory)..where((t) => t.id.equals(id))).go();
   Future<void> upsertHistoryRaw({
     required int id,
     required int counterId,

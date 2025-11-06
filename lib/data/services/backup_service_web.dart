@@ -4,10 +4,14 @@ import 'dart:async';
 import 'dart:html' as html;
 
 import 'package:lembreplus/data/database/app_database.dart';
+import 'package:lembreplus/data/services/backup_codec.dart';
 
 abstract class BackupService {
   Future<String> export();
   Future<String> import();
+  Future<List<String>> listBackups();
+  Future<String> importFromPath(String path);
+  Future<String> exportPath();
 }
 
 class BackupServiceImpl implements BackupService {
@@ -55,11 +59,26 @@ class BackupServiceImpl implements BackupService {
     final bytes = utf8.encode(json);
     final blob = html.Blob([bytes], 'application/json');
     final url = html.Url.createObjectUrlFromBlob(blob);
+    final now = DateTime.now();
+    final ts = '${now.year.toString().padLeft(4, '0')}'
+        '${now.month.toString().padLeft(2, '0')}'
+        '${now.day.toString().padLeft(2, '0')}'
+        '_'
+        '${now.hour.toString().padLeft(2, '0')}'
+        '${now.minute.toString().padLeft(2, '0')}'
+        '${now.second.toString().padLeft(2, '0')}';
+    final filename = 'lembre_backup_$ts.json';
     html.AnchorElement(href: url)
-      ..download = 'lembre_backup.json'
+      ..download = filename
       ..click();
     html.Url.revokeObjectUrl(url);
-    return 'Download iniciado (lembre_backup.json)';
+    return 'Download iniciado ($filename)';
+  }
+
+  @override
+  Future<String> exportPath() async {
+    // Não suportado no Web: não há caminho local de arquivo
+    throw 'Exportação com caminho não suportada no Web';
   }
 
   @override
@@ -77,7 +96,14 @@ class BackupServiceImpl implements BackupService {
         try {
           final content = reader.result as String;
           final data = jsonDecode(content) as Map<String, dynamic>;
-          await _restoreFromJson(data);
+          final errors = BackupCodec.validate(data);
+          if (errors.isNotEmpty) {
+            final report = StringBuffer('Validação falhou (${errors.length} problemas):\n');
+            for (final e in errors) { report.writeln('- $e'); }
+            completer.completeError(report.toString());
+            return;
+          }
+          await BackupCodec.restore(db, data);
           completer.complete('Dados importados com sucesso');
         } catch (e) {
           completer.completeError(e);
@@ -89,42 +115,15 @@ class BackupServiceImpl implements BackupService {
     return completer.future;
   }
 
-  Future<void> _restoreFromJson(Map<String, dynamic> data) async {
-    final counters = (data['counters'] as List<dynamic>? ?? []);
-    for (final c in counters) {
-      final m = c as Map<String, dynamic>;
-      await db.upsertCounterRaw(
-        id: m['id'] as int,
-        name: m['name'] as String,
-        description: m['description'] as String?,
-        eventDate: DateTime.parse(m['eventDate'] as String),
-        category: m['category'] as String?,
-        recurrence: m['recurrence'] as String?,
-        createdAt: DateTime.parse(m['createdAt'] as String),
-        updatedAt: (m['updatedAt'] as String?) != null ? DateTime.parse(m['updatedAt'] as String) : null,
-      );
-    }
+  @override
+  Future<List<String>> listBackups() async {
+    // Não suportado no Web: não há diretório de documentos
+    return [];
+  }
 
-    final categories = (data['categories'] as List<dynamic>? ?? []);
-    for (final cat in categories) {
-      final m = cat as Map<String, dynamic>;
-      await db.upsertCategoryRaw(
-        id: m['id'] as int,
-        name: m['name'] as String,
-        normalized: m['normalized'] as String,
-      );
-    }
-
-    final history = (data['history'] as List<dynamic>? ?? []);
-    for (final h in history) {
-      final m = h as Map<String, dynamic>;
-      await db.upsertHistoryRaw(
-        id: m['id'] as int,
-        counterId: m['counterId'] as int,
-        snapshot: m['snapshot'] as String,
-        operation: m['operation'] as String,
-        timestamp: DateTime.parse(m['timestamp'] as String),
-      );
-    }
+  @override
+  Future<String> importFromPath(String path) async {
+    // Não suportado no Web
+    throw 'Importação por caminho não suportada no Web';
   }
 }

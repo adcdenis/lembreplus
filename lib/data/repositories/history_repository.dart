@@ -11,7 +11,8 @@ class HistoryRepository {
         counterId: r.counterId,
         snapshot: r.snapshot,
         operation: r.operation,
-        timestamp: r.timestamp,
+        // Garante que timestamp seja apresentado em horário local
+        timestamp: r.timestamp.isUtc ? r.timestamp.toLocal() : r.timestamp,
       );
 
   CounterHistoryCompanion _toCompanion(model.CounterHistory h) => CounterHistoryCompanion(
@@ -28,4 +29,6 @@ class HistoryRepository {
 
   Stream<List<model.CounterHistory>> watchByCounter(int counterId) =>
       db.watchHistoryForCounter(counterId).map((rows) => rows.map(_mapRow).toList());
+
+  Future<int> delete(int id) => db.deleteHistory(id);
 }

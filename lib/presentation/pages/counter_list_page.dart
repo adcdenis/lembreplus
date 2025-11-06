@@ -216,6 +216,11 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                               ),
                                               Wrap(spacing: 8, children: [
                                                 IconButton.filledTonal(
+                                                  tooltip: 'Histórico',
+                                                  icon: const Icon(Icons.history),
+                                                  onPressed: () => context.go('/counter/${c.id}/history'),
+                                                ),
+                                                IconButton.filledTonal(
                                                   tooltip: 'Excluir',
                                                   icon: const Icon(Icons.delete),
                                                   onPressed: () async {

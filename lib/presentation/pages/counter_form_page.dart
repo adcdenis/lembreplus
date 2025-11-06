@@ -526,7 +526,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
         createdAt: now,
         updatedAt: now,
       );
-      await repo.create(c);
+      await repo.createWithHistory(c);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Contador criado com sucesso')),
@@ -548,7 +548,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
         createdAt: _createdAt ?? now,
         updatedAt: now,
       );
-      final ok = await repo.update(c);
+      final ok = await repo.updateWithHistory(c);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
