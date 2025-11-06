@@ -60,12 +60,14 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                   height: 48,
                   child: TextField(
                     decoration: InputDecoration(
-                      prefixIcon: const Text('🔎', style: TextStyle(fontSize: 18)),
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                       hintText: 'Buscar por descrição ou nome...',
                       filled: true,
                       fillColor: scheme.surfaceContainerHighest,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      isDense: true,
                     ),
                     onChanged: (v) => setState(() => _search = v.trim().toLowerCase()),
                   ),
