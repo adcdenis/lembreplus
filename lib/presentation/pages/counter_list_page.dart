@@ -37,6 +37,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final countersAsync = ref.watch(countersProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final repo = ref.watch(counterRepositoryProvider);
@@ -59,11 +60,13 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                 child: SizedBox(
                   height: 48,
                   child: TextField(
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.search),
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
                       hintText: 'Buscar por descrição ou nome...',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      filled: true,
+                      fillColor: scheme.surfaceContainerHighest,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                     onChanged: (v) => setState(() => _search = v.trim().toLowerCase()),
                   ),
@@ -98,9 +101,11 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                     width: 240,
                     height: 48,
                     child: InputDecorator(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: scheme.surfaceContainerHighest,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String?>(
@@ -173,7 +178,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                             final hours = comps.hours;
                             final mins = comps.minutes;
                             final secs = comps.seconds;
-                            final tint = isFuture ? Colors.blue[50]! : Colors.red[50]!;
+                            final tint = isFuture ? scheme.primaryContainer : scheme.errorContainer;
 
                             return Card(
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -185,6 +190,13 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: isFuture
+                                          ? [scheme.primaryContainer.withValues(alpha: 0.6), scheme.primaryContainer.withValues(alpha: 0.3)]
+                                          : [scheme.errorContainer.withValues(alpha: 0.6), scheme.errorContainer.withValues(alpha: 0.3)],
+                                    ),
                                   ),
                                   padding: const EdgeInsets.all(16),
                                   child: Row(
@@ -197,11 +209,13 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                         children: [
                                           Row(
                                             children: [
+                                              Icon(isFuture ? Icons.schedule : Icons.history, color: isFuture ? scheme.primary : scheme.error),
+                                              const SizedBox(width: 8),
                                               Expanded(
                                                 child: Text(c.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                                               ),
                                               Wrap(spacing: 8, children: [
-                                                IconButton(
+                                                IconButton.filledTonal(
                                                   tooltip: 'Excluir',
                                                   icon: const Icon(Icons.delete),
                                                   onPressed: () async {
@@ -230,12 +244,21 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                           const SizedBox(height: 8),
                                           Wrap(spacing: 8, runSpacing: 6, children: [
                                             if ((c.category ?? '').isNotEmpty)
-                                              Chip(label: Text(c.category!), visualDensity: VisualDensity.compact),
+                                              Chip(
+                                                avatar: Icon(Icons.label, size: 16, color: scheme.onSecondaryContainer),
+                                                label: Text(c.category!),
+                                                visualDensity: VisualDensity.compact,
+                                                backgroundColor: scheme.secondaryContainer,
+                                                labelStyle: TextStyle(color: scheme.onSecondaryContainer),
+                                              ),
                                             () {
                                               if (rec == Recurrence.none) return const SizedBox.shrink();
                                               return Chip(
+                                                avatar: Icon(Icons.repeat, size: 16, color: scheme.onTertiaryContainer),
                                                 label: Text(_labelForRecurrence(rec)),
                                                 visualDensity: VisualDensity.compact,
+                                                backgroundColor: scheme.tertiaryContainer,
+                                                labelStyle: TextStyle(color: scheme.onTertiaryContainer),
                                               );
                                             }(),
                                           ]),
@@ -318,18 +341,26 @@ class _CounterBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: tint,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [tint.withValues(alpha: 0.85), tint.withValues(alpha: 0.5)],
+        ),
+        boxShadow: [
+          BoxShadow(color: tint.withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 4)),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('$value', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 12)),
+          Text('$value', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: scheme.onSurface)),
+          const SizedBox(height: 3),
+          Text(label, style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
         ],
       ),
     );

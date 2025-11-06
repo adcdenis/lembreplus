@@ -1,20 +1,375 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:lembreplus/domain/recurrence.dart';
+import 'package:lembreplus/domain/time_utils.dart';
+import 'package:lembreplus/state/providers.dart';
 
-class SummaryPage extends StatelessWidget {
+class SummaryPage extends ConsumerWidget {
   const SummaryPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final countersAsync = ref.watch(countersProvider);
+    final cs = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('Resumo', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-          SizedBox(height: 12),
-          Text('Visão geral dos contadores e categorias (base).'),
+      child: countersAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, st) => Center(child: Text('Erro ao carregar: $e')),
+        data: (counters) {
+          final now = DateTime.now();
+          DateTime effectiveDate(DateTime base, String? recurrence) {
+            final r = Recurrence.fromString(recurrence);
+            return nextRecurringDate(base, r, now);
+          }
+
+          // Métricas principais
+          final total = counters.length;
+          final recurring = counters.where((c) => Recurrence.fromString(c.recurrence) != Recurrence.none).length;
+          final past = counters.where((c) => isPast(effectiveDate(c.eventDate, c.recurrence), now: now)).length;
+          final future = counters.where((c) => !isPast(effectiveDate(c.eventDate, c.recurrence), now: now)).length;
+
+          // Semana atual (seg->dom) e próxima semana
+          final startWeek = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
+          final endWeek = startWeek.add(const Duration(days: 7));
+          final startNextWeek = endWeek;
+          final endNextWeek = startNextWeek.add(const Duration(days: 7));
+          bool inRange(DateTime d, DateTime a, DateTime b) => !d.isBefore(a) && d.isBefore(b);
+          final weekCount = counters.where((c) => inRange(effectiveDate(c.eventDate, c.recurrence), startWeek, endWeek)).length;
+          final nextWeekCount = counters.where((c) => inRange(effectiveDate(c.eventDate, c.recurrence), startNextWeek, endNextWeek)).length;
+
+          // Mês atual
+          final startMonth = DateTime(now.year, now.month, 1);
+          final endMonth = DateTime(now.year, now.month + 1, 1);
+          final monthCount = counters.where((c) => inRange(effectiveDate(c.eventDate, c.recurrence), startMonth, endMonth)).length;
+
+          // Próximos eventos (próximos 10)
+          final upcoming = counters
+              .map((c) => (c, effectiveDate(c.eventDate, c.recurrence)))
+              .where((t) => !isPast(t.$2, now: now))
+              .toList()
+            ..sort((a, b) => a.$2.compareTo(b.$2));
+          final nextTen = upcoming.take(10).toList();
+
+          // Distribuição por categoria
+          final Map<String, int> byCategory = {};
+          for (final c in counters) {
+            final k = (c.category ?? 'Sem categoria');
+            byCategory[k] = (byCategory[k] ?? 0) + 1;
+          }
+          final categoryEntries = byCategory.entries.toList()
+            ..sort((a, b) => b.value.compareTo(a.value));
+
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Resumo Geral', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Text('Visão completa dos seus contadores e eventos', style: TextStyle(color: cs.onSurface.withValues(alpha: 0.7))),
+                const SizedBox(height: 16),
+
+                // Cards principais
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _statCard(context, title: 'Esta Semana', value: weekCount, color: cs.primaryContainer, icon: Icons.date_range),
+                    _statCard(context, title: 'Este Mês', value: monthCount, color: cs.secondaryContainer, icon: Icons.calendar_month),
+                    _statCard(context, title: 'Próxima Semana', value: nextWeekCount, color: cs.tertiaryContainer, icon: Icons.next_plan),
+                    _statCard(context, title: 'Vencidos', value: past, color: cs.errorContainer, icon: Icons.warning_amber_rounded),
+                    _statCard(context, title: 'Total de Itens', value: total, color: cs.surfaceContainerHighest, icon: Icons.list_alt),
+                    _statCard(context, title: 'Eventos Passados', value: past, color: cs.surfaceContainerHighest, icon: Icons.history),
+                    _statCard(context, title: 'Eventos Futuros', value: future, color: cs.surfaceContainerHighest, icon: Icons.event),
+                    _statCard(context, title: 'Recorrentes', value: recurring, color: cs.surfaceContainerHighest, icon: Icons.repeat),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Grade inferior: próximos eventos, barras de categoria, donut
+                LayoutBuilder(builder: (context, constraints) {
+                  final isWide = constraints.maxWidth >= 1100;
+                  final leftPanel = _panelCard(
+                    context,
+                    title: 'Próximos Eventos',
+                    icon: Icons.upcoming,
+                    child: Column(
+                      children: [
+                        for (final t in nextTen)
+                          _upcomingTile(context, t.$1.name, t.$1.category, t.$2, now),
+                        if (nextTen.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text('Sem eventos futuros', style: TextStyle(color: cs.onSurface.withValues(alpha: 0.7))),
+                          ),
+                      ],
+                    ),
+                  );
+
+                  final middlePanel = _panelCard(
+                    context,
+                    title: 'Distribuição por Categoria',
+                    icon: Icons.stacked_bar_chart,
+                    child: Column(
+                      children: [
+                        for (final e in categoryEntries)
+                          _categoryBar(context, label: e.key, value: e.value, max: total),
+                        if (categoryEntries.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text('Sem categorias', style: TextStyle(color: cs.onSurface.withValues(alpha: 0.7))),
+                          ),
+                      ],
+                    ),
+                  );
+
+                  final rightPanel = _panelCard(
+                    context,
+                    title: 'Proporção por Categoria',
+                    icon: Icons.donut_large,
+                    child: SizedBox(
+                      height: 220,
+                      child: _DonutChart(data: byCategory, total: total),
+                    ),
+                  );
+
+                  if (isWide) {
+                    return Row(children: [
+                      Expanded(child: leftPanel),
+                      const SizedBox(width: 12),
+                      Expanded(child: middlePanel),
+                      const SizedBox(width: 12),
+                      Expanded(child: rightPanel),
+                    ]);
+                  }
+                  return Column(children: [
+                    leftPanel,
+                    const SizedBox(height: 12),
+                    middlePanel,
+                    const SizedBox(height: 12),
+                    rightPanel,
+                  ]);
+                }),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _statCard(BuildContext context, {required String title, required int value, required Color color, required IconData icon}) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 0,
+      color: color,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: cs.outline.withValues(alpha: 0.12))),
+      child: SizedBox(
+        width: 240,
+        height: 90,
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              Icon(icon, color: cs.onSurfaceVariant),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text('$value', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _panelCard(BuildContext context, {required String title, required IconData icon, required Widget child}) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 0,
+      color: cs.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: cs.outline.withValues(alpha: 0.12))),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [Icon(icon), const SizedBox(width: 8), Text(title, style: const TextStyle(fontWeight: FontWeight.w600))]),
+            const SizedBox(height: 12),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _upcomingTile(BuildContext context, String name, String? category, DateTime date, DateTime now) {
+    final cs = Theme.of(context).colorScheme;
+    final df = DateFormat('dd/MM/yyyy');
+    final daysLeft = durationDiff(now, date).days; // usa duração normalizada
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: cs.shadow.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 2))],
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 4),
+              Row(children: [
+                Text(df.format(date), style: TextStyle(color: cs.onSurfaceVariant)),
+                const SizedBox(width: 12),
+                if (category != null) Chip(label: Text(category), visualDensity: VisualDensity.compact, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
+              ]),
+            ]),
+          ),
+          Text('$daysLeft dias', style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
     );
+  }
+
+  Widget _categoryBar(BuildContext context, {required String label, required int value, required int max}) {
+    final cs = Theme.of(context).colorScheme;
+    final pct = max == 0 ? 0.0 : value / max;
+    final barColor = _palette(context)[label.hashCode.abs() % _palette(context).length];
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Icon(Icons.circle, size: 10, color: barColor),
+                const SizedBox(width: 6),
+                Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
+                const SizedBox(width: 6),
+                Text('$value'),
+              ]),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  height: 8,
+                  child: Stack(children: [
+                    Container(color: cs.surfaceContainerHighest),
+                    FractionallySizedBox(widthFactor: pct, child: Container(color: barColor)),
+                  ]),
+                ),
+              ),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Color> _palette(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return [
+      cs.primary,
+      cs.secondary,
+      cs.tertiary,
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+      Colors.redAccent,
+    ];
+  }
+}
+
+class _DonutChart extends StatelessWidget {
+  final Map<String, int> data;
+  final int total;
+  const _DonutChart({required this.data, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _DonutPainter(data: data, total: total, palette: _palette(context)),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('Total'),
+            Text('$total', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Color> _palette(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return [
+      cs.primary,
+      cs.secondary,
+      cs.tertiary,
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+      Colors.redAccent,
+    ];
+  }
+}
+
+class _DonutPainter extends CustomPainter {
+  final Map<String, int> data;
+  final int total;
+  final List<Color> palette;
+  _DonutPainter({required this.data, required this.total, required this.palette});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.shortestSide / 2 - 8;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    final bg = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 26
+      ..color = Colors.grey.withValues(alpha: 0.15);
+    canvas.drawArc(rect, 0, 2 * 3.1415926, false, bg);
+
+    if (total <= 0 || data.isEmpty) return;
+
+    double start = -3.1415926 / 2; // topo
+    int i = 0;
+    for (final e in data.entries) {
+      final sweep = (e.value / total) * 2 * 3.1415926;
+      final p = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 26
+        ..strokeCap = StrokeCap.butt
+        ..color = palette[i % palette.length];
+      canvas.drawArc(rect, start, sweep, false, p);
+      start += sweep;
+      i++;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DonutPainter oldDelegate) {
+    return oldDelegate.data != data || oldDelegate.total != total;
   }
 }
