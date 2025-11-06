@@ -40,7 +40,7 @@ class BackupPage extends ConsumerWidget {
                     final ts = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
                     await Share.shareXFiles(
                       [XFile(path, mimeType: 'application/json')],
-                      subject: 'Backup LembrePlus',
+    subject: 'Backup Lembre+',
                       text: 'Backup exportado em $ts',
                     );
                   } catch (e) {

@@ -1,6 +1,6 @@
-# LembrePlus
+# Lembre+
 
-Aplicativo Flutter para gerenciamento de lembretes com navegação moderna, persistência local e suporte a backup/restauração em JSON. O projeto está pronto para distribuição em Android (APK) e Web.
+Aplicativo Flutter para gerenciamento de lembretes com navegação moderna, persistência local e suporte a backup/restauração em JSON. O projeto está pronto para distribuição em Android (APK). Plataformas Web e Desktop foram desabilitadas para focar em mobile.
 
 ## Estrutura do projeto
 
@@ -16,7 +16,6 @@ lembreplus/
 │  └─ utils/                   # Utilitários diversos
 ├─ test/                       # Testes de navegação, backup e formulários
 ├─ android/                    # Projeto Android (Gradle)
-├─ web/                        # Configurações web
 ├─ build/                      # Artefatos gerados (após builds)
 └─ pubspec.yaml                # Dependências e configurações do Flutter
 ```
@@ -26,20 +25,21 @@ lembreplus/
 1. Pré-requisitos:
    - `Flutter` 3.24+ (canal stable) e `Dart` 3.8+
    - Android SDK/NDK para build Android
-   - Chrome para rodar/testar web
 
 2. Instalar dependências:
    ```bash
    flutter pub get
    ```
 
-3. Rodar em desenvolvimento:
+3. Rodar em desenvolvimento (Android):
    ```bash
-   # Web
-   flutter run -d chrome
-
-   # Android (emulador/dispositivo)
    flutter run -d android
+   ```
+
+   Ou utilize o script no Windows para iniciar automaticamente um emulador e rodar o app:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts/run_android.ps1
    ```
 
 ## Comandos
@@ -47,7 +47,6 @@ lembreplus/
 - `flutter pub get` — instala dependências
 - `flutter test` — executa a suíte de testes
 - `flutter build apk` — gera APK release em `build/app/outputs/flutter-apk/app-release.apk`
-- `flutter build web` — gera build web estático em `build/web/`
 
 ### Notas de build Android
 
@@ -102,7 +101,7 @@ Na aplicação:
 Plataformas:
 
 - Android/iOS: o serviço grava/ler do diretório de documentos da aplicação (`getApplicationDocumentsDirectory`) com nome padrão `lembre_backup.json`
-- Web: exporta via download do navegador e importa via seletor de arquivos (sem caminho fixo)
+  
 
 Codec de backup:
 
@@ -111,14 +110,41 @@ Codec de backup:
 ## Artefatos de distribuição
 
 - APK: `build/app/outputs/flutter-apk/app-release.apk`
-- Web: `build/web/` (sirva via qualquer HTTP server ou GitHub Pages)
+  
+## Execução somente em dispositivos móveis
+
+Este projeto está configurado para rodar apenas em Android/iOS. Para iniciar rapidamente no Android com emulador:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_android.ps1
+```
+
+Modo release:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_android.ps1 -Release
+```
+
+Se não houver AVD configurado, crie um emulador no Android Studio (Device Manager).
+
+### Executar via VS Code, Gradle ou npm
+
+- VS Code:
+  - Paleta de comandos → `Run Task` → selecione `Run Android (emulador)` ou `Run Android (release)`.
+  - Arquivo: `.vscode/tasks.json` (já configurado).
+- Gradle:
+  - `./gradlew runAndroid` (debug)
+  - `./gradlew runAndroidRelease` (release)
+- npm (atalhos):
+  - `npm run android`
+  - `npm run android:release`
 
 ## Conclusão
 
 Projeto pronto para distribuição. Para publicar:
 
 - Android: assine o APK/AAB com sua keystore e publique na Play Store
-- Web: disponibilize o conteúdo de `build/web/` em seu servidor/CDN
+  
 
 
 Gerar APK
@@ -156,6 +182,4 @@ Notas rápidas
 - Execute flutter doctor para verificar o ambiente Android antes de compilar.
 - Para publicar na Play Store, configure assinatura de release (keystore e key.properties ) e a seção de signingConfigs no android/app/build.gradle.kts . Posso te guiar nessa configuração se quiser.
 
-flutter run -d android
-flutter emulators --launch Pixel_Tablet_API_35
- flutter devices --device-timeout 60
+Nota: As plataformas Web e Desktop foram desabilitadas via `flutter config` para garantir execução apenas em dispositivos móveis.
