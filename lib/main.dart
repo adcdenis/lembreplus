@@ -16,7 +16,8 @@ class LembrePlusApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Lembre+',
       theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      // darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.light,
       locale: const Locale('pt', 'BR'),
       supportedLocales: const [Locale('pt', 'BR')],
       localizationsDelegates: const [

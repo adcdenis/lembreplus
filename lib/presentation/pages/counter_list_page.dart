@@ -285,8 +285,8 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                             );
                           }
 
-                          // Para múltiplas colunas, mantenha GridView com uma razão mais alta
-                          final aspectRatio = crossAxisCount == 2 ? 2.4 : 2.8;
+                          // Para múltiplas colunas, aumente a altura dos cards para evitar overflow
+                          final aspectRatio = crossAxisCount == 2 ? 1.8 : 2.1;
                           return GridView.builder(
                             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: crossAxisCount,

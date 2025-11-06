@@ -20,6 +20,8 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
   final _nameCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _categoryCtrl = TextEditingController();
+  // Holds a reference to the Autocomplete text field controller to keep UI in sync
+  TextEditingController? _categoryFieldCtrl;
   DateTime _date = DateTime.now();
   TimeOfDay _time = TimeOfDay.now();
   String _recurrence = Recurrence.none.name;
@@ -104,18 +106,18 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                       orElse: () => const []);
                   },
                   fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
-                    // Sincroniza com o controller do formulário
-                    textController.text = _categoryCtrl.text;
-                    textController.selection = _categoryCtrl.selection;
-                    textController.addListener(() {
-                      _categoryCtrl
-                        ..text = textController.text
-                        ..selection = textController.selection;
-                      setState(() {});
-                    });
+                    // Guarda referência para sincronizar quando chips/botões atualizam a categoria
+                    _categoryFieldCtrl = textController;
                     return TextFormField(
                       controller: textController,
                       focusNode: focusNode,
+                      onChanged: (v) {
+                        // Mantém _categoryCtrl como fonte de verdade para outros widgets
+                        _categoryCtrl
+                          ..text = v
+                          ..selection = textController.selection;
+                        setState(() {});
+                      },
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
                         hintText: 'Selecione ou digite uma categoria',
@@ -127,14 +129,16 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                                 tooltip: 'Limpar',
                                 icon: const Icon(Icons.clear),
                                 onPressed: () {
-                                  setState(() => _categoryCtrl.clear());
+                                  _categoryCtrl.clear();
+                                  _categoryFieldCtrl?.clear();
+                                  setState(() {});
                                 },
                               ),
                             IconButton(
                               tooltip: 'Criar nova categoria',
                               icon: const Icon(Icons.add),
                               onPressed: () async {
-                                final name = _categoryCtrl.text.trim();
+                                final name = (_categoryFieldCtrl?.text ?? _categoryCtrl.text).trim();
                                 if (name.isEmpty) return;
                                 final normalized = normalizeCategory(name);
                                 // Evita duplicação no client-side
@@ -162,7 +166,10 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                     );
                   },
                   onSelected: (value) {
-                    setState(() => _categoryCtrl.text = value);
+                    _categoryCtrl.text = value;
+                    _categoryFieldCtrl?.text = value;
+                    _categoryFieldCtrl?.selection = TextSelection.collapsed(offset: value.length);
+                    setState(() {});
                   },
                 ),
                 const SizedBox(height: 8),
@@ -191,7 +198,12 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                             child: InputChip(
                               label: Text(c.name),
                               selected: selected,
-                              onPressed: () => setState(() => _categoryCtrl.text = c.name),
+                              onPressed: () {
+                                _categoryCtrl.text = c.name;
+                                _categoryFieldCtrl?.text = c.name;
+                                _categoryFieldCtrl?.selection = TextSelection.collapsed(offset: c.name.length);
+                                setState(() {});
+                              },
                               onDeleted: isUsed
                                   ? null
                                   : () async {

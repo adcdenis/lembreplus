@@ -119,3 +119,39 @@ Projeto pronto para distribuição. Para publicar:
 
 - Android: assine o APK/AAB com sua keystore e publique na Play Store
 - Web: disponibilize o conteúdo de `build/web/` em seu servidor/CDN
+
+
+Gerar APK
+
+- Para um APK de release (instalação manual ou distribuição fora da Play Store):
+```
+flutter build apk --release
+```
+- Arquivo gerado: build\app\outputs\apk\release\app-release.apk
+- Para um APK de debug (instalação rápida para testes):
+```
+flutter build apk --debug
+```
+- Arquivo gerado: build\app\outputs\apk\debug\app-debug.apk
+- Para reduzir tamanho (um APK por ABI):
+```
+flutter build apk --release 
+--split-per-abi
+```
+- Arquivos gerados: build\app\outputs\apk\release\app-*-release.apk (por ABI)
+- Abrir a pasta dos APKs no Explorer:
+```
+explorer .
+\build\app\outputs\apk\release
+```
+AAB (Play Store)
+
+- O formato recomendado para publicação na Play Store:
+```
+flutter build appbundle --release
+```
+- Arquivo gerado: build\app\outputs\bundle\release\app-release.aab
+Notas rápidas
+
+- Execute flutter doctor para verificar o ambiente Android antes de compilar.
+- Para publicar na Play Store, configure assinatura de release (keystore e key.properties ) e a seção de signingConfigs no android/app/build.gradle.kts . Posso te guiar nessa configuração se quiser.

@@ -4,5 +4,8 @@ import 'package:drift/web.dart';
 
 QueryExecutor openTestConnection() {
   // Usar IndexedDB diretamente nos testes web para estabilidade
-  return LazyDatabase(() async => WebDatabase('lembreplus_test'));
+  return LazyDatabase(() async =>
+      WebDatabase.withStorage(await DriftWebStorage.indexedDbIfSupported(
+        'lembreplus_test',
+      )));
 }
