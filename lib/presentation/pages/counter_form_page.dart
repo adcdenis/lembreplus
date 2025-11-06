@@ -396,7 +396,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                         firstDate: DateTime(2000),
                         lastDate: DateTime(2100),
                       );
-                      if (picked != null)
+                      if (picked != null) {
                         setState(
                           () => _date = DateTime(
                             picked.year,
@@ -406,6 +406,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                             _date.minute,
                           ),
                         );
+                      }
                     },
                     icon: const Icon(Icons.date_range),
                     label: Text(
@@ -421,7 +422,9 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                         context: context,
                         initialTime: _time,
                       );
-                      if (picked != null) setState(() => _time = picked);
+                      if (picked != null) {
+                        setState(() => _time = picked);
+                      }
                     },
                     icon: const Icon(Icons.access_time),
                     label: Text('Hora: ${_time.format(context)}'),

@@ -178,13 +178,16 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                             return Card(
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               elevation: 0,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-                                ),
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () => context.go('/counter/${c.id}/edit'),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                                  ),
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(
@@ -198,11 +201,6 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                                 child: Text(c.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                                               ),
                                               Wrap(spacing: 8, children: [
-                                                IconButton(
-                                                  tooltip: 'Editar',
-                                                  icon: const Icon(Icons.edit),
-                                                  onPressed: () => context.go('/counter/${c.id}/edit'),
-                                                ),
                                                 IconButton(
                                                   tooltip: 'Excluir',
                                                   icon: const Icon(Icons.delete),
@@ -273,7 +271,8 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                   ],
                                 ),
                               ),
-                            );
+                            ),
+                          );
                           }
 
                           if (crossAxisCount == 1) {

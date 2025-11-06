@@ -155,3 +155,7 @@ Notas rápidas
 
 - Execute flutter doctor para verificar o ambiente Android antes de compilar.
 - Para publicar na Play Store, configure assinatura de release (keystore e key.properties ) e a seção de signingConfigs no android/app/build.gradle.kts . Posso te guiar nessa configuração se quiser.
+
+flutter run -d android
+flutter emulators --launch Pixel_Tablet_API_35
+ flutter devices --device-timeout 60
