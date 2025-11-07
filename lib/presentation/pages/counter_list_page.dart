@@ -17,6 +17,7 @@ class CounterListPage extends ConsumerStatefulWidget {
 class _CounterListPageState extends ConsumerState<CounterListPage> {
   static const _prefsKeyFilterSearch = 'counter_list_filter_search';
   static const _prefsKeyFilterCategory = 'counter_list_filter_category';
+  static const _prefsKeyFilterCategories = 'counter_list_filter_categories';
   String _labelForRecurrence(Recurrence r) {
     switch (r) {
       case Recurrence.none:
@@ -37,7 +38,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
   }
   final TextEditingController _searchCtrl = TextEditingController();
   String _search = '';
-  String? _selectedCategory;
+  Set<String> _selectedCategories = {};
 
   @override
   void initState() {
@@ -49,11 +50,14 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedSearch = prefs.getString(_prefsKeyFilterSearch) ?? '';
-      final savedCategory = prefs.getString(_prefsKeyFilterCategory);
+      final savedCategories = prefs.getStringList(_prefsKeyFilterCategories);
+      final legacySingle = prefs.getString(_prefsKeyFilterCategory);
       if (mounted) {
         setState(() {
           _search = savedSearch;
-          _selectedCategory = (savedCategory?.isNotEmpty ?? false) ? savedCategory : null;
+          final set = <String>{...?(savedCategories)};
+          if ((legacySingle?.isNotEmpty ?? false)) set.add(legacySingle!);
+          _selectedCategories = set;
         });
         _searchCtrl.text = savedSearch;
       }
@@ -131,118 +135,108 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                 ),
               ),
               const SizedBox(width: 12),
-              countersAsync.when(
-                loading: () => const SizedBox(width: 200, height: 48, child: Center(child: CircularProgressIndicator())),
-                error: (e, _) => const SizedBox(),
-                data: (items) {
-                  // Conjunta categorias presentes nos contadores
-                  final presentCats = <String>{
-                    for (final c in items)
-                      if ((c.category ?? '').trim().isNotEmpty) (c.category!)
-                  };
-
-                  // Map de nomes amigáveis se existirem no provider de categorias
-                  final catsData = categoriesAsync.asData?.value ?? const [];
-                  final nameByNormalized = {
-                    for (final cat in catsData) cat.normalized: cat.name,
-                  };
-
-                  // Inclui a categoria previamente salva mesmo se não houver contadores atuais com ela
-                  final present = <String>{...presentCats};
-                  if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
-                    present.add(_selectedCategory!);
-                  }
-                  final dropdownItems = <DropdownMenuItem<String?>>[
-                    const DropdownMenuItem<String?>(value: null, child: Text('Todas as categorias')),
-                    ...present.map((norm) => DropdownMenuItem<String?>(
-                          value: norm,
-                          child: Text(nameByNormalized[norm] ?? norm),
-                        )),
-                  ];
-
-                  return Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isCompact = constraints.maxWidth < 460;
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ConstrainedBox(
-                              constraints: BoxConstraints(maxWidth: isCompact ? 180 : 240),
-                              child: SizedBox(
-                                height: 48,
-                                child: InputDecorator(
-                                  decoration: InputDecoration(
-                                    filled: true,
-                                    fillColor: scheme.surfaceContainerHighest,
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String?>(
-                                      isExpanded: true,
-                                      value: _selectedCategory,
-                                      items: dropdownItems,
-                                      onChanged: (v) async {
-                                        setState(() => _selectedCategory = v);
-                                        try {
-                                          final prefs = await SharedPreferences.getInstance();
-                                          if (v == null || (v.isEmpty)) {
-                                            await prefs.remove(_prefsKeyFilterCategory);
-                                          } else {
-                                            await prefs.setString(_prefsKeyFilterCategory, v);
-                                          }
-                                        } catch (_) {
-                                          // Ignora erros de persistência
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            SizedBox(
-                              height: 48,
-                              child: FilledButton.tonal(
-                                style: FilledButton.styleFrom(
-                                  shape: const StadiumBorder(),
-                                  padding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 16),
-                                ),
-                                onPressed: () async {
-                                  setState(() {
-                                    _search = '';
-                                    _searchCtrl.clear();
-                                    _selectedCategory = null;
-                                  });
-                                  try {
-                                    final prefs = await SharedPreferences.getInstance();
-                                    await prefs.remove(_prefsKeyFilterSearch);
-                                    await prefs.remove(_prefsKeyFilterCategory);
-                                  } catch (_) {
-                                    // Ignora erros de persistência
-                                  }
-                                },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.filter_alt_off),
-                                    if (!isCompact) const SizedBox(width: 8),
-                                    if (!isCompact) const Text('Limpar filtros'),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ));
-                      },
-                    ),
-                  );
-                },
+              SizedBox(
+                height: 48,
+                child: FilledButton.tonal(
+                  style: FilledButton.styleFrom(shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(horizontal: 16)),
+                  onPressed: () async {
+                    setState(() {
+                      _search = '';
+                      _searchCtrl.clear();
+                      _selectedCategories.clear();
+                    });
+                    try {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.remove(_prefsKeyFilterSearch);
+                      await prefs.remove(_prefsKeyFilterCategory); // legado
+                      await prefs.remove(_prefsKeyFilterCategories);
+                    } catch (_) {
+                      // Ignora erros de persistência
+                    }
+                  },
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.filter_alt_off),
+                      SizedBox(width: 8),
+                      Text('Limpar filtros'),
+                    ],
+                  ),
+                ),
               ),
             ]),
+            const SizedBox(height: 8),
+            // Linha de etiquetas (chips) selecionáveis de categorias
+            countersAsync.when(
+              loading: () => const SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: CircularProgressIndicator())),
+              error: (e, _) => const SizedBox.shrink(),
+              data: (items) {
+                final presentCats = <String>{
+                  for (final c in items)
+                    if ((c.category ?? '').trim().isNotEmpty) (c.category!)
+                };
+
+                final catsData = categoriesAsync.asData?.value ?? const [];
+                final nameByNormalized = {for (final cat in catsData) cat.normalized: cat.name};
+
+                final present = <String>{...presentCats, ..._selectedCategories};
+
+                final chips = present.map((norm) {
+                  final selected = _selectedCategories.contains(norm);
+                  final scheme = Theme.of(context).colorScheme;
+                  final labelStyle = TextStyle(
+                    color: selected ? scheme.onPrimaryContainer : scheme.onSecondaryContainer,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                    fontSize: 12,
+                  );
+                  return FilterChip(
+                    selected: selected,
+                    showCheckmark: true,
+                    checkmarkColor: scheme.onPrimaryContainer,
+                    avatar: Icon(
+                      Icons.local_offer,
+                      size: 14,
+                      color: selected ? scheme.onPrimaryContainer : scheme.onSecondaryContainer,
+                    ),
+                    label: Text(nameByNormalized[norm] ?? norm, style: labelStyle),
+                    visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+                    backgroundColor: selected ? scheme.primaryContainer : scheme.secondaryContainer,
+                    selectedColor: scheme.primaryContainer,
+                    side: BorderSide(
+                      color: selected ? scheme.primary : scheme.outlineVariant,
+                      width: selected ? 2 : 1,
+                    ),
+                    elevation: selected ? 1 : 0,
+                    onSelected: (v) async {
+                      setState(() {
+                        if (v) {
+                          _selectedCategories.add(norm);
+                        } else {
+                          _selectedCategories.remove(norm);
+                        }
+                      });
+                      try {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setStringList(_prefsKeyFilterCategories, _selectedCategories.toList());
+                      } catch (_) {
+                        // Ignora erros de persistência
+                      }
+                    },
+                  );
+                }).toList();
+
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: chips,
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 16),
             countersAsync.when(
               loading: () => const Expanded(child: Center(child: CircularProgressIndicator())),
@@ -253,7 +247,8 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                   final matchesSearch = _search.isEmpty ||
                       c.name.toLowerCase().contains(q) ||
                       (c.description?.toLowerCase().contains(q) ?? false);
-                  final matchesCat = _selectedCategory == null || (c.category ?? '') == _selectedCategory;
+                  final cat = (c.category ?? '').trim();
+                  final matchesCat = _selectedCategories.isEmpty || (cat.isNotEmpty && _selectedCategories.contains(cat));
                   return matchesSearch && matchesCat;
                 }).toList();
 

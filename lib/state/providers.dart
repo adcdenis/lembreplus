@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:lembreplus/data/database/app_database.dart';
 import 'package:lembreplus/data/models/counter.dart';
 import 'package:lembreplus/data/models/category.dart' as model;
@@ -23,3 +24,9 @@ final countersProvider = StreamProvider<List<Counter>>((ref) => ref.watch(counte
 final categoriesProvider = StreamProvider<List<model.Category>>((ref) => ref.watch(categoryRepositoryProvider).watchAll());
 final historyProvider = StreamProvider.family<List<hist.CounterHistory>, int>((ref, counterId) =>
     ref.watch(historyRepositoryProvider).watchByCounter(counterId));
+
+// Versão do aplicativo para exibir no rodapé do menu lateral
+final appVersionProvider = FutureProvider<String>((ref) async {
+  final info = await PackageInfo.fromPlatform();
+  return 'v${info.version} (build ${info.buildNumber})';
+});

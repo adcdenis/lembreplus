@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lembreplus/state/providers.dart';
 
 class AppShell extends StatelessWidget {
   final Widget child;
@@ -52,6 +54,10 @@ class AppShell extends StatelessWidget {
                 labelType: (constraints.maxWidth >= 1200)
                     ? NavigationRailLabelType.none
                     : NavigationRailLabelType.all,
+                trailing: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: _VersionFooter(),
+                ),
                 destinations: const [
                   NavigationRailDestination(icon: Text('📋', style: TextStyle(fontSize: 20)), selectedIcon: Text('📋', style: TextStyle(fontSize: 20)), label: Text('Dashboard')),
                   NavigationRailDestination(icon: Text('🧮', style: TextStyle(fontSize: 20)), selectedIcon: Text('🧮', style: TextStyle(fontSize: 20)), label: Text('Contadores')),
@@ -167,8 +173,36 @@ class _AppDrawer extends StatelessWidget {
                 onNavigateIndex(4);
               },
             ),
+            const Divider(height: 1),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: _VersionFooter(),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// Rodapé com a versão do aplicativo
+class _VersionFooter extends ConsumerWidget {
+  const _VersionFooter();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final versionAsync = ref.watch(appVersionProvider);
+    final scheme = Theme.of(context).colorScheme;
+    return versionAsync.when(
+      loading: () => Text('Versão...', style: TextStyle(color: scheme.onSurfaceVariant)),
+      error: (err, _) => Text('Versão indisponível', style: TextStyle(color: scheme.onSurfaceVariant)),
+      data: (v) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.info_outline, size: 16, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(v, style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+        ],
       ),
     );
   }
