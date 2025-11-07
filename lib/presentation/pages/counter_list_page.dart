@@ -134,6 +134,9 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                   return matchesSearch && matchesCat;
                 }).toList();
 
+                // Ordena alfabeticamente por nome (case-insensitive)
+                filtered.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
                 if (filtered.isEmpty) {
                   return const Expanded(child: Center(child: Text('Nenhum contador encontrado.')));
                 }
