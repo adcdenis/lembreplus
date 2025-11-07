@@ -107,9 +107,21 @@ class AppDatabase extends _$AppDatabase {
   // Histórico
   Future<int> insertHistory(CounterHistoryCompanion entry) => into(counterHistory).insert(entry);
   Future<List<CounterHistoryRow>> getHistoryForCounter(int counterId) =>
-      (select(counterHistory)..where((t) => t.counterId.equals(counterId))).get();
+      (select(counterHistory)
+            ..where((t) => t.counterId.equals(counterId))
+            ..orderBy([
+              (t) => OrderingTerm(expression: t.timestamp, mode: OrderingMode.desc),
+              (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
+            ]))
+          .get();
   Stream<List<CounterHistoryRow>> watchHistoryForCounter(int counterId) =>
-      (select(counterHistory)..where((t) => t.counterId.equals(counterId))).watch();
+      (select(counterHistory)
+            ..where((t) => t.counterId.equals(counterId))
+            ..orderBy([
+              (t) => OrderingTerm(expression: t.timestamp, mode: OrderingMode.desc),
+              (t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc),
+            ]))
+          .watch();
   Future<List<CounterHistoryRow>> getAllHistory() => select(counterHistory).get();
   Future<int> deleteHistory(int id) => (delete(counterHistory)..where((t) => t.id.equals(id))).go();
   Future<void> upsertHistoryRaw({
