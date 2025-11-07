@@ -45,13 +45,13 @@ class SummaryPage extends ConsumerWidget {
           final endMonth = DateTime(now.year, now.month + 1, 1);
           final monthCount = counters.where((c) => inRange(effectiveDate(c.eventDate, c.recurrence), startMonth, endMonth)).length;
 
-          // Próximos eventos (próximos 10)
+          // Próximos eventos (próximos 5)
           final upcoming = counters
               .map((c) => (c, effectiveDate(c.eventDate, c.recurrence)))
               .where((t) => !isPast(t.$2, now: now))
               .toList()
             ..sort((a, b) => a.$2.compareTo(b.$2));
-          final nextTen = upcoming.take(10).toList();
+          final nextFive = upcoming.take(5).toList();
 
           // Distribuição por categoria
           final Map<String, int> byCategory = {};
@@ -109,9 +109,9 @@ class SummaryPage extends ConsumerWidget {
                     emoji: '⏳',
                     child: Column(
                       children: [
-                        for (final t in nextTen)
+                        for (final t in nextFive)
                           _upcomingTile(context, t.$1.name, t.$1.category, t.$2, now),
-                        if (nextTen.isEmpty)
+                        if (nextFive.isEmpty)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8.0),
                             child: Text('Sem eventos futuros', style: TextStyle(color: cs.onSurface.withValues(alpha: 0.7))),
