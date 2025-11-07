@@ -42,6 +42,14 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        beforeOpen: (details) async {
+          // Garante que chaves estrangeiras estejam ativadas (necessário para CASCADE funcionar)
+          await customStatement('PRAGMA foreign_keys = ON');
+        },
+      );
+
   // CRUD básico para Counters
   Future<int> insertCounter(CountersCompanion entry) => into(counters).insert(entry);
   Future<List<CounterRow>> getAllCounters() => select(counters).get();

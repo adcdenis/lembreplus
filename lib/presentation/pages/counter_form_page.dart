@@ -6,6 +6,7 @@ import 'package:lembreplus/state/providers.dart';
 import 'package:lembreplus/domain/recurrence.dart';
 import 'package:lembreplus/data/models/category.dart' as cat;
 import 'package:lembreplus/domain/category_utils.dart';
+import 'package:lembreplus/domain/time_utils.dart';
 
 class CounterFormPage extends ConsumerStatefulWidget {
   final int? counterId;
@@ -39,12 +40,18 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
       final repo = ref.read(counterRepositoryProvider);
       final c = await repo.byId(id);
       if (c != null) {
+        // Ajuste: para itens recorrentes vencidos, prefira próxima ocorrência
+        final now = DateTime.now();
+        final rec = Recurrence.fromString(c.recurrence);
+        final effective = nextRecurringDate(c.eventDate, rec, now);
+        final useEffective = rec != Recurrence.none && effective.isAfter(now) && effective != c.eventDate;
+        final base = useEffective ? effective : c.eventDate;
         setState(() {
           _nameCtrl.text = c.name;
           _descCtrl.text = c.description ?? '';
           _categoryCtrl.text = c.category ?? '';
-          _date = c.eventDate;
-          _time = TimeOfDay(hour: c.eventDate.hour, minute: c.eventDate.minute);
+          _date = base;
+          _time = TimeOfDay(hour: base.hour, minute: base.minute);
           _recurrence = c.recurrence ?? Recurrence.none.name;
           _createdAt = c.createdAt;
         });

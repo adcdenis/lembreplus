@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 class AppShell extends StatelessWidget {
@@ -7,15 +8,35 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final isWide = constraints.maxWidth >= 900;
-      final title = Row(
-        children: const [
-          Icon(Icons.event_note),
-          SizedBox(width: 8),
-          Text('Lembre+'),
-        ],
-      );
+    return PopScope(
+      canPop: GoRouter.of(context).canPop(),
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Sair do aplicativo'),
+            content: const Text('Deseja realmente fechar o app?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+              FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Sair')),
+            ],
+          ),
+        );
+        if (confirm == true) {
+          // Fecha o app no Android
+          SystemNavigator.pop();
+        }
+      },
+      child: LayoutBuilder(builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 900;
+        final title = Row(
+          children: const [
+            Icon(Icons.event_note),
+            SizedBox(width: 8),
+            Text('Lembre+'),
+          ],
+        );
 
       if (isWide) {
         final selectedIndex = _selectedIndexForLocation(GoRouterState.of(context).uri.toString());
@@ -51,7 +72,8 @@ class AppShell extends StatelessWidget {
         drawer: _AppDrawer(onNavigateIndex: (index) => _goToIndex(context, index)),
         body: child,
       );
-    });
+    }),
+    );
   }
 
   int _selectedIndexForLocation(String location) {
