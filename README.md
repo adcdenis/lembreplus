@@ -113,32 +113,40 @@ Codec de backup:
   
 ## Sincronização na nuvem (Google) e backup contínuo
 
-Este projeto já traz a interface e o serviço de sincronização em nuvem com login Google prontos para integração. Por padrão, a sincronização está em modo "Noop" para não quebrar o build. Para habilitar sincronização real entre dispositivos, siga:
+Este projeto traz a interface e o serviço de sincronização em nuvem com login Google e backup direto no Google Drive (sem Firebase). Para habilitar a sincronização real entre dispositivos, siga:
 
-1. Ative o provedor Firebase
-   - Crie um projeto no Firebase Console.
-   - Adicione apps Android e iOS.
-   - Baixe e coloque `google-services.json` em `android/app/` e `GoogleService-Info.plist` em `ios/Runner/`.
-   - Habilite o provedor de login Google no Firebase Authentication.
-   - Crie um banco `Cloud Firestore` e/ou use `Cloud Storage` para backups.
+1. Habilite a API do Google Drive
+   - Acesse o Google Cloud Console no projeto do app.
+   - Em `APIs & Services → Library`, ative `Google Drive API`.
 
-2. Adicione dependências no `pubspec.yaml`:
-   - `firebase_core`, `firebase_auth`, `google_sign_in`, `cloud_firestore`.
+2. Configure a tela de consentimento OAuth
+   - Em `APIs & Services → OAuth consent screen`, escolha `External`.
+   - Adicione escopo `https://www.googleapis.com/auth/drive.file`.
+   - Inclua sua conta em `Test users`.
 
-3. Inicialize Firebase no app (`main.dart`):
-   - Chame `Firebase.initializeApp()` antes de `runApp`.
+3. Adicione dependências no `pubspec.yaml` (já presentes neste projeto):
+   - `google_sign_in`, `http`, `googleapis`.
 
-4. Habilite o provedor Firebase no código:
-   - Em `lib/core/cloud/cloud_config.dart`, altere `useFirebaseCloudSync` para `true`.
+4. Habilite o provedor Google Drive no código:
+   - Em `lib/core/cloud/cloud_config.dart`, `useGoogleDriveCloudSync = true`.
 
-5. Fluxo no app:
+5. Pasta de backups (evitar arquivos na raiz do Drive)
+   - Por padrão, os backups são gravados na subpasta `LembrePlus Backups` em "My Drive".
+   - Para alterar o nome da pasta, ajuste `cloudDriveFolderName` em `lib/core/cloud/cloud_config.dart`.
+   - Se preferir manter os arquivos ocultos fora da raiz do Drive, você pode usar o espaço `appDataFolder`:
+     - Em `lib/core/cloud/cloud_config.dart`, defina `useDriveAppDataSpace = true`.
+     - Isso muda o escopo de login para `drive.appdata` e os backups ficam acessíveis apenas pelo app.
+
+6. Fluxo no app:
    - Abra `Backup` no menu.
    - Faça login com Google.
    - Ative `Sincronização automática` para manter dados sincronizados entre dispositivos.
+   - Comportamento de auto-sync: só envia backup automático ao criar/alterar contadores (com debounce ~20s). Não dispara em eventos de minimizar/fechar o app.
    - Use `Backup na nuvem` e `Restaurar da nuvem` para operações manuais.
 
 Observações:
-- Sem configurar Firebase, o login exibirá uma mensagem orientando a configuração.
+- Se a Drive API foi ativada recentemente, aguarde alguns minutos para propagação.
+- Em Android, garanta que o SHA‑1 do keystore de debug está cadastrado nos `OAuth client IDs` do projeto para que o Google Sign-In funcione.
 - O serviço local (`NoopCloudSyncService`) valida o fluxo sem enviar dados.
 
 ## Execução somente em dispositivos móveis

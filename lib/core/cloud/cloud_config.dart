@@ -1,5 +1,12 @@
 // Configuração de sincronização em nuvem
-// Altere para true quando integrar Firebase/Google Sign-In.
-const bool useFirebaseCloudSync = true; // altere para false para desativar Firebase
-// Alternativa sem Firebase: Google Drive (requer configurar Google Sign-In + Drive API)
-const bool useGoogleDriveCloudSync = false;
+// Usar Google Drive (sem Firebase)
+const bool useGoogleDriveCloudSync = true;
+
+// Nome da subpasta para armazenar backups no Google Drive (My Drive).
+// Se preferir deixar oculto fora da raiz, considere usar o espaço appData abaixo.
+const String cloudDriveFolderName = 'LembrePlus Backups';
+
+// Usar espaço "appDataFolder" do Google Drive para backups ocultos do app.
+// Requer escopo 'https://www.googleapis.com/auth/drive.appdata'.
+// Quando true, os backups não aparecerão na raiz do Drive.
+const bool useDriveAppDataSpace = false;

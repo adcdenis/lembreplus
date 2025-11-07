@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/navigation/app_router.dart';
 import 'presentation/widgets/app_lifecycle_sync.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await Firebase.initializeApp();
-  } catch (_) {
-    // Caso plataformas sem config Firebase (ex.: iOS sem GoogleService-Info.plist), ignora.
-  }
   runApp(const ProviderScope(child: LembrePlusApp()));
 }
 

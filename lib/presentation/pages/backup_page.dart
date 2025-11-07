@@ -175,9 +175,9 @@ class BackupPage extends ConsumerWidget {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          if (!useFirebaseCloudSync && !useGoogleDriveCloudSync)
+          if (!useGoogleDriveCloudSync)
             const Text(
-              'Para habilitar login Google e sincronização entre dispositivos, configure Firebase ou Google Drive (veja README).',
+              'Para habilitar login Google e backup no Google Drive, ative o provedor Drive nas configurações do código.',
               style: TextStyle(color: Colors.orange),
             ),
           const SizedBox(height: 12),
@@ -232,27 +232,32 @@ class BackupPage extends ConsumerWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              autoSyncAsync.when(
-                data: (enabled) => Switch(
-                  value: enabled,
-                  onChanged: (v) async {
-                    await cloudSvc.setAutoSyncEnabled(v);
-                    if (v) {
-                      await cloudSvc.startRealtimeSync();
-                    } else {
-                      await cloudSvc.stopRealtimeSync();
-                    }
-                  },
-                ),
-                loading: () => const SizedBox(
-                  width: 48,
-                  height: 24,
-                  child: LinearProgressIndicator(),
-                ),
-                error: (e, _) => Text('Erro sync: $e'),
+              Switch(
+                value: autoSyncAsync.asData?.value ?? false,
+                onChanged: (v) async {
+                  await cloudSvc.setAutoSyncEnabled(v);
+                  if (v) {
+                    await cloudSvc.startRealtimeSync();
+                  } else {
+                    await cloudSvc.stopRealtimeSync();
+                  }
+                },
               ),
               const SizedBox(width: 8),
-              const Text('Sincronização automática'),
+              Row(
+                children: [
+                  const Text('Sincronização automática'),
+                  if (autoSyncAsync.isLoading)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 8),
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 12),
