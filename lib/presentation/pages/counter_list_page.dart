@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lembreplus/state/providers.dart';
@@ -14,6 +15,8 @@ class CounterListPage extends ConsumerStatefulWidget {
 }
 
 class _CounterListPageState extends ConsumerState<CounterListPage> {
+  static const _prefsKeyFilterSearch = 'counter_list_filter_search';
+  static const _prefsKeyFilterCategory = 'counter_list_filter_category';
   String _labelForRecurrence(Recurrence r) {
     switch (r) {
       case Recurrence.none:
@@ -32,8 +35,32 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
     // Usa diferença de calendário normalizada em horário local
     return calendarDiff(a, b);
   }
+  final TextEditingController _searchCtrl = TextEditingController();
   String _search = '';
   String? _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedFilters();
+  }
+
+  Future<void> _loadSavedFilters() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedSearch = prefs.getString(_prefsKeyFilterSearch) ?? '';
+      final savedCategory = prefs.getString(_prefsKeyFilterCategory);
+      if (mounted) {
+        setState(() {
+          _search = savedSearch;
+          _selectedCategory = (savedCategory?.isNotEmpty ?? false) ? savedCategory : null;
+        });
+        _searchCtrl.text = savedSearch;
+      }
+    } catch (_) {
+      // Ignora erros de persistência
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +85,8 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
               Expanded(
                 child: SizedBox(
                   height: 48,
-                  child: TextField(
+                    child: TextField(
+                    controller: _searchCtrl,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.search, size: 20),
                       prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
@@ -69,7 +97,16 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       isDense: true,
                     ),
-                    onChanged: (v) => setState(() => _search = v.trim().toLowerCase()),
+                    onChanged: (v) async {
+                      final nv = v.trim();
+                      setState(() => _search = nv);
+                      try {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setString(_prefsKeyFilterSearch, nv);
+                      } catch (_) {
+                        // Ignora erros de persistência
+                      }
+                    },
                   ),
                 ),
               ),
@@ -90,9 +127,14 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                     for (final cat in catsData) cat.normalized: cat.name,
                   };
 
+                  // Inclui a categoria previamente salva mesmo se não houver contadores atuais com ela
+                  final present = <String>{...presentCats};
+                  if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
+                    present.add(_selectedCategory!);
+                  }
                   final dropdownItems = <DropdownMenuItem<String?>>[
                     const DropdownMenuItem<String?>(value: null, child: Text('Todas as categorias')),
-                    ...presentCats.map((norm) => DropdownMenuItem<String?>(
+                    ...present.map((norm) => DropdownMenuItem<String?>(
                           value: norm,
                           child: Text(nameByNormalized[norm] ?? norm),
                         )),
@@ -113,7 +155,19 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                           isExpanded: true,
                           value: _selectedCategory,
                           items: dropdownItems,
-                          onChanged: (v) => setState(() => _selectedCategory = v),
+                          onChanged: (v) async {
+                            setState(() => _selectedCategory = v);
+                            try {
+                              final prefs = await SharedPreferences.getInstance();
+                              if (v == null || (v.isEmpty)) {
+                                await prefs.remove(_prefsKeyFilterCategory);
+                              } else {
+                                await prefs.setString(_prefsKeyFilterCategory, v);
+                              }
+                            } catch (_) {
+                              // Ignora erros de persistência
+                            }
+                          },
                         ),
                       ),
                     ),
@@ -127,9 +181,10 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
               error: (e, _) => Expanded(child: Text('Erro ao carregar: $e')),
               data: (items) {
                 var filtered = items.where((c) {
+                  final q = _search.toLowerCase();
                   final matchesSearch = _search.isEmpty ||
-                      c.name.toLowerCase().contains(_search) ||
-                      (c.description?.toLowerCase().contains(_search) ?? false);
+                      c.name.toLowerCase().contains(q) ||
+                      (c.description?.toLowerCase().contains(q) ?? false);
                   final matchesCat = _selectedCategory == null || (c.category ?? '') == _selectedCategory;
                   return matchesSearch && matchesCat;
                 }).toList();
@@ -359,6 +414,12 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 }
 
