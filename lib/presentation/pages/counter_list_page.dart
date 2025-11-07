@@ -96,6 +96,26 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       isDense: true,
+                      suffixIcon: _searchCtrl.text.isNotEmpty
+                          ? Tooltip(
+                              message: 'Limpar busca',
+                              child: IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () async {
+                                  setState(() {
+                                    _searchCtrl.clear();
+                                    _search = '';
+                                  });
+                                  try {
+                                    final prefs = await SharedPreferences.getInstance();
+                                    await prefs.remove(_prefsKeyFilterSearch);
+                                  } catch (_) {
+                                    // Ignora erros de persistência
+                                  }
+                                },
+                              ),
+                            )
+                          : null,
                     ),
                     onChanged: (v) async {
                       final nv = v.trim();
@@ -140,36 +160,84 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                         )),
                   ];
 
-                  return SizedBox(
-                    width: 240,
-                    height: 48,
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: scheme.surfaceContainerHighest,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String?>(
-                          isExpanded: true,
-                          value: _selectedCategory,
-                          items: dropdownItems,
-                          onChanged: (v) async {
-                            setState(() => _selectedCategory = v);
-                            try {
-                              final prefs = await SharedPreferences.getInstance();
-                              if (v == null || (v.isEmpty)) {
-                                await prefs.remove(_prefsKeyFilterCategory);
-                              } else {
-                                await prefs.setString(_prefsKeyFilterCategory, v);
-                              }
-                            } catch (_) {
-                              // Ignora erros de persistência
-                            }
-                          },
-                        ),
-                      ),
+                  return Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isCompact = constraints.maxWidth < 460;
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: isCompact ? 180 : 240),
+                              child: SizedBox(
+                                height: 48,
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: scheme.surfaceContainerHighest,
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String?>(
+                                      isExpanded: true,
+                                      value: _selectedCategory,
+                                      items: dropdownItems,
+                                      onChanged: (v) async {
+                                        setState(() => _selectedCategory = v);
+                                        try {
+                                          final prefs = await SharedPreferences.getInstance();
+                                          if (v == null || (v.isEmpty)) {
+                                            await prefs.remove(_prefsKeyFilterCategory);
+                                          } else {
+                                            await prefs.setString(_prefsKeyFilterCategory, v);
+                                          }
+                                        } catch (_) {
+                                          // Ignora erros de persistência
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              height: 48,
+                              child: FilledButton.tonal(
+                                style: FilledButton.styleFrom(
+                                  shape: const StadiumBorder(),
+                                  padding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 16),
+                                ),
+                                onPressed: () async {
+                                  setState(() {
+                                    _search = '';
+                                    _searchCtrl.clear();
+                                    _selectedCategory = null;
+                                  });
+                                  try {
+                                    final prefs = await SharedPreferences.getInstance();
+                                    await prefs.remove(_prefsKeyFilterSearch);
+                                    await prefs.remove(_prefsKeyFilterCategory);
+                                  } catch (_) {
+                                    // Ignora erros de persistência
+                                  }
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.filter_alt_off),
+                                    if (!isCompact) const SizedBox(width: 8),
+                                    if (!isCompact) const Text('Limpar filtros'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ));
+                      },
                     ),
                   );
                 },
