@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "811492317737",
+    "project_id": "lembreplus",
+    "storage_bucket": "lembreplus.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:811492317737:android:785e8ee18d41acc924da38",
+        "android_client_info": {
+          "package_name": "com.example.lembreplus"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "811492317737-l48fcbr7uktrpijse3fae7ihuq9d9h6v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lembreplus",
+            "certificate_hash": "b7cace16cd9030e6b07490e82d821dff49927331"
+          }
+        },
+        {
+          "client_id": "811492317737-hbtat6j14jpn41hnlhbbnvui85prpplk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBP7PLvr1DhkR9tlAThV_cOAXprOlXKYfU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "811492317737-hbtat6j14jpn41hnlhbbnvui85prpplk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

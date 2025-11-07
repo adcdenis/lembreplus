@@ -111,6 +111,36 @@ Codec de backup:
 
 - APK: `build/app/outputs/flutter-apk/app-release.apk`
   
+## Sincronização na nuvem (Google) e backup contínuo
+
+Este projeto já traz a interface e o serviço de sincronização em nuvem com login Google prontos para integração. Por padrão, a sincronização está em modo "Noop" para não quebrar o build. Para habilitar sincronização real entre dispositivos, siga:
+
+1. Ative o provedor Firebase
+   - Crie um projeto no Firebase Console.
+   - Adicione apps Android e iOS.
+   - Baixe e coloque `google-services.json` em `android/app/` e `GoogleService-Info.plist` em `ios/Runner/`.
+   - Habilite o provedor de login Google no Firebase Authentication.
+   - Crie um banco `Cloud Firestore` e/ou use `Cloud Storage` para backups.
+
+2. Adicione dependências no `pubspec.yaml`:
+   - `firebase_core`, `firebase_auth`, `google_sign_in`, `cloud_firestore`.
+
+3. Inicialize Firebase no app (`main.dart`):
+   - Chame `Firebase.initializeApp()` antes de `runApp`.
+
+4. Habilite o provedor Firebase no código:
+   - Em `lib/core/cloud/cloud_config.dart`, altere `useFirebaseCloudSync` para `true`.
+
+5. Fluxo no app:
+   - Abra `Backup` no menu.
+   - Faça login com Google.
+   - Ative `Sincronização automática` para manter dados sincronizados entre dispositivos.
+   - Use `Backup na nuvem` e `Restaurar da nuvem` para operações manuais.
+
+Observações:
+- Sem configurar Firebase, o login exibirá uma mensagem orientando a configuração.
+- O serviço local (`NoopCloudSyncService`) valida o fluxo sem enviar dados.
+
 ## Execução somente em dispositivos móveis
 
 Este projeto está configurado para rodar apenas em Android/iOS. Para iniciar rapidamente no Android com emulador:
