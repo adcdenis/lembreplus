@@ -366,17 +366,16 @@ class _DonutPainter extends CustomPainter {
     if (total <= 0 || data.isEmpty) return;
 
     double start = -3.1415926 / 2; // topo
-    int i = 0;
     for (final e in data.entries) {
       final sweep = (e.value / total) * 2 * 3.1415926;
       final p = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 26
         ..strokeCap = StrokeCap.butt
-        ..color = palette[i % palette.length];
+        // Usa mesmo mapeamento de cor das barras: por hash da categoria
+        ..color = palette[e.key.hashCode.abs() % palette.length];
       canvas.drawArc(rect, start, sweep, false, p);
       start += sweep;
-      i++;
     }
   }
 
