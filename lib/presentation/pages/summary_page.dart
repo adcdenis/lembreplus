@@ -62,6 +62,13 @@ class SummaryPage extends ConsumerWidget {
           final categoryEntries = byCategory.entries.toList()
             ..sort((a, b) => b.value.compareTo(a.value));
 
+          // Paleta distinta por categoria (evita cores iguais)
+          final labels = categoryEntries.map((e) => e.key).toList();
+          final palette = _distinctPalette(context, labels.length);
+          final Map<String, Color> colorsByCategory = {
+            for (var i = 0; i < labels.length; i++) labels[i]: palette[i]
+          };
+
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +134,13 @@ class SummaryPage extends ConsumerWidget {
                     child: Column(
                       children: [
                         for (final e in categoryEntries)
-                          _categoryBar(context, label: e.key, value: e.value, max: total),
+                          _categoryBar(
+                            context,
+                            label: e.key,
+                            value: e.value,
+                            max: total,
+                            color: colorsByCategory[e.key]!,
+                          ),
                         if (categoryEntries.isEmpty)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -143,7 +156,11 @@ class SummaryPage extends ConsumerWidget {
                     emoji: '🥧',
                     child: SizedBox(
                       height: 220,
-                      child: _DonutChart(data: byCategory, total: total),
+                      child: _DonutChart(
+                        data: byCategory,
+                        total: total,
+                        colorsByCategory: colorsByCategory,
+                      ),
                     ),
                   );
 
@@ -258,10 +275,10 @@ class SummaryPage extends ConsumerWidget {
     );
   }
 
-  Widget _categoryBar(BuildContext context, {required String label, required int value, required int max}) {
+  Widget _categoryBar(BuildContext context, {required String label, required int value, required int max, required Color color}) {
     final cs = Theme.of(context).colorScheme;
     final pct = max == 0 ? 0.0 : value / max;
-    final barColor = _palette(context)[label.hashCode.abs() % _palette(context).length];
+    final barColor = color;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
@@ -293,31 +310,30 @@ class SummaryPage extends ConsumerWidget {
     );
   }
 
-  List<Color> _palette(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return [
-      cs.primary,
-      cs.secondary,
-      cs.tertiary,
-      Colors.blue,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal,
-      Colors.redAccent,
-    ];
+  // Gera uma paleta distinta de cores para a quantidade solicitada,
+  // distribuindo as cores pelo círculo de matiz (HSL) para evitar colisões.
+  List<Color> _distinctPalette(BuildContext context, int count) {
+    final brightness = Theme.of(context).brightness;
+    final double s = brightness == Brightness.dark ? 0.65 : 0.60;
+    final double l = brightness == Brightness.dark ? 0.55 : 0.50;
+    if (count <= 0) return const [];
+    return List<Color>.generate(count, (i) {
+      final hue = (360.0 * i / count) % 360.0;
+      return HSLColor.fromAHSL(1.0, hue, s, l).toColor();
+    });
   }
 }
 
 class _DonutChart extends StatelessWidget {
   final Map<String, int> data;
   final int total;
-  const _DonutChart({required this.data, required this.total});
+  final Map<String, Color> colorsByCategory;
+  const _DonutChart({required this.data, required this.total, required this.colorsByCategory});
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _DonutPainter(data: data, total: total, palette: _palette(context)),
+      painter: _DonutPainter(data: data, total: total, colorsByCategory: colorsByCategory),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -329,28 +345,13 @@ class _DonutChart extends StatelessWidget {
       ),
     );
   }
-
-  List<Color> _palette(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return [
-      cs.primary,
-      cs.secondary,
-      cs.tertiary,
-      Colors.blue,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal,
-      Colors.redAccent,
-    ];
-  }
 }
 
 class _DonutPainter extends CustomPainter {
   final Map<String, int> data;
   final int total;
-  final List<Color> palette;
-  _DonutPainter({required this.data, required this.total, required this.palette});
+  final Map<String, Color> colorsByCategory;
+  _DonutPainter({required this.data, required this.total, required this.colorsByCategory});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -372,8 +373,8 @@ class _DonutPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 26
         ..strokeCap = StrokeCap.butt
-        // Usa mesmo mapeamento de cor das barras: por hash da categoria
-        ..color = palette[e.key.hashCode.abs() % palette.length];
+        // Usa mapeamento de cor único por categoria
+        ..color = colorsByCategory[e.key] ?? Colors.grey;
       canvas.drawArc(rect, start, sweep, false, p);
       start += sweep;
     }
