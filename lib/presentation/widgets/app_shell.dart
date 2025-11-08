@@ -15,6 +15,12 @@ class AppShell extends StatelessWidget {
       // voltar leva à listagem de contadores; somente nela perguntar para sair.
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
+        // Se o Drawer estiver aberto, feche-o e não trate como "voltar" da página
+        final scaffoldState = Scaffold.maybeOf(context);
+        if (scaffoldState?.isDrawerOpen == true) {
+          scaffoldState!.closeDrawer();
+          return;
+        }
         final router = GoRouter.of(context);
         final location = GoRouterState.of(context).uri.toString();
         if (location == '/counters') {
@@ -159,7 +165,7 @@ class _AppDrawer extends StatelessWidget {
               leading: const Text('📋', style: TextStyle(fontSize: 20)),
               title: const Text('Dashboard'),
               onTap: () {
-                Navigator.of(context).pop();
+                Scaffold.maybeOf(context)?.closeDrawer();
                 onNavigateIndex(0);
               },
             ),
@@ -167,7 +173,7 @@ class _AppDrawer extends StatelessWidget {
               leading: const Text('🧮', style: TextStyle(fontSize: 20)),
               title: const Text('Contadores'),
               onTap: () {
-                Navigator.of(context).pop();
+                Scaffold.maybeOf(context)?.closeDrawer();
                 onNavigateIndex(1);
               },
             ),
@@ -175,7 +181,7 @@ class _AppDrawer extends StatelessWidget {
               leading: const Text('📊', style: TextStyle(fontSize: 20)),
               title: const Text('Resumo'),
               onTap: () {
-                Navigator.of(context).pop();
+                Scaffold.maybeOf(context)?.closeDrawer();
                 onNavigateIndex(2);
               },
             ),
@@ -183,7 +189,7 @@ class _AppDrawer extends StatelessWidget {
               leading: const Text('📈', style: TextStyle(fontSize: 20)),
               title: const Text('Relatórios'),
               onTap: () {
-                Navigator.of(context).pop();
+                Scaffold.maybeOf(context)?.closeDrawer();
                 onNavigateIndex(3);
               },
             ),
@@ -191,7 +197,7 @@ class _AppDrawer extends StatelessWidget {
               leading: const Text('🔄', style: TextStyle(fontSize: 20)),
               title: const Text('Backup'),
               onTap: () {
-                Navigator.of(context).pop();
+                Scaffold.maybeOf(context)?.closeDrawer();
                 onNavigateIndex(4);
               },
             ),
@@ -199,7 +205,7 @@ class _AppDrawer extends StatelessWidget {
               leading: const Text('☁️', style: TextStyle(fontSize: 20)),
               title: const Text('Backup na Nuvem'),
               onTap: () {
-                Navigator.of(context).pop();
+                Scaffold.maybeOf(context)?.closeDrawer();
                 onNavigateIndex(5);
               },
             ),
