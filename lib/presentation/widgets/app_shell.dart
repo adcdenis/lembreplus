@@ -50,7 +50,12 @@ class AppShell extends StatelessWidget {
       if (isWide) {
         final selectedIndex = _selectedIndexForLocation(GoRouterState.of(context).uri.toString());
         return Scaffold(
-          appBar: AppBar(title: title),
+          appBar: AppBar(title: title, actions: const [
+            Padding(
+              padding: EdgeInsets.only(right: 8.0),
+              child: _ProfileAvatar(),
+            ),
+          ]),
           body: Row(
             children: [
               NavigationRail(
@@ -81,7 +86,12 @@ class AppShell extends StatelessWidget {
       }
 
       return Scaffold(
-        appBar: AppBar(title: title, centerTitle: false),
+        appBar: AppBar(title: title, centerTitle: false, actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 8.0),
+            child: _ProfileAvatar(),
+          ),
+        ]),
         drawer: _AppDrawer(onNavigateIndex: (index) => _goToIndex(context, index)),
         body: child,
       );
@@ -211,6 +221,37 @@ class _VersionFooter extends ConsumerWidget {
           Text(v, style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
         ],
       ),
+    );
+  }
+}
+
+// Avatar do usuário (topo direito): mostra foto do Google quando logado,
+// e avatar padrão quando deslogado.
+class _ProfileAvatar extends ConsumerWidget {
+  const _ProfileAvatar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(cloudUserProvider);
+    final cs = Theme.of(context).colorScheme;
+    Widget defaultAvatar() => CircleAvatar(
+          radius: 16,
+          backgroundColor: cs.surface,
+          child: Icon(Icons.account_circle, size: 20, color: cs.onSurfaceVariant),
+        );
+
+    return userAsync.maybeWhen(
+      data: (user) {
+        if (user == null || user.photoUrl == null) {
+          return defaultAvatar();
+        }
+        return CircleAvatar(
+          radius: 16,
+          backgroundImage: NetworkImage(user.photoUrl!),
+          backgroundColor: cs.surface,
+        );
+      },
+      orElse: () => defaultAvatar(),
     );
   }
 }

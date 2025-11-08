@@ -188,10 +188,22 @@ class BackupPage extends ConsumerWidget {
                   final status = user == null
                       ? 'Não autenticado'
                       : 'Autenticado: ${user.email ?? user.displayName ?? user.uid}';
-                  return Expanded(child: Text(status));
+                  return Expanded(
+                    child: Text(
+                      status,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
                 },
                 loading: () => const Expanded(child: LinearProgressIndicator()),
-                error: (e, _) => Expanded(child: Text('Erro auth: $e')),
+                error: (e, _) => Expanded(
+                  child: Text(
+                    'Erro auth: $e',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               OutlinedButton.icon(

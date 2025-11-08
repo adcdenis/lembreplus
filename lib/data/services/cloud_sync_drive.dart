@@ -58,6 +58,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
             uid: acct.id,
             displayName: acct.displayName,
             email: acct.email,
+            photoUrl: acct.photoUrl,
           ));
         } else {
           _authCtrl.add(null);
@@ -79,6 +80,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
           uid: account.id,
           displayName: account.displayName,
           email: account.email,
+          photoUrl: account.photoUrl,
         ));
       }
     });
@@ -103,6 +105,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
           uid: acct.id,
           displayName: acct.displayName,
           email: acct.email,
+          photoUrl: acct.photoUrl,
         ));
         // Se auto-sync habilitado, inicia observação contínua
         if (_auto) {
@@ -150,7 +153,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
   Future<void> signInWithGoogle() async {
     final account = await _signIn.signIn();
     if (account == null) throw 'Login cancelado';
-    _authCtrl.add(CloudUser(uid: account.id, displayName: account.displayName, email: account.email));
+    _authCtrl.add(CloudUser(uid: account.id, displayName: account.displayName, email: account.email, photoUrl: account.photoUrl));
   }
 
   @override

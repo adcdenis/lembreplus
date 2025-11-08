@@ -7,7 +7,7 @@ final cloudSyncServiceProvider = Provider<CloudSyncService>((ref) {
   return createCloudSyncService(db);
 });
 
-final cloudUserProvider = StreamProvider((ref) {
+final cloudUserProvider = StreamProvider<CloudUser?>((ref) {
   final svc = ref.read(cloudSyncServiceProvider);
   return svc.authStateChanges();
 });

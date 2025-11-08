@@ -11,7 +11,8 @@ class CloudUser {
   final String uid;
   final String? displayName;
   final String? email;
-  CloudUser({required this.uid, this.displayName, this.email});
+  final String? photoUrl;
+  CloudUser({required this.uid, this.displayName, this.email, this.photoUrl});
 }
 
 /// Interface do serviço de sincronização em nuvem

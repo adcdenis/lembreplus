@@ -234,7 +234,18 @@ class SummaryPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [Text(emoji, style: const TextStyle(fontSize: 18)), const SizedBox(width: 8), Text(title, style: const TextStyle(fontWeight: FontWeight.w600))]),
+            Row(children: [
+              Text(emoji, style: const TextStyle(fontSize: 18)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ]),
             const SizedBox(height: 12),
             child,
           ],
@@ -260,13 +271,28 @@ class SummaryPage extends ConsumerWidget {
         children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 4),
-              Row(children: [
-                Text(df.format(date), style: TextStyle(color: cs.onSurfaceVariant)),
-                const SizedBox(width: 12),
-                if (category != null) Chip(avatar: const Text('🏷️'), label: Text(category), visualDensity: VisualDensity.compact, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
-              ]),
+              Wrap(
+                spacing: 12,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(df.format(date), style: TextStyle(color: cs.onSurfaceVariant)),
+                  if (category != null)
+                    Chip(
+                      avatar: const Text('🏷️'),
+                      label: Text(category),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                ],
+              ),
             ]),
           ),
           Text('$daysLeft dias', style: const TextStyle(fontWeight: FontWeight.w600)),
