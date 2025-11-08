@@ -355,6 +355,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                           final past = isPast(eff, now: _now);
                           final diffStr = _formatDiff(eff);
                               final label = past ? diffStr : diffStr;
+                              final timeColor = past ? Colors.blue : Colors.green;
                               final recurrenceVal = Recurrence.fromString(c.recurrence);
                               return Container(
                                 decoration: BoxDecoration(
@@ -387,7 +388,13 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                           style: TextStyle(color: cs.onSurfaceVariant),
                                         ),
                                       const SizedBox(height: 4),
-                                      Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                      Text(
+                                        label,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          color: timeColor,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                   trailing: null,
