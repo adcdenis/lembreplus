@@ -11,23 +11,30 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: GoRouter.of(context).canPop(),
+      // Intercepta sempre o botão voltar para aplicar regra:
+      // voltar leva à listagem de contadores; somente nela perguntar para sair.
+      canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) return;
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Sair do aplicativo'),
-            content: const Text('Deseja realmente fechar o app?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
-              FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Sair')),
-            ],
-          ),
-        );
-        if (confirm == true) {
-          // Fecha o app no Android
-          SystemNavigator.pop();
+        final router = GoRouter.of(context);
+        final location = GoRouterState.of(context).uri.toString();
+        if (location == '/counters') {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Sair do aplicativo'),
+              content: const Text('Deseja realmente fechar o app?'),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+                FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Sair')),
+              ],
+            ),
+          );
+          if (confirm == true) {
+            SystemNavigator.pop();
+          }
+        } else {
+          // Qualquer outra página: voltar navega para a listagem de contadores
+          router.go('/counters');
         }
       },
       child: LayoutBuilder(builder: (context, constraints) {
