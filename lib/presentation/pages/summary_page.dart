@@ -93,14 +93,14 @@ class SummaryPage extends ConsumerWidget {
                       mainAxisExtent: extent,
                     ),
                     children: [
-                      _statCard(context, title: 'Esta Semana', value: weekCount, color: cs.primaryContainer, emoji: '📅', width: double.infinity),
-                      _statCard(context, title: 'Este Mês', value: monthCount, color: cs.secondaryContainer, emoji: '🗓️', width: double.infinity),
-                      _statCard(context, title: 'Próxima Semana', value: nextWeekCount, color: cs.tertiaryContainer, emoji: '⏭️', width: double.infinity),
-                      _statCard(context, title: 'Vencidos', value: past, color: cs.errorContainer, emoji: '⚠️', width: double.infinity),
-                      _statCard(context, title: 'Total de Itens', value: total, color: cs.surfaceContainerHighest, emoji: '📋', width: double.infinity),
-                      _statCard(context, title: 'Eventos Passados', value: past, color: cs.surfaceContainerHighest, emoji: '🕰️', width: double.infinity),
-                      _statCard(context, title: 'Eventos Futuros', value: future, color: cs.surfaceContainerHighest, emoji: '🗓️', width: double.infinity),
-                      _statCard(context, title: 'Recorrentes', value: recurring, color: cs.surfaceContainerHighest, emoji: '🔁', width: double.infinity),
+  _statCard(context, title: 'Total', value: total, color: cs.primaryContainer, emoji: '📋', width: double.infinity),
+  _statCard(context, title: 'Passados', value: past, color: cs.secondaryContainer, emoji: '🕰️', width: double.infinity),
+  _statCard(context, title: 'Futuros', value: future, color: cs.tertiaryContainer, emoji: '🗓️', width: double.infinity),
+  _statCard(context, title: 'Recorrentes', value: recurring, color: Colors.green.shade100, emoji: '🔁', width: double.infinity),
+  _statCard(context, title: 'Esta Semana', value: weekCount, color: Colors.amber.shade100, emoji: '📅', width: double.infinity),
+  _statCard(context, title: 'Este Mês', value: monthCount, color: Colors.grey.shade200, emoji: '🗓️', width: double.infinity),
+  _statCard(context, title: 'Próx. Semana', value: nextWeekCount, color: Colors.orange.shade100, emoji: '⏭️', width: double.infinity),
+  _statCard(context, title: 'Vencidos', value: past, color: cs.errorContainer, emoji: '⚠️', width: double.infinity),
                     ],
                   );
                 }),
@@ -191,6 +191,22 @@ class SummaryPage extends ConsumerWidget {
 
   Widget _statCard(BuildContext context, {required String title, required int value, required Color color, required String emoji, required double width}) {
     final cs = Theme.of(context).colorScheme;
+    // Choose an appropriate text color based on the container color for better contrast
+    // Map text color according to background for good contrast.
+    // Use theme on*Container for scheme containers, otherwise compute fallback based on brightness.
+    final Color onColor;
+    if (color == cs.primaryContainer) {
+      onColor = cs.onPrimaryContainer;
+    } else if (color == cs.secondaryContainer) {
+      onColor = cs.onSecondaryContainer;
+    } else if (color == cs.tertiaryContainer) {
+      onColor = cs.onTertiaryContainer;
+    } else if (color == cs.errorContainer) {
+      onColor = cs.onErrorContainer;
+    } else {
+      final isLightBg = ThemeData.estimateBrightnessForColor(color) == Brightness.light;
+      onColor = isLightBg ? Colors.black.withValues(alpha: 0.87) : Colors.white;
+    }
     return Card(
       elevation: 0,
       color: color,
@@ -210,9 +226,9 @@ class SummaryPage extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(height: 2),
-                    Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w600, color: onColor)),
                     const SizedBox(height: 4),
-                    Text('$value', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                    Text('$value', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: onColor)),
                   ],
                 ),
               ),

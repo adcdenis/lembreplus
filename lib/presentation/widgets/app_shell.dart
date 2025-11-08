@@ -76,6 +76,7 @@ class AppShell extends StatelessWidget {
                   NavigationRailDestination(icon: Text('📊', style: TextStyle(fontSize: 20)), selectedIcon: Text('📊', style: TextStyle(fontSize: 20)), label: Text('Resumo')),
                   NavigationRailDestination(icon: Text('📈', style: TextStyle(fontSize: 20)), selectedIcon: Text('📈', style: TextStyle(fontSize: 20)), label: Text('Relatórios')),
                   NavigationRailDestination(icon: Text('🔄', style: TextStyle(fontSize: 20)), selectedIcon: Text('🔄', style: TextStyle(fontSize: 20)), label: Text('Backup')),
+                  NavigationRailDestination(icon: Text('☁️', style: TextStyle(fontSize: 20)), selectedIcon: Text('☁️', style: TextStyle(fontSize: 20)), label: Text('Backup na Nuvem')),
                 ],
               ),
               const VerticalDivider(width: 1),
@@ -104,6 +105,7 @@ class AppShell extends StatelessWidget {
     if (location.startsWith('/summary')) return 2;
     if (location.startsWith('/reports')) return 3;
     if (location.startsWith('/backup')) return 4;
+    if (location.startsWith('/cloud-backup')) return 5;
     return 0; // dashboard default
   }
 
@@ -123,6 +125,9 @@ class AppShell extends StatelessWidget {
         break;
       case 4:
         context.go('/backup');
+        break;
+      case 5:
+        context.go('/cloud-backup');
         break;
     }
   }
@@ -188,6 +193,14 @@ class _AppDrawer extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).pop();
                 onNavigateIndex(4);
+              },
+            ),
+            ListTile(
+              leading: const Text('☁️', style: TextStyle(fontSize: 20)),
+              title: const Text('Backup na Nuvem'),
+              onTap: () {
+                Navigator.of(context).pop();
+                onNavigateIndex(5);
               },
             ),
             const Divider(height: 1),

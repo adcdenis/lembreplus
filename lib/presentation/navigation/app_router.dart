@@ -8,6 +8,7 @@ import '../pages/counter_history_page.dart';
 import '../pages/summary_page.dart';
 import '../pages/reports_page.dart';
 import '../pages/backup_page.dart';
+import '../pages/cloud_backup_page.dart';
 import '../widgets/app_shell.dart';
 
 class AppRouter {
@@ -70,6 +71,11 @@ class AppRouter {
             path: '/backup',
             name: 'backup',
             pageBuilder: (context, state) => const MaterialPage(child: BackupPage()),
+          ),
+          GoRoute(
+            path: '/cloud-backup',
+            name: 'cloud_backup',
+            pageBuilder: (context, state) => const MaterialPage(child: CloudBackupPage()),
           ),
         ],
       ),
