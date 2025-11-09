@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:lembreplus/data/database/app_database.dart';
 import 'package:lembreplus/data/services/backup_codec.dart';
@@ -29,6 +29,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
   final AppDatabase db;
   late final StreamController<CloudUser?> _authCtrl;
   late final StreamController<bool> _autoSyncCtrl;
+  late final StreamController<DateTime> _restoreCtrl;
   bool _auto = false;
 
   final GoogleSignIn _signIn = GoogleSignIn(
@@ -48,6 +49,10 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
   String? _backupFolderId; // cache do id da subpasta de backups
   static const String _prefsKeyAutoSync = 'cloud_auto_sync_enabled';
   static const String _prefsKeyLastUpdate = 'cloud_last_update_timestamp';
+  static const String _prefsKeyLastBackupTs = 'cloud_last_backup_timestamp';
+  static const String _prefsKeyLastBackupFile = 'cloud_last_backup_file';
+  static const String _prefsKeyLastRestoreTs = 'cloud_last_restore_timestamp';
+  static const String _prefsKeyLastRestoreFile = 'cloud_last_restore_file';
 
   GoogleDriveCloudSyncService(this.db) {
     _authCtrl = StreamController<CloudUser?>.broadcast(
@@ -72,6 +77,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
         _autoSyncCtrl.add(_auto);
       },
     );
+    _restoreCtrl = StreamController<DateTime>.broadcast();
     // Emite usuário atual ao iniciar
     _signIn.onCurrentUserChanged.listen((account) {
       if (account == null) {
@@ -183,6 +189,11 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
             if (errors.isEmpty) {
               await BackupCodec.restore(db, data);
               await prefs.setString(_prefsKeyLastUpdate, latestTs);
+              // Emite evento de restauração com o timestamp do backup restaurado
+              final restoredAt = _parseTimestampToLocal(latestTs);
+              if (restoredAt != null) {
+                _restoreCtrl.add(restoredAt);
+              }
             }
           }
         } catch (_) {
@@ -191,26 +202,25 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       }
 
       // Limpeza automática: mantém no máximo 10 backups mais recentes
-      // Usa os timestamps válidos para ordenar; se não virem ordenados, reordena por ts
-      final entries = <MapEntry<String, drive.File>>[];
-      for (final f in files) {
-        final name = f.name ?? '';
-        final m = regexp.firstMatch(name);
-        if (m != null) entries.add(MapEntry(m.group(1)!, f));
-      }
-      entries.sort((a, b) => b.key.compareTo(a.key)); // desc
-      for (var i = 10; i < entries.length; i++) {
-        final id = entries[i].value.id;
-        if (id != null) {
-          try {
-            await api.files.delete(id);
-          } catch (_) {
-            // ignora falhas de deleção
-          }
-        }
-      }
+      await _cleanupOldBackups(api);
     } catch (_) {
       // Ignora erros gerais para permanecer silencioso
+    }
+  }
+
+  DateTime? _parseTimestampToLocal(String ts) {
+    // Formato: YYYYMMDD_HHMMSS (gerado em UTC pelo app)
+    try {
+      final year = int.parse(ts.substring(0, 4));
+      final month = int.parse(ts.substring(4, 6));
+      final day = int.parse(ts.substring(6, 8));
+      final hour = int.parse(ts.substring(9, 11));
+      final minute = int.parse(ts.substring(11, 13));
+      final second = int.parse(ts.substring(13, 15));
+      final dtUtc = DateTime.utc(year, month, day, hour, minute, second);
+      return dtUtc.toLocal();
+    } catch (_) {
+      return null;
     }
   }
 
@@ -249,6 +259,23 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
     final account = await _signIn.signIn();
     if (account == null) throw 'Login cancelado';
     _authCtrl.add(CloudUser(uid: account.id, displayName: account.displayName, email: account.email, photoUrl: account.photoUrl));
+
+    // Ativar auto-sync por padrão ao autenticar e persistir preferência
+    _auto = true;
+    _autoSyncCtrl.add(true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_prefsKeyAutoSync, true);
+    } catch (_) {}
+    await startRealtimeSync();
+
+    // Criar um backup inicial no Drive e atualizar timestamp local
+    try {
+      await backupNow();
+      await _updateLastTimestampFromDriveLatest();
+    } catch (_) {
+      // silencioso: não interromper fluxo de login
+    }
   }
 
   @override
@@ -311,12 +338,38 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       ..mimeType = 'application/json';
     if (useDriveAppDataSpace) {
       fileMeta.parents = ['appDataFolder'];
-      await api.files.create(fileMeta, uploadMedia: media);
+      final created = await api.files.create(fileMeta, uploadMedia: media);
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final name = created.name ?? fileMeta.name ?? '';
+        final m = RegExp(r"^lembre_backup_(\d{8}_\d{6})\.json").firstMatch(name);
+        final ts = m?.group(1);
+        if (ts != null) {
+          await prefs.setString(_prefsKeyLastBackupTs, ts);
+          await prefs.setString(_prefsKeyLastUpdate, ts);
+        }
+        await prefs.setString(_prefsKeyLastBackupFile, name);
+      } catch (_) {}
+      // Após gravação, limpar excedentes mantendo somente 10 mais recentes
+      await _cleanupOldBackups(api);
       return;
     }
     final folderId = await _ensureBackupFolderId(api);
     fileMeta.parents = [folderId];
-    await api.files.create(fileMeta, uploadMedia: media);
+    final created = await api.files.create(fileMeta, uploadMedia: media);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final name = created.name ?? fileMeta.name ?? '';
+      final m = RegExp(r"^lembre_backup_(\d{8}_\d{6})\.json").firstMatch(name);
+      final ts = m?.group(1);
+      if (ts != null) {
+        await prefs.setString(_prefsKeyLastBackupTs, ts);
+        await prefs.setString(_prefsKeyLastUpdate, ts);
+      }
+      await prefs.setString(_prefsKeyLastBackupFile, name);
+    } catch (_) {}
+    // Após gravação, limpar excedentes mantendo somente 10 mais recentes
+    await _cleanupOldBackups(api);
   }
 
   @override
@@ -362,6 +415,24 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       throw report.toString();
     }
     await BackupCodec.restore(db, data);
+    // Limpeza após restauração: manter apenas os 10 mais recentes
+    await _cleanupOldBackups(api);
+    // Emite evento com a data definida pelo nome do arquivo
+    final name = f.name ?? '';
+    final m = RegExp(r"^lembre_backup_(\d{8}_\d{6})\.json").firstMatch(name);
+    if (m != null) {
+      final ts = m.group(1)!;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_prefsKeyLastRestoreTs, ts);
+        await prefs.setString(_prefsKeyLastRestoreFile, name);
+        await prefs.setString(_prefsKeyLastUpdate, ts);
+      } catch (_) {}
+      final restoredAt = _parseTimestampToLocal(ts);
+      if (restoredAt != null) {
+        _restoreCtrl.add(restoredAt);
+      }
+    }
   }
 
   @override
@@ -390,4 +461,91 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       }
     });
   }
+
+  /// Atualiza o timestamp local com base no backup mais recente no Drive
+  Future<void> _updateLastTimestampFromDriveLatest() async {
+    try {
+      final api = await _driveApi();
+      String spaces = useDriveAppDataSpace ? 'appDataFolder' : 'drive';
+      String q = "mimeType = 'application/json' and name contains 'lembre_backup_' and trashed = false";
+      if (!useDriveAppDataSpace) {
+        final folderId = await _ensureBackupFolderId(api);
+        q = "$q and '$folderId' in parents";
+      }
+      final res = await api.files.list(
+        q: q,
+        orderBy: 'name desc',
+        pageSize: 10,
+        spaces: spaces,
+        $fields: 'files(id,name)'
+      );
+      final files = res.files ?? [];
+      if (files.isEmpty) return;
+      final regexp = RegExp(r"^lembre_backup_(\d{8}_\d{6})\.json");
+      String? latestTs;
+      for (final f in files) {
+        final name = f.name ?? '';
+        final m = regexp.firstMatch(name);
+        if (m != null) {
+          final ts = m.group(1)!;
+          if (latestTs == null || ts.compareTo(latestTs) > 0) {
+            latestTs = ts;
+          }
+        }
+      }
+      if (latestTs != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_prefsKeyLastUpdate, latestTs);
+      }
+    } catch (_) {
+      // silencioso
+    }
+  }
+
+  /// Remove backups excedentes, mantendo apenas os 10 mais recentes.
+  Future<void> _cleanupOldBackups(drive.DriveApi api) async {
+    try {
+      String spaces = useDriveAppDataSpace ? 'appDataFolder' : 'drive';
+      String q = "mimeType = 'application/json' and name contains 'lembre_backup_' and trashed = false";
+      if (!useDriveAppDataSpace) {
+        final folderId = await _ensureBackupFolderId(api);
+        q = "$q and '$folderId' in parents";
+      }
+      final res = await api.files.list(
+        q: q,
+        orderBy: 'name desc',
+        pageSize: 100,
+        spaces: spaces,
+        $fields: 'files(id,name)'
+      );
+      final files = res.files ?? [];
+      if (files.length <= 10) return;
+      final regexp = RegExp(r"^lembre_backup_(\d{8}_\d{6})\.json");
+      final entries = <MapEntry<String, drive.File>>[];
+      for (final f in files) {
+        final name = f.name ?? '';
+        final m = regexp.firstMatch(name);
+        if (m != null) entries.add(MapEntry(m.group(1)!, f));
+      }
+      entries.sort((a, b) => b.key.compareTo(a.key)); // mais recentes primeiro
+      for (var i = 10; i < entries.length; i++) {
+        final id = entries[i].value.id;
+        if (id != null) {
+          try {
+            await api.files.delete(id);
+            // Log discreto para depuração de limpeza de backups
+            final deletedName = entries[i].value.name ?? id;
+            debugPrint('[DriveCleanup] Excluído backup antigo: $deletedName');
+          } catch (_) {
+            // Ignora falhas pontuais
+          }
+        }
+      }
+    } catch (_) {
+      // Silencioso: não falha fluxo de backup
+    }
+  }
+
+  @override
+  Stream<DateTime> restoreEvents() => _restoreCtrl.stream;
 }

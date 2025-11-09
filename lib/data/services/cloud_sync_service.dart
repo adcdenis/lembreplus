@@ -31,6 +31,10 @@ abstract class CloudSyncService {
   /// Restaura os dados da nuvem para o dispositivo local
   Future<void> restoreNow();
 
+  /// Eventos de restauração concluída, emitindo a data/hora do backup restaurado.
+  /// A data representa o timestamp do arquivo de backup remoto (UTC convertido para local).
+  Stream<DateTime> restoreEvents();
+
   /// Inicia observação contínua para sincronização bidirecional
   Future<void> startRealtimeSync();
   Future<void> stopRealtimeSync();
@@ -42,6 +46,7 @@ class NoopCloudSyncService implements CloudSyncService {
   final AppDatabase db;
   late final StreamController<CloudUser?> _authCtrl;
   late final StreamController<bool> _autoSyncCtrl;
+  late final StreamController<DateTime> _restoreCtrl;
   bool _auto = false;
   StreamSubscription? _countersSub;
   Timer? _debounce;
@@ -61,6 +66,7 @@ class NoopCloudSyncService implements CloudSyncService {
         _autoSyncCtrl.add(_auto);
       },
     );
+    _restoreCtrl = StreamController<DateTime>.broadcast();
     // Bootstrap: carregar preferências de auto-sync
     Future.microtask(_bootstrap);
   }
@@ -158,6 +164,9 @@ class NoopCloudSyncService implements CloudSyncService {
     // No Noop, apenas demonstra fluxo: requer dados da nuvem
     throw 'Restauração indisponível sem provedor de nuvem configurado.';
   }
+
+  @override
+  Stream<DateTime> restoreEvents() => _restoreCtrl.stream;
 
   @override
   Future<void> startRealtimeSync() async {

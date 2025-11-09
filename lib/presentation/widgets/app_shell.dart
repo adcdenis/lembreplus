@@ -3,13 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lembreplus/state/providers.dart';
+import 'package:intl/intl.dart';
 
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   final Widget child;
   const AppShell({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Ouve eventos de restauração e mostra uma mensagem com data/hora exata
+    ref.listen(cloudRestoreEventProvider, (prev, next) {
+      next.whenData((dt) {
+        final formatted = DateFormat('dd/MM/yyyy HH:mm:ss').format(dt);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Dados atualizados. Restauração de $formatted.')),
+        );
+      });
+    });
     return PopScope(
       // Intercepta sempre o botão voltar para aplicar regra:
       // voltar leva à listagem de contadores; somente nela perguntar para sair.

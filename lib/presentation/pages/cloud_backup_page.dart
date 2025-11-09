@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lembreplus/state/providers.dart';
 import 'package:lembreplus/core/cloud/cloud_config.dart';
@@ -12,6 +13,9 @@ class CloudBackupPage extends ConsumerWidget {
     final cloudSvc = ref.watch(cloudSyncServiceProvider);
     final cloudUserAsync = ref.watch(cloudUserProvider);
     final autoSyncAsync = ref.watch(cloudAutoSyncProvider);
+    final autoSyncInitialAsync = ref.watch(cloudAutoSyncInitialProvider);
+    final lastBackupAsync = ref.watch(cloudLastBackupInfoProvider);
+    final lastRestoreAsync = ref.watch(cloudLastRestoreInfoProvider);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -29,6 +33,38 @@ class CloudBackupPage extends ConsumerWidget {
               'Para habilitar login Google e backup no Google Drive, ative o provedor Drive nas configurações do código.',
               style: TextStyle(color: Colors.orange),
             ),
+          const SizedBox(height: 12),
+          // Informações de último backup e última restauração
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              lastBackupAsync.when(
+                data: (info) {
+                  final dt = info.when;
+                  final name = info.fileName;
+                  final text = (dt != null && name != null && name.isNotEmpty)
+                      ? 'Último backup: ${DateFormat('dd/MM/yyyy HH:mm:ss').format(dt)} • arquivo: $name'
+                      : 'Último backup: —';
+                  return Text(text, maxLines: 2);
+                },
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Erro ao carregar último backup: $e'),
+              ),
+              const SizedBox(height: 6),
+              lastRestoreAsync.when(
+                data: (info) {
+                  final dt = info.when;
+                  final name = info.fileName;
+                  final text = (dt != null && name != null && name.isNotEmpty)
+                      ? 'Última restauração: ${DateFormat('dd/MM/yyyy HH:mm:ss').format(dt)} • arquivo: $name'
+                      : 'Última restauração: —';
+                  return Text(text, maxLines: 2);
+                },
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Erro ao carregar última restauração: $e'),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           // Status de autenticação na primeira linha; botões na linha abaixo
           Column(
@@ -56,6 +92,10 @@ class CloudBackupPage extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Login Google concluído')),
+                          );
+                          // Indica visualmente o backup inicial criado após o login
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Backup inicial criado no Drive')),
                           );
                         }
                       } catch (e) {
@@ -89,7 +129,10 @@ class CloudBackupPage extends ConsumerWidget {
           Row(
             children: [
               Switch(
-                value: autoSyncAsync.asData?.value ?? false,
+                value: autoSyncAsync.maybeWhen(
+                  data: (v) => v,
+                  orElse: () => autoSyncInitialAsync.asData?.value ?? false,
+                ),
                 onChanged: (v) async {
                   await cloudSvc.setAutoSyncEnabled(v);
                   if (v) {
@@ -125,6 +168,8 @@ class CloudBackupPage extends ConsumerWidget {
                 onPressed: () async {
                   try {
                     await cloudSvc.backupNow();
+                    // Atualiza campos de último backup na UI
+                    ref.invalidate(cloudLastBackupInfoProvider);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -147,6 +192,8 @@ class CloudBackupPage extends ConsumerWidget {
                 onPressed: () async {
                   try {
                     await cloudSvc.restoreNow();
+                    // Atualiza campos de última restauração na UI
+                    ref.invalidate(cloudLastRestoreInfoProvider);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Restauração concluída')),
