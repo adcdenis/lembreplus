@@ -39,6 +39,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _search = '';
   Set<String> _selectedCategories = {};
+  bool _showSearch = false;
 
   @override
   void initState() {
@@ -58,6 +59,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
           final set = <String>{...?(savedCategories)};
           if ((legacySingle?.isNotEmpty ?? false)) set.add(legacySingle!);
           _selectedCategories = set;
+          _showSearch = savedSearch.isNotEmpty;
         });
         _searchCtrl.text = savedSearch;
       }
@@ -83,9 +85,21 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Contadores', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
+            Row(
+              children: [
+                const Text('Contadores', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
+                const SizedBox(width: 8),
+                Tooltip(
+                  message: _showSearch ? 'Ocultar filtro' : 'Mostrar filtro',
+                  child: IconButton.filledTonal(
+                    icon: Icon(_showSearch ? Icons.search_off : Icons.search),
+                    onPressed: () => setState(() => _showSearch = !_showSearch),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
-            Row(children: [
+            if (_showSearch) Row(children: [
               Expanded(
                 child: SizedBox(
                   height: 48,
