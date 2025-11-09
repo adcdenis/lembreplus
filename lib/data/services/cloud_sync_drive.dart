@@ -47,6 +47,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
   Timer? _debounce;
   String? _backupFolderId; // cache do id da subpasta de backups
   static const String _prefsKeyAutoSync = 'cloud_auto_sync_enabled';
+  static const String _prefsKeyLastUpdate = 'cloud_last_update_timestamp';
 
   GoogleDriveCloudSyncService(this.db) {
     _authCtrl = StreamController<CloudUser?>.broadcast(
@@ -110,12 +111,106 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
         // Se auto-sync habilitado, inicia observação contínua
         if (_auto) {
           await startRealtimeSync();
+          // Executa sincronização automática de restauração ao iniciar, se necessário
+          await _runStartupAutoSync();
         }
       } else {
         _authCtrl.add(null);
       }
     } catch (_) {
       // Silencioso; usuário permanece não autenticado até login explícito
+    }
+  }
+
+  /// Executa, de forma silenciosa, a verificação de backup remoto mais recente e restaura se necessário.
+  /// Condições: usuário autenticado e auto-sync habilitado.
+  Future<void> _runStartupAutoSync() async {
+    try {
+      if (!_auto) return; // precisa estar habilitado
+      final acct = _signIn.currentUser ?? await _signIn.signInSilently();
+      if (acct == null) return; // requer usuário autenticado
+      final prefs = await SharedPreferences.getInstance();
+      final last = prefs.getString(_prefsKeyLastUpdate) ?? '';
+
+      final headers = await acct.authHeaders;
+      final client = GoogleAuthClient(headers);
+      final api = drive.DriveApi(client);
+
+      String spaces = useDriveAppDataSpace ? 'appDataFolder' : 'drive';
+      String q = "mimeType = 'application/json' and name contains 'lembre_backup_' and trashed = false";
+      if (!useDriveAppDataSpace) {
+        final folderId = await _ensureBackupFolderId(api);
+        q = "$q and '$folderId' in parents";
+      }
+
+      // Lista arquivos de backup, sem limitar a 1, para também realizar limpeza
+      final res = await api.files.list(
+        q: q,
+        orderBy: 'name desc', // ordena por nome para aproveitar o timestamp lexicográfico
+        pageSize: 100,
+        spaces: spaces,
+        $fields: 'files(id,name,modifiedTime,size)',
+      );
+      final files = res.files ?? [];
+      if (files.isEmpty) return; // nada a fazer
+
+      String? latestTs;
+      drive.File? latestFile;
+      final regexp = RegExp(r"^lembre_backup_(\d{8}_\d{6})\.json");
+      for (final f in files) {
+        final name = f.name ?? '';
+        final m = regexp.firstMatch(name);
+        if (m != null) {
+          final ts = m.group(1)!; // YYYYMMDD_HHMMSS
+          if (latestTs == null || ts.compareTo(latestTs) > 0) {
+            latestTs = ts;
+            latestFile = f;
+          }
+        }
+      }
+      if (latestTs == null || latestFile == null) return; // nenhum arquivo compatível
+
+      // Compara com timestamp salvo
+      if (last.isEmpty || latestTs.compareTo(last) > 0) {
+        // remoto é mais recente → baixa e restaura
+        try {
+          final url = Uri.parse('https://www.googleapis.com/drive/v3/files/${latestFile.id}?alt=media');
+          final response = await client.get(url);
+          if (response.statusCode == 200) {
+            final jsonStr = response.body;
+            final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+            final errors = BackupCodec.validate(data);
+            if (errors.isEmpty) {
+              await BackupCodec.restore(db, data);
+              await prefs.setString(_prefsKeyLastUpdate, latestTs);
+            }
+          }
+        } catch (_) {
+          // silencioso: não interrompe inicialização
+        }
+      }
+
+      // Limpeza automática: mantém no máximo 10 backups mais recentes
+      // Usa os timestamps válidos para ordenar; se não virem ordenados, reordena por ts
+      final entries = <MapEntry<String, drive.File>>[];
+      for (final f in files) {
+        final name = f.name ?? '';
+        final m = regexp.firstMatch(name);
+        if (m != null) entries.add(MapEntry(m.group(1)!, f));
+      }
+      entries.sort((a, b) => b.key.compareTo(a.key)); // desc
+      for (var i = 10; i < entries.length; i++) {
+        final id = entries[i].value.id;
+        if (id != null) {
+          try {
+            await api.files.delete(id);
+          } catch (_) {
+            // ignora falhas de deleção
+          }
+        }
+      }
+    } catch (_) {
+      // Ignora erros gerais para permanecer silencioso
     }
   }
 
