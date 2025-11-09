@@ -9,12 +9,14 @@ import 'package:pdf/widgets.dart' as pw;
 
 class ReportRow {
   final String nome;
+  final String descricao;
   final DateTime dataHora;
   final String categoria;
   final String repeticao;
   final String tempoFormatado; // "7 dias, 7 horas, 52 minutos, 52 segundos" ou "–"
   const ReportRow({
     required this.nome,
+    required this.descricao,
     required this.dataHora,
     required this.categoria,
     required this.repeticao,
@@ -31,20 +33,28 @@ Future<File> _createTempFile(String basename) async {
 
 Future<File> generateXlsxReport(List<ReportRow> rows) async {
   final excel = ex.Excel.createExcel();
-  final sheet = excel['Relatorio'];
+  final sheetName = 'Relatorio';
+  final sheet = excel[sheetName];
+  // Define a planilha padrão e remove a planilha vazia inicial, se existir
+  excel.setDefaultSheet(sheetName);
+  try { excel.delete('Sheet1'); } catch (_) {}
+  // Cabeçalho como texto simples (compatível com versões anteriores)
   sheet.appendRow([
     'Nome do contador',
+    'Descrição',
     'Data (DD/MM/AAAA)',
     'Hora (HH:MM)',
     'Tempo decorrido ou restante',
     'Categoria',
     'Repetição',
   ]);
+
   final df = DateFormat('dd/MM/yyyy');
   final tf = DateFormat('HH:mm');
   for (final r in rows) {
     sheet.appendRow([
       r.nome,
+      r.descricao,
       df.format(r.dataHora),
       tf.format(r.dataHora),
       r.tempoFormatado,
@@ -52,6 +62,7 @@ Future<File> generateXlsxReport(List<ReportRow> rows) async {
       r.repeticao,
     ]);
   }
+
   final bytes = excel.encode()!;
   final f = await _createTempFile('relatorio');
   final xlsx = File('${f.path}.xlsx');
@@ -63,8 +74,8 @@ Future<File> generatePdfReport(List<ReportRow> rows) async {
   final doc = pw.Document();
   final df = DateFormat('dd/MM/yyyy');
   final tf = DateFormat('HH:mm');
-  final headerStyle = pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold);
-  final cellStyle = const pw.TextStyle(fontSize: 11);
+  final headerStyle = pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold);
+  final cellStyle = const pw.TextStyle(fontSize: 9);
 
   doc.addPage(
     pw.MultiPage(
@@ -72,7 +83,7 @@ Future<File> generatePdfReport(List<ReportRow> rows) async {
       build: (context) {
         return [
           pw.Row(children: [
-            pw.Text('Relatórios', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            pw.Text('Relatório de Contadores', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
           ]),
           pw.SizedBox(height: 8),
           pw.Text('Gerado em ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}',
@@ -80,17 +91,21 @@ Future<File> generatePdfReport(List<ReportRow> rows) async {
           pw.SizedBox(height: 12),
           pw.Table(
             border: pw.TableBorder.all(width: 0.3, color: PdfColors.grey),
+            tableWidth: pw.TableWidth.max,
             columnWidths: {
-              0: const pw.FlexColumnWidth(2),
-              1: const pw.FlexColumnWidth(1),
-              2: const pw.FlexColumnWidth(1),
-              3: const pw.FlexColumnWidth(2),
-              4: const pw.FlexColumnWidth(1),
-              5: const pw.FlexColumnWidth(1),
+              // Larguras ajustadas para evitar quebra dentro das palavras
+              0: const pw.FixedColumnWidth(70),  // nome
+              1: const pw.FixedColumnWidth(95),  // descrição
+              2: const pw.FixedColumnWidth(85),  // data
+              3: const pw.FixedColumnWidth(55),  // hora
+              4: const pw.FixedColumnWidth(120), // tempo
+              5: const pw.FixedColumnWidth(65),  // categoria
+              6: const pw.FixedColumnWidth(65),  // repetição
             },
             children: [
               pw.TableRow(children: [
                 pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text('Nome do contador', style: headerStyle)),
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text('Descrição', style: headerStyle)),
                 pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text('Data (DD/MM/AAAA)', style: headerStyle)),
                 pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text('Hora (HH:MM)', style: headerStyle)),
                 pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text('Tempo decorrido ou restante', style: headerStyle)),
@@ -99,6 +114,7 @@ Future<File> generatePdfReport(List<ReportRow> rows) async {
               ]),
               ...rows.map((r) => pw.TableRow(children: [
                     pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(r.nome, style: cellStyle)),
+                    pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(r.descricao, style: cellStyle)),
                     pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(df.format(r.dataHora), style: cellStyle)),
                     pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(tf.format(r.dataHora), style: cellStyle)),
                     pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text(r.tempoFormatado, style: cellStyle)),

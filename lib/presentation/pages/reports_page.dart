@@ -132,6 +132,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       final diffLabel = _formatDiff(eff);
       return ReportRow(
         nome: c.name,
+        descricao: c.description ?? '',
         dataHora: c.eventDate,
         categoria: c.category ?? '-'
         ,

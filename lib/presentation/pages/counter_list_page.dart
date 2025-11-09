@@ -375,27 +375,6 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                             ],
                                           ),
                                           const SizedBox(height: 8),
-                                          Wrap(spacing: 8, runSpacing: 6, children: [
-                                            if ((c.category ?? '').isNotEmpty)
-                                              Chip(
-                                                avatar: Text('🏷️', style: TextStyle(fontSize: 14, color: scheme.onSecondaryContainer)),
-                                                label: Text(c.category!),
-                                                visualDensity: VisualDensity.compact,
-                                                backgroundColor: scheme.secondaryContainer,
-                                                labelStyle: TextStyle(color: scheme.onSecondaryContainer),
-                                              ),
-                                            () {
-                                              if (rec == Recurrence.none) return const SizedBox.shrink();
-                                              return Chip(
-                                                avatar: Text('🔁', style: TextStyle(fontSize: 16, color: scheme.onTertiaryContainer)),
-                                                label: Text(_labelForRecurrence(rec)),
-                                                visualDensity: VisualDensity.compact,
-                                                backgroundColor: scheme.tertiaryContainer,
-                                                labelStyle: TextStyle(color: scheme.onTertiaryContainer),
-                                              );
-                                            }(),
-                                          ]),
-                                          const SizedBox(height: 12),
                                           FittedBox(
                                             fit: BoxFit.scaleDown,
                                             alignment: Alignment.centerLeft,
@@ -429,11 +408,40 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                             ),
                                           ),
                                           const SizedBox(height: 12),
-                                          Text(
-                                            () {
-                                              final formatted = DateFormat('dd/MM/yyyy HH:mm').format(effectiveDate);
-                                              return isFuture ? 'Evento em $formatted' : 'Desde $formatted';
-                                            }(),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if ((c.category ?? '').trim().isNotEmpty) ...[
+                                                Chip(
+                                                  avatar: Text('🏷️', style: TextStyle(fontSize: 14, color: scheme.onSecondaryContainer)),
+                                                  label: Text(c.category!),
+                                                  visualDensity: VisualDensity.compact,
+                                                  backgroundColor: scheme.secondaryContainer,
+                                                  labelStyle: TextStyle(color: scheme.onSecondaryContainer),
+                                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                ),
+                                                const SizedBox(width: 8),
+                                              ],
+                                              if (rec != Recurrence.none) ...[
+                                                Chip(
+                                                  avatar: Text('🔁', style: TextStyle(fontSize: 16, color: scheme.onTertiaryContainer)),
+                                                  label: Text(_labelForRecurrence(rec)),
+                                                  visualDensity: VisualDensity.compact,
+                                                  backgroundColor: scheme.tertiaryContainer,
+                                                  labelStyle: TextStyle(color: scheme.onTertiaryContainer),
+                                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                ),
+                                                const SizedBox(width: 8),
+                                              ],
+                                              Flexible(
+                                                child: Text(
+                                                  DateFormat('dd/MM/yyyy HH:mm').format(effectiveDate),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
