@@ -31,6 +31,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
   late final StreamController<bool> _autoSyncCtrl;
   late final StreamController<DateTime> _restoreCtrl;
   late final StreamController<DateTime> _backupCtrl;
+  DateTime? _lastRestoreEvent;
   bool _auto = false;
   DateTime? _suppressAutoBackupUntil; // janela de supressão de backup após restauração
   Timer? _suppressionTimer; // dispara um backup logo após fim da supressão se houve mudanças
@@ -81,7 +82,15 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
         _autoSyncCtrl.add(_auto);
       },
     );
-    _restoreCtrl = StreamController<DateTime>.broadcast();
+    _restoreCtrl = StreamController<DateTime>.broadcast(
+      onListen: () {
+        // Emite o último evento conhecido para novos assinantes (evita perda se o evento
+        // ocorreu antes da UI estar inscrita).
+        if (_lastRestoreEvent != null) {
+          _restoreCtrl.add(_lastRestoreEvent!);
+        }
+      },
+    );
     _backupCtrl = StreamController<DateTime>.broadcast();
     // Emite usuário atual ao iniciar
     _signIn.onCurrentUserChanged.listen((account) {
@@ -119,11 +128,13 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
           email: acct.email,
           photoUrl: acct.photoUrl,
         ));
-        // Se auto-sync habilitado, inicia observação contínua
+        // Se auto-sync habilitado, primeiro tenta sincronizar/restaurar do remoto
+        // e só então inicia a observação contínua para evitar que mudanças
+        // locais geradas na inicialização disparem um backup automático.
         if (_auto) {
-          await startRealtimeSync();
           // Executa sincronização automática de restauração ao iniciar, se necessário
           await _runStartupAutoSync();
+          await startRealtimeSync();
         }
       } else {
         _authCtrl.add(null);
@@ -204,11 +215,24 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
             final data = jsonDecode(jsonStr) as Map<String, dynamic>;
             final errors = BackupCodec.validate(data);
             if (errors.isEmpty || BackupCodec.isOnlyOrphanHistoryErrors(errors)) {
+              debugPrint('[CloudDrive] Iniciando restauração automática de $latestTs');
               await BackupCodec.restore(db, data);
-              await prefs.setString(_prefsKeyLastUpdate, latestTs);
+              // Persiste metadados de restauração (para UI/providers)
+              try {
+                debugPrint('[CloudDrive] Gravando metadados da restauração automática...');
+                await prefs.setString(_prefsKeyLastUpdate, latestTs);
+                // Também salvar explicitamente como última restauração
+                await prefs.setString(_prefsKeyLastRestoreTs, latestTs);
+                final name = latestFile?.name ?? '';
+                if (name.isNotEmpty) await prefs.setString(_prefsKeyLastRestoreFile, name);
+                debugPrint('[CloudDrive] Metadados gravados: timestamp=$latestTs, arquivo=$name');
+              } catch (e) {
+                debugPrint('[CloudDrive] Erro ao gravar metadados: $e');
+              }
               // Emite evento de restauração com o timestamp do backup restaurado
               final restoredAt = _parseTimestampToLocal(latestTs);
               if (restoredAt != null) {
+                _lastRestoreEvent = restoredAt;
                 _restoreCtrl.add(restoredAt);
               }
             }
@@ -301,13 +325,13 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_prefsKeyAutoSync, true);
     } catch (_) {}
-    await startRealtimeSync();
-    // Executa sincronização de inicialização (restaura se necessário), sem criar backup inicial
+    // Executa sincronização de inicialização (restaura se necessário) antes de iniciar observação contínua
     try {
       await _runStartupAutoSync();
     } catch (_) {
       // silencioso: não interromper fluxo de login
     }
+    await startRealtimeSync();
   }
 
   @override
@@ -477,6 +501,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       } catch (_) {}
       final restoredAt = _parseTimestampToLocal(ts);
       if (restoredAt != null) {
+        _lastRestoreEvent = restoredAt;
         _restoreCtrl.add(restoredAt);
       }
     }
