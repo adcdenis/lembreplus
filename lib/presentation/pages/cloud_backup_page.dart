@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lembreplus/state/providers.dart';
@@ -61,7 +60,8 @@ class CloudBackupPage extends ConsumerWidget {
                   return Text(text, maxLines: 2);
                 },
                 loading: () => const LinearProgressIndicator(),
-                error: (e, _) => Text('Erro ao carregar última restauração: $e'),
+                error: (e, _) =>
+                    Text('Erro ao carregar última restauração: $e'),
               ),
             ],
           ),
@@ -75,53 +75,78 @@ class CloudBackupPage extends ConsumerWidget {
                   final status = user == null
                       ? 'Não autenticado'
                       : 'Autenticado: ${user.email ?? user.displayName ?? user.uid}';
-                  return Text(status, maxLines: 1, overflow: TextOverflow.ellipsis);
+                  return Text(
+                    status,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  );
                 },
                 loading: () => const LinearProgressIndicator(),
-                error: (e, _) => Text('Erro auth: $e', maxLines: 1, overflow: TextOverflow.ellipsis),
+                error: (e, _) => Text(
+                  'Erro auth: $e',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      try {
-                        await cloudSvc.signInWithGoogle();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Login Google concluído')),
-                          );
-                          // Indica visualmente o backup inicial criado após o login
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Backup inicial criado no Drive')),
-                          );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Falha no login: $e')),
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.login),
-                    label: const Text('Entrar com Google'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      await cloudSvc.signOut();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Logout concluído')),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Sair'),
-                  ),
-                ],
+              cloudUserAsync.when(
+                data: (user) {
+                  final children = <Widget>[];
+                  if (user == null) {
+                    children.add(
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          try {
+                            await cloudSvc.signInWithGoogle();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Login Google concluído'),
+                                ),
+                              );
+                              // Indica visualmente o backup inicial criado após o login
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Backup inicial criado no Drive'),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Falha no login: $e')),
+                              );
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.login),
+                        label: const Text('Entrar com Google'),
+                      ),
+                    );
+                  } else {
+                    children.add(
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          await cloudSvc.signOut();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Logout concluído')),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.logout),
+                        label: const Text('Sair'),
+                      ),
+                    );
+                  }
+                  return Wrap(spacing: 8, runSpacing: 8, children: children);
+                },
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [Text('Erro auth: $e')],
+                ),
               ),
             ],
           ),
@@ -143,20 +168,7 @@ class CloudBackupPage extends ConsumerWidget {
                 },
               ),
               const SizedBox(width: 8),
-              Row(
-                children: [
-                  const Text('Sincronização automática'),
-                  if (autoSyncAsync.isLoading)
-                    const Padding(
-                      padding: EdgeInsets.only(left: 8),
-                      child: SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
-                ],
-              ),
+              Row(children: [const Text('Sincronização automática')]),
             ],
           ),
           const SizedBox(height: 12),
@@ -213,11 +225,6 @@ class CloudBackupPage extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 24),
-          if (!kIsWeb) ...[
-            const Text(
-              'Observação: Esta tela foca apenas recursos de nuvem. Exports locais continuam na tela Backup.',
-            ),
-          ],
         ],
       ),
     );

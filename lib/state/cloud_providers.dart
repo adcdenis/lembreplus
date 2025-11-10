@@ -30,6 +30,12 @@ final cloudRestoreEventProvider = StreamProvider<DateTime>((ref) {
   return svc.restoreEvents();
 });
 
+/// Evento de backup: emite a data/hora local do backup criado
+final cloudBackupEventProvider = StreamProvider<DateTime>((ref) {
+  final svc = ref.read(cloudSyncServiceProvider);
+  return svc.backupEvents();
+});
+
 class CloudActionInfo {
   final DateTime? when;
   final String? fileName;
@@ -51,6 +57,8 @@ DateTime? _parseTsToLocal(String ts) {
 }
 
 final cloudLastBackupInfoProvider = FutureProvider<CloudActionInfo>((ref) async {
+  // Recarrega quando um novo backup é emitido
+  ref.watch(cloudBackupEventProvider);
   final prefs = await SharedPreferences.getInstance();
   final ts = prefs.getString('cloud_last_backup_timestamp');
   final file = prefs.getString('cloud_last_backup_file');
@@ -58,6 +66,8 @@ final cloudLastBackupInfoProvider = FutureProvider<CloudActionInfo>((ref) async 
 });
 
 final cloudLastRestoreInfoProvider = FutureProvider<CloudActionInfo>((ref) async {
+  // Recarrega quando uma restauração é emitida
+  ref.watch(cloudRestoreEventProvider);
   final prefs = await SharedPreferences.getInstance();
   final ts = prefs.getString('cloud_last_restore_timestamp');
   final file = prefs.getString('cloud_last_restore_file');

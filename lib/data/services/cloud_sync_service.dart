@@ -28,6 +28,9 @@ abstract class CloudSyncService {
   /// Backup imediato dos dados locais para a nuvem
   Future<void> backupNow();
 
+  /// Eventos de backup concluído, emitindo a data/hora local do backup criado.
+  Stream<DateTime> backupEvents();
+
   /// Restaura os dados da nuvem para o dispositivo local
   Future<void> restoreNow();
 
@@ -47,6 +50,7 @@ class NoopCloudSyncService implements CloudSyncService {
   late final StreamController<CloudUser?> _authCtrl;
   late final StreamController<bool> _autoSyncCtrl;
   late final StreamController<DateTime> _restoreCtrl;
+  late final StreamController<DateTime> _backupCtrl;
   bool _auto = false;
   StreamSubscription? _countersSub;
   Timer? _debounce;
@@ -67,6 +71,7 @@ class NoopCloudSyncService implements CloudSyncService {
       },
     );
     _restoreCtrl = StreamController<DateTime>.broadcast();
+    _backupCtrl = StreamController<DateTime>.broadcast();
     // Bootstrap: carregar preferências de auto-sync
     Future.microtask(_bootstrap);
   }
@@ -157,6 +162,8 @@ class NoopCloudSyncService implements CloudSyncService {
     if (json.isEmpty) {
       throw 'Falha ao preparar backup';
     }
+    // Noop: emite evento para que UI possa se atualizar em ambientes sem Drive
+    _backupCtrl.add(DateTime.now());
   }
 
   @override
@@ -167,6 +174,9 @@ class NoopCloudSyncService implements CloudSyncService {
 
   @override
   Stream<DateTime> restoreEvents() => _restoreCtrl.stream;
+
+  @override
+  Stream<DateTime> backupEvents() => _backupCtrl.stream;
 
   @override
   Future<void> startRealtimeSync() async {

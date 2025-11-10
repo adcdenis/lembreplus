@@ -105,14 +105,19 @@ class BackupServiceImpl implements BackupService {
     final content = await file.readAsString();
     final data = jsonDecode(content) as Map<String, dynamic>;
     final errors = BackupCodec.validate(data);
-    if (errors.isNotEmpty) {
+    if (errors.isNotEmpty && !BackupCodec.isOnlyOrphanHistoryErrors(errors)) {
       final report = StringBuffer('Validação falhou (${errors.length} problemas):\n');
       for (final e in errors) {
         report.writeln('- $e');
       }
       throw report.toString();
     }
+    // Prossegue com restauração leniente quando os únicos erros são históricos órfãos
+    final skipped = errors.isNotEmpty ? BackupCodec.countOrphanHistory(data) : 0;
     await BackupCodec.restore(db, data);
+    if (skipped > 0) {
+      return 'Dados importados com sucesso de ${file.path} (histórico ignorado: $skipped registro(s) órfão(s))';
+    }
     return 'Dados importados com sucesso de ${file.path}';
   }
 

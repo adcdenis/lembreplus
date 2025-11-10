@@ -30,7 +30,11 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
   late final StreamController<CloudUser?> _authCtrl;
   late final StreamController<bool> _autoSyncCtrl;
   late final StreamController<DateTime> _restoreCtrl;
+  late final StreamController<DateTime> _backupCtrl;
   bool _auto = false;
+  DateTime? _suppressAutoBackupUntil; // janela de supressão de backup após restauração
+  Timer? _suppressionTimer; // dispara um backup logo após fim da supressão se houve mudanças
+  bool _suppressedChange = false; // houve mudança local durante supressão
 
   final GoogleSignIn _signIn = GoogleSignIn(
     scopes: useDriveAppDataSpace
@@ -78,6 +82,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       },
     );
     _restoreCtrl = StreamController<DateTime>.broadcast();
+    _backupCtrl = StreamController<DateTime>.broadcast();
     // Emite usuário atual ao iniciar
     _signIn.onCurrentUserChanged.listen((account) {
       if (account == null) {
@@ -180,13 +185,25 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       if (last.isEmpty || latestTs.compareTo(last) > 0) {
         // remoto é mais recente → baixa e restaura
         try {
+          // Suprimir backups automáticos por um período após restauração
+          _suppressAutoBackupUntil = DateTime.now().add(const Duration(seconds: 30));
+          _suppressedChange = false;
+          _suppressionTimer?.cancel();
+          final delay = _suppressAutoBackupUntil!.difference(DateTime.now());
+          _suppressionTimer = Timer(delay + const Duration(seconds: 1), () async {
+            // Se houve mudanças durante supressão, realiza um backup logo após terminar
+            if (_auto && _suppressedChange) {
+              try { await backupNow(); } catch (_) {}
+            }
+            _suppressedChange = false;
+          });
           final url = Uri.parse('https://www.googleapis.com/drive/v3/files/${latestFile.id}?alt=media');
           final response = await client.get(url);
           if (response.statusCode == 200) {
             final jsonStr = response.body;
             final data = jsonDecode(jsonStr) as Map<String, dynamic>;
             final errors = BackupCodec.validate(data);
-            if (errors.isEmpty) {
+            if (errors.isEmpty || BackupCodec.isOnlyOrphanHistoryErrors(errors)) {
               await BackupCodec.restore(db, data);
               await prefs.setString(_prefsKeyLastUpdate, latestTs);
               // Emite evento de restauração com o timestamp do backup restaurado
@@ -229,7 +246,24 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       // No appDataSpace, não há pasta arbitrária; retornamos marcador especial
       return 'appDataFolder';
     }
-    if (_backupFolderId != null) return _backupFolderId!;
+    // Se temos cache, verifica se ainda existe e não está na lixeira
+    if (_backupFolderId != null) {
+      try {
+        final f = await api.files.get(_backupFolderId!, $fields: 'id,name,trashed');
+        final file = f as drive.File;
+        final trashed = file.trashed ?? false;
+        final name = file.name ?? '';
+        // Reutiliza apenas se não estiver na lixeira e o nome coincidir com o nome canônico configurado
+        if (!trashed && name == cloudDriveFolderName) {
+          return _backupFolderId!;
+        } else {
+          _backupFolderId = null; // pasta renomeada ou na lixeira → força recriação/localização por nome
+        }
+      } catch (_) {
+        // id pode ter sido removido; limpa cache e prossegue para localizar/criar
+        _backupFolderId = null;
+      }
+    }
     // Procurar pasta existente com nome configurado
     final res = await api.files.list(
       q: "mimeType = 'application/vnd.google-apps.folder' and name = '${cloudDriveFolderName.replaceAll("'", "\\'")}' and trashed = false",
@@ -347,6 +381,8 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
         if (ts != null) {
           await prefs.setString(_prefsKeyLastBackupTs, ts);
           await prefs.setString(_prefsKeyLastUpdate, ts);
+          final when = _parseTimestampToLocal(ts) ?? DateTime.now();
+          _backupCtrl.add(when);
         }
         await prefs.setString(_prefsKeyLastBackupFile, name);
       } catch (_) {}
@@ -365,6 +401,8 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       if (ts != null) {
         await prefs.setString(_prefsKeyLastBackupTs, ts);
         await prefs.setString(_prefsKeyLastUpdate, ts);
+        final when = _parseTimestampToLocal(ts) ?? DateTime.now();
+        _backupCtrl.add(when);
       }
       await prefs.setString(_prefsKeyLastBackupFile, name);
     } catch (_) {}
@@ -409,11 +447,22 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
     final jsonStr = response.body;
     final data = jsonDecode(jsonStr) as Map<String, dynamic>;
     final errors = BackupCodec.validate(data);
-    if (errors.isNotEmpty) {
+    if (errors.isNotEmpty && !BackupCodec.isOnlyOrphanHistoryErrors(errors)) {
       final report = StringBuffer('Validação falhou (${errors.length} problemas):\n');
       for (final e in errors) { report.writeln('- $e'); }
       throw report.toString();
     }
+    // Suprimir backups automáticos por um período após restauração manual
+    _suppressAutoBackupUntil = DateTime.now().add(const Duration(seconds: 30));
+    _suppressedChange = false;
+    _suppressionTimer?.cancel();
+    final delay = _suppressAutoBackupUntil!.difference(DateTime.now());
+    _suppressionTimer = Timer(delay + const Duration(seconds: 1), () async {
+      if (_auto && _suppressedChange) {
+        try { await backupNow(); } catch (_) {}
+      }
+      _suppressedChange = false;
+    });
     await BackupCodec.restore(db, data);
     // Limpeza após restauração: manter apenas os 10 mais recentes
     await _cleanupOldBackups(api);
@@ -452,6 +501,12 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
 
   void _onLocalChange() {
     if (!_auto) return;
+    // Evita criar um backup imediatamente após uma restauração
+    if (_suppressAutoBackupUntil != null && DateTime.now().isBefore(_suppressAutoBackupUntil!)) {
+      // marca que houve alterações durante supressão
+      _suppressedChange = true;
+      return;
+    }
     _debounce?.cancel();
     _debounce = Timer(const Duration(seconds: 20), () async {
       try {
@@ -548,4 +603,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
 
   @override
   Stream<DateTime> restoreEvents() => _restoreCtrl.stream;
+
+  @override
+  Stream<DateTime> backupEvents() => _backupCtrl.stream;
 }
