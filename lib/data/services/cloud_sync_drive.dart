@@ -302,11 +302,9 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       await prefs.setBool(_prefsKeyAutoSync, true);
     } catch (_) {}
     await startRealtimeSync();
-
-    // Criar um backup inicial no Drive e atualizar timestamp local
+    // Executa sincronização de inicialização (restaura se necessário), sem criar backup inicial
     try {
-      await backupNow();
-      await _updateLastTimestampFromDriveLatest();
+      await _runStartupAutoSync();
     } catch (_) {
       // silencioso: não interromper fluxo de login
     }
@@ -487,7 +485,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
   @override
   Future<void> startRealtimeSync() async {
     if (!_auto) return;
-    _countersSub ??= db.watchAllCounters().listen((_) => _onLocalChange());
+    _countersSub ??= db.watchAllCounters().skip(1).listen((_) => _onLocalChange());
     // Política: não sincronizar por mudanças de categorias
   }
 

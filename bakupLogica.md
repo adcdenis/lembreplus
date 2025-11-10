@@ -36,8 +36,8 @@ Este documento descreve, de forma completa e atualizada, o funcionamento do back
 - Ações:
   - Autentica o usuário via Google Sign-In.
   - Habilita o auto-sync por padrão (`cloud_auto_sync_enabled = true`) e inicia `startRealtimeSync()`.
-  - Cria um backup inicial (`backupNow()`).
-  - Atualiza `cloud_last_update_timestamp` a partir do último arquivo no Drive (para evitar restauração automática desnecessária).
+  - Executa a sincronização de inicialização (`_runStartupAutoSync()`), que verifica e restaura um backup remoto mais recente, se necessário.
+  - Não cria backup inicial automaticamente.
 
 ### Backup Manual
 
