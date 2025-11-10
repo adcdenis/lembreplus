@@ -355,8 +355,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                           final eff = _effectiveDate(c.eventDate, c.recurrence);
                           final past = isPast(eff, now: _now);
                           final diffStr = _formatDiff(eff);
-                              final label = past ? diffStr : diffStr;
-                              final timeColor = past ? Colors.blue : Colors.green;
+                          final label = past ? 'Passaram $diffStr' : 'Faltam $diffStr';
+                              final timeColor = past ? Colors.red : Colors.blue;
                               final recurrenceVal = Recurrence.fromString(c.recurrence);
                               return Container(
                                 decoration: BoxDecoration(
