@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:lembreplus/state/providers.dart';
 import 'package:lembreplus/domain/recurrence.dart';
 import 'package:lembreplus/domain/time_utils.dart';
+import 'package:lembreplus/data/models/counter.dart';
 
 class CounterListPage extends ConsumerStatefulWidget {
   const CounterListPage({super.key});
@@ -31,6 +33,40 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
     }
   }
   String _pluralize(int value, String singular, String plural) => value == 1 ? singular : plural;
+  
+  void _shareCounter(BuildContext context, Counter counter, DateTime effectiveDate, bool isFuture) {
+    final now = DateTime.now();
+    final comps = _calendarComponents(now, effectiveDate);
+    final timeText = isFuture ? 'Faltam' : 'Passaram';
+    
+    String formattedTime = '';
+    if (comps.years > 0) formattedTime += '${comps.years} ano${comps.years == 1 ? '' : 's'}, ';
+    if (comps.months > 0) formattedTime += '${comps.months} mês${comps.months == 1 ? '' : 'es'}, ';
+    if (comps.days > 0) formattedTime += '${comps.days} dia${comps.days == 1 ? '' : 's'}, ';
+    if (comps.hours > 0) formattedTime += '${comps.hours} hora${comps.hours == 1 ? '' : 's'}, ';
+    if (comps.minutes > 0) formattedTime += '${comps.minutes} minuto${comps.minutes == 1 ? '' : 's'}, ';
+    if (comps.seconds > 0) formattedTime += '${comps.seconds} segundo${comps.seconds == 1 ? '' : 's'}, ';
+    
+    // Remove a vírgula final se houver tempo formatado
+    if (formattedTime.endsWith(', ')) {
+      formattedTime = formattedTime.substring(0, formattedTime.length - 2);
+    }
+    
+    final shareText = '''
+📊 **${counter.name}**
+
+${counter.description ?? 'Sem descrição'}
+
+📅 **Data do evento:** ${DateFormat('dd/MM/yyyy HH:mm').format(counter.eventDate)}
+🔄 **Repetição:** ${_labelForRecurrence(Recurrence.fromString(counter.recurrence))}
+${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.category}\n' : ''}
+⏰ **Tempo ${timeText.toLowerCase()}:** ${formattedTime.isNotEmpty ? formattedTime : 'menos de 1 segundo'}
+
+📱 Compartilhado via LembrePlus
+''';
+
+    Share.share(shareText, subject: 'Contador: ${counter.name}');
+  }
   
   TimeDiffComponents _calendarComponents(DateTime a, DateTime b) {
     // Usa diferença de calendário normalizada em horário local
@@ -334,7 +370,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                           : [scheme.errorContainer.withValues(alpha: 0.6), scheme.errorContainer.withValues(alpha: 0.3)],
                                     ),
                                   ),
-                                  padding: const EdgeInsets.all(16),
+                                  padding: const EdgeInsets.all(12),
                                   child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -343,52 +379,134 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
+                                          // Header com ícone, título e ações
                                           Row(
                                             children: [
-                                              Text(
-                                                isFuture ? '🗓️' : '🕰️',
-                                                style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: isFuture ? scheme.primary : scheme.error,
+                                              // Ícone principal mais compacto
+                                              Container(
+                                                padding: const EdgeInsets.all(4),
+                                                decoration: BoxDecoration(
+                                                  color: isFuture
+                                                      ? scheme.primary.withOpacity(0.1)
+                                                      : scheme.error.withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  isFuture ? '🗓️' : '🕰️',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    color: isFuture ? scheme.primary : scheme.error,
+                                                  ),
                                                 ),
                                               ),
-                                              const SizedBox(width: 8),
+                                              const SizedBox(width: 12),
+                                              // Título com mais espaço
                                               Expanded(
-                                                child: Text(c.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                                              ),
-                                              Wrap(spacing: 8, children: [
-                                                IconButton.filledTonal(
-                                                  tooltip: 'Histórico',
-                                                  icon: const Text('📜', style: TextStyle(fontSize: 20)),
-                                                  onPressed: () => context.go('/counter/${c.id}/history'),
-                                                ),
-                                                IconButton.filledTonal(
-                                                  tooltip: 'Excluir',
-                                                  icon: const Text('🗑️', style: TextStyle(fontSize: 20)),
-                                                  onPressed: () async {
-                                                    final confirm = await showDialog<bool>(
-                                                      context: context,
-                                                      builder: (ctx) => AlertDialog(
-                                                        title: const Text('Excluir contador'),
-                                                        content: const Text('Tem certeza que deseja excluir? Esta ação não pode ser desfeita.'),
-                                                        actions: [
-                                                          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
-                                                          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Excluir')),
-                                                        ],
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      c.name,
+                                                      style: const TextStyle(
+                                                        fontSize: 20,
+                                                        fontWeight: FontWeight.w700,
+                                                        height: 1.2
                                                       ),
-                                                    );
-                                                    if (confirm == true) {
-                                                      await repo.delete(c.id!);
-                                                      if (context.mounted) {
-                                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contador excluído')));
-                                                      }
-                                                    }
-                                                  },
+                                                      maxLines: 2,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ],
                                                 ),
-                                              ]),
+                                              ),
+                                              // Botões de ação compactos
+                                              Container(
+                                                decoration: BoxDecoration(
+                                                  color: scheme.surfaceVariant.withOpacity(0.3),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Tooltip(
+                                                      message: 'Histórico',
+                                                      child: Material(
+                                                        color: Colors.transparent,
+                                                        child: InkWell(
+                                                          borderRadius: BorderRadius.circular(6),
+                                                          onTap: () => context.go('/counter/${c.id}/history'),
+                                                          child: const Padding(
+                                                            padding: EdgeInsets.all(8),
+                                                            child: Icon(
+                                                              Icons.history,
+                                                              size: 14,
+                                                              color: Colors.grey,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const VerticalDivider(width: 1),
+                                                    Tooltip(
+                                                      message: 'Compartilhar',
+                                                      child: Material(
+                                                        color: Colors.transparent,
+                                                        child: InkWell(
+                                                          borderRadius: BorderRadius.circular(6),
+                                                          onTap: () => _shareCounter(context, c, effectiveDate, isFuture),
+                                                          child: const Padding(
+                                                            padding: EdgeInsets.all(8),
+                                                            child: Icon(
+                                                              Icons.share,
+                                                              size: 14,
+                                                              color: Colors.grey,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const VerticalDivider(width: 1),
+                                                    Tooltip(
+                                                      message: 'Excluir',
+                                                      child: Material(
+                                                        color: Colors.transparent,
+                                                        child: InkWell(
+                                                          borderRadius: BorderRadius.circular(6),
+                                                          onTap: () async {
+                                                            final confirm = await showDialog<bool>(
+                                                              context: context,
+                                                              builder: (ctx) => AlertDialog(
+                                                                title: const Text('Excluir contador'),
+                                                                content: const Text('Tem certeza que deseja excluir? Esta ação não pode ser desfeita.'),
+                                                                actions: [
+                                                                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+                                                                  TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Excluir')),
+                                                                ],
+                                                              ),
+                                                            );
+                                                            if (confirm == true) {
+                                                              await repo.delete(c.id!);
+                                                              if (context.mounted) {
+                                                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contador excluído')));
+                                                              }
+                                                            }
+                                                          },
+                                                          child: const Padding(
+                                                            padding: EdgeInsets.all(8),
+                                                            child: Icon(
+                                                              Icons.delete_outline,
+                                                              size: 14,
+                                                              color: Colors.grey,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                             ],
                                           ),
-                                          const SizedBox(height: 8),
+                                          const SizedBox(height: 6),
                                           FittedBox(
                                             fit: BoxFit.scaleDown,
                                             alignment: Alignment.centerLeft,
@@ -421,7 +539,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
                                               ],
                                             ),
                                           ),
-                                          const SizedBox(height: 12),
+                                          const SizedBox(height: 8),
                                           Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
