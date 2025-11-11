@@ -1,5 +1,16 @@
 # Lembre+
 
+## Resumo do Projeto
+
+O "Lembre+" é um aplicativo de gerenciamento de lembretes desenvolvido em Flutter, projetado especificamente para a plataforma Android. O núcleo do aplicativo é construído em torno de tecnologias modernas do ecossistema Flutter, incluindo:
+
+*   **Gerenciamento de Estado:** Utiliza `flutter_riverpod` para um gerenciamento de estado reativo e escalável.
+*   **Navegação:** Emprega `go_router` para uma navegação declarativa e baseada em rotas.
+*   **Persistência de Dados:** Usa `Drift` (uma implementação de `Moor`/`SQLite`) para armazenar dados localmente no dispositivo, garantindo que os lembretes sejam salvos de forma segura.
+*   **Backup e Sincronização:** Oferece funcionalidades robustas de backup e restauração, permitindo que os usuários exportem seus dados para um arquivo JSON. Além disso, integra-se com o Google Drive para sincronização em nuvem, permitindo backups automáticos e manuais sem depender do Firebase.
+
+A estrutura do projeto é bem definida, separando claramente as camadas de apresentação (telas e widgets), dados (serviços, banco de dados) e estado (providers), o que facilita a manutenção e o desenvolvimento. O aplicativo está configurado para o idioma português do Brasil e inclui testes para validar a navegação, a lógica de backup e as validações de formulário.
+
 Aplicativo Flutter para gerenciamento de lembretes com navegação moderna, persistência local e suporte a backup/restauração em JSON. O projeto está pronto para distribuição em Android (APK). Plataformas Web e Desktop foram desabilitadas para focar em mobile.
 
 ## Estrutura do projeto
