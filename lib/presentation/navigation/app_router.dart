@@ -5,7 +5,6 @@ import '../pages/counter_detail_page.dart';
 import '../pages/counter_form_page.dart';
 import '../pages/counter_list_page.dart';
 import '../pages/counter_history_page.dart';
-import '../pages/summary_page.dart';
 import '../pages/reports_page.dart';
 import '../pages/backup_page.dart';
 import '../pages/cloud_backup_page.dart';
@@ -56,11 +55,6 @@ class AppRouter {
               final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
               return MaterialPage(child: CounterFormPage(counterId: id));
             },
-          ),
-          GoRoute(
-            path: '/summary',
-            name: 'summary',
-            pageBuilder: (context, state) => const MaterialPage(child: SummaryPage()),
           ),
           GoRoute(
             path: '/reports',

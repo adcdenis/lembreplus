@@ -439,9 +439,9 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                                           onTap: () => context.go('/counter/${c.id}/history'),
                                                           child: const Padding(
                                                             padding: EdgeInsets.all(8),
-                                                            child: Icon(
+                                                            child: const Icon(
                                                               Icons.history,
-                                                              size: 14,
+                                                              size: 16.8,
                                                               color: Colors.grey,
                                                             ),
                                                           ),
@@ -458,9 +458,9 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                                           onTap: () => _shareCounter(context, c, effectiveDate, isFuture),
                                                           child: const Padding(
                                                             padding: EdgeInsets.all(8),
-                                                            child: Icon(
+                                                            child: const Icon(
                                                               Icons.share,
-                                                              size: 14,
+                                                              size: 16.8,
                                                               color: Colors.grey,
                                                             ),
                                                           ),
@@ -495,9 +495,9 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                                           },
                                                           child: const Padding(
                                                             padding: EdgeInsets.all(8),
-                                                            child: Icon(
+                                                            child: const Icon(
                                                               Icons.delete_outline,
-                                                              size: 14,
+                                                              size: 16.8,
                                                               color: Colors.grey,
                                                             ),
                                                           ),
