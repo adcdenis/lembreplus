@@ -223,7 +223,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
                 await prefs.setString(_prefsKeyLastUpdate, latestTs);
                 // Também salvar explicitamente como última restauração
                 await prefs.setString(_prefsKeyLastRestoreTs, latestTs);
-                final name = latestFile?.name ?? '';
+                final name = latestFile.name ?? '';
                 if (name.isNotEmpty) await prefs.setString(_prefsKeyLastRestoreFile, name);
                 debugPrint('[CloudDrive] Metadados gravados: timestamp=$latestTs, arquivo=$name');
               } catch (e) {
@@ -540,45 +540,6 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
     });
   }
 
-  /// Atualiza o timestamp local com base no backup mais recente no Drive
-  Future<void> _updateLastTimestampFromDriveLatest() async {
-    try {
-      final api = await _driveApi();
-      String spaces = useDriveAppDataSpace ? 'appDataFolder' : 'drive';
-      String q = "mimeType = 'application/json' and name contains 'lembre_backup_' and trashed = false";
-      if (!useDriveAppDataSpace) {
-        final folderId = await _ensureBackupFolderId(api);
-        q = "$q and '$folderId' in parents";
-      }
-      final res = await api.files.list(
-        q: q,
-        orderBy: 'name desc',
-        pageSize: 10,
-        spaces: spaces,
-        $fields: 'files(id,name)'
-      );
-      final files = res.files ?? [];
-      if (files.isEmpty) return;
-      final regexp = RegExp(r"^lembre_backup_(\d{8}_\d{6})\.json");
-      String? latestTs;
-      for (final f in files) {
-        final name = f.name ?? '';
-        final m = regexp.firstMatch(name);
-        if (m != null) {
-          final ts = m.group(1)!;
-          if (latestTs == null || ts.compareTo(latestTs) > 0) {
-            latestTs = ts;
-          }
-        }
-      }
-      if (latestTs != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_prefsKeyLastUpdate, latestTs);
-      }
-    } catch (_) {
-      // silencioso
-    }
-  }
 
   /// Remove backups excedentes, mantendo apenas os 10 mais recentes.
   Future<void> _cleanupOldBackups(drive.DriveApi api) async {

@@ -8,6 +8,7 @@ import 'package:lembreplus/state/providers.dart';
 import 'package:lembreplus/domain/recurrence.dart';
 import 'package:lembreplus/domain/time_utils.dart';
 import 'package:lembreplus/data/models/counter.dart';
+import 'package:lembreplus/core/text_sanitizer.dart';
 
 class CounterListPage extends ConsumerStatefulWidget {
   const CounterListPage({super.key});
@@ -62,10 +63,12 @@ ${counter.description ?? 'Sem descrição'}
 ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.category}\n' : ''}
 ⏰ **Tempo ${timeText.toLowerCase()}:** ${formattedTime.isNotEmpty ? formattedTime : 'menos de 1 segundo'}
 
-📱 Compartilhado via LembrePlus
+📱 Compartilhado por Lembre+
 ''';
 
-    Share.share(shareText, subject: 'Contador: ${counter.name}');
+    final sanitizedText = sanitizeForShare(shareText);
+    final sanitizedSubject = sanitizeForShare('Contador: ${counter.name}');
+    Share.share(sanitizedText, subject: sanitizedSubject);
   }
   
   TimeDiffComponents _calendarComponents(DateTime a, DateTime b) {
@@ -387,8 +390,8 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                                 padding: const EdgeInsets.all(4),
                                                 decoration: BoxDecoration(
                                                   color: isFuture
-                                                      ? scheme.primary.withOpacity(0.1)
-                                                      : scheme.error.withOpacity(0.1),
+                                                      ? scheme.primary.withValues(alpha: 0.1)
+                                                      : scheme.error.withValues(alpha: 0.1),
                                                   borderRadius: BorderRadius.circular(8),
                                                 ),
                                                 child: Text(
@@ -421,7 +424,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                               // Botões de ação compactos
                                               Container(
                                                 decoration: BoxDecoration(
-                                                  color: scheme.surfaceVariant.withOpacity(0.3),
+                                                  color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
                                                   borderRadius: BorderRadius.circular(8),
                                                 ),
                                                 child: Row(

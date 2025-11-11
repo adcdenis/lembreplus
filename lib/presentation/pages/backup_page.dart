@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lembreplus/state/providers.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:lembreplus/core/text_sanitizer.dart';
 // Removida a seção de nuvem desta tela. Recursos de nuvem foram movidos para CloudBackupPage.
 
 class BackupPage extends ConsumerWidget {
@@ -47,10 +48,12 @@ class BackupPage extends ConsumerWidget {
                       final now = DateTime.now();
                       final ts =
                           '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+                      final subject = sanitizeForShare('Backup Lembre+');
+                      final text = sanitizeForShare('Backup exportado em $ts');
                       await Share.shareXFiles(
                         [XFile(path, mimeType: 'application/json')],
-                        subject: 'Backup Lembre+',
-                        text: 'Backup exportado em $ts',
+                        subject: subject,
+                        text: text,
                       );
                     } catch (e) {
                       if (context.mounted) {
