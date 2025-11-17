@@ -48,20 +48,24 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
     final timeText = isFuture ? 'Faltam' : 'Passaram';
 
     String formattedTime = '';
-    if (comps.years > 0)
+    if (comps.years > 0) {
       formattedTime += '${comps.years} ano${comps.years == 1 ? '' : 's'}, ';
-    if (comps.months > 0)
+    }
+    if (comps.months > 0) {
       formattedTime += '${comps.months} mês${comps.months == 1 ? '' : 'es'}, ';
-    if (comps.days > 0)
+    }
+    if (comps.days > 0) {
       formattedTime += '${comps.days} dia${comps.days == 1 ? '' : 's'}, ';
-    if (comps.hours > 0)
+    }
+    if (comps.hours > 0) {
       formattedTime += '${comps.hours} hora${comps.hours == 1 ? '' : 's'}, ';
-    if (comps.minutes > 0)
-      formattedTime +=
-          '${comps.minutes} minuto${comps.minutes == 1 ? '' : 's'}, ';
-    if (comps.seconds > 0)
-      formattedTime +=
-          '${comps.seconds} segundo${comps.seconds == 1 ? '' : 's'}, ';
+    }
+    if (comps.minutes > 0) {
+      formattedTime += '${comps.minutes} minuto${comps.minutes == 1 ? '' : 's'}, ';
+    }
+    if (comps.seconds > 0) {
+      formattedTime += '${comps.seconds} segundo${comps.seconds == 1 ? '' : 's'}, ';
+    }
 
     // Remove a vírgula final se houver tempo formatado
     if (formattedTime.endsWith(', ')) {

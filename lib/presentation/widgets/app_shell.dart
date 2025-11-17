@@ -82,6 +82,9 @@ class AppShell extends ConsumerWidget {
                 labelType: (constraints.maxWidth >= 1200)
                     ? NavigationRailLabelType.none
                     : NavigationRailLabelType.all,
+                useIndicator: true,
+                indicatorColor: Theme.of(context).colorScheme.primaryContainer,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 trailing: const Padding(
                   padding: EdgeInsets.all(12),
                   child: _VersionFooter(),
@@ -150,61 +153,84 @@ class _AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final location = GoRouterState.of(context).uri.toString();
+    int selectedIndex = 0;
+    if (location.startsWith('/counters')) selectedIndex = 1;
+    if (location.startsWith('/reports')) selectedIndex = 2;
+    if (location.startsWith('/backup')) selectedIndex = 3;
+    if (location.startsWith('/cloud-backup')) selectedIndex = 4;
+
+    Widget tile({required int index, required String label, required Widget leading}) {
+      final selected = selectedIndex == index;
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: ListTile(
+          leading: leading,
+          title: Text(label,
+              style: TextStyle(
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              )),
+          selected: selected,
+          selectedTileColor: cs.primaryContainer,
+          tileColor: cs.surfaceContainerHigh,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          onTap: () {
+            Scaffold.maybeOf(context)?.closeDrawer();
+            onNavigateIndex(index);
+          },
+        ),
+      );
+    }
+
     return Drawer(
+      backgroundColor: cs.surface,
       child: SafeArea(
-        child: ListView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DrawerHeader(
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Row(
-                  children: [
-                    Icon(Icons.event_note, size: 24),
-                    SizedBox(width: 8),
-                    Text('Lembre+', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
-                  ],
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [cs.primaryContainer, cs.primary],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
               ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: cs.onPrimary.withValues(alpha: 0.15),
+                    child: const Icon(Icons.event_note, color: Colors.white),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text('Lembre+', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text('Organize seus lembretes', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                      ],
+                    ),
+                  ),
+                  const _ProfileAvatar(),
+                ],
+              ),
             ),
-            ListTile(
-              leading: const Text('📋', style: TextStyle(fontSize: 20)),
-              title: const Text('Dashboard'),
-              onTap: () {
-                Scaffold.maybeOf(context)?.closeDrawer();
-                onNavigateIndex(0);
-              },
-            ),
-            ListTile(
-              leading: const Text('🧮', style: TextStyle(fontSize: 20)),
-              title: const Text('Contadores'),
-              onTap: () {
-                Scaffold.maybeOf(context)?.closeDrawer();
-                onNavigateIndex(1);
-              },
-            ),
-            ListTile(
-              leading: const Text('📈', style: TextStyle(fontSize: 20)),
-              title: const Text('Relatórios'),
-              onTap: () {
-                Scaffold.maybeOf(context)?.closeDrawer();
-                onNavigateIndex(2);
-              },
-            ),
-            ListTile(
-              leading: const Text('🔄', style: TextStyle(fontSize: 20)),
-              title: const Text('Backup'),
-              onTap: () {
-                Scaffold.maybeOf(context)?.closeDrawer();
-                onNavigateIndex(3);
-              },
-            ),
-            ListTile(
-              leading: const Text('☁️', style: TextStyle(fontSize: 20)),
-              title: const Text('Backup na Nuvem'),
-              onTap: () {
-                Scaffold.maybeOf(context)?.closeDrawer();
-                onNavigateIndex(4);
-              },
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  tile(index: 0, label: 'Dashboard', leading: const Text('📋', style: TextStyle(fontSize: 20))),
+                  tile(index: 1, label: 'Contadores', leading: const Text('🧮', style: TextStyle(fontSize: 20))),
+                  tile(index: 2, label: 'Relatórios', leading: const Text('📈', style: TextStyle(fontSize: 20))),
+                  tile(index: 3, label: 'Backup', leading: const Text('🔄', style: TextStyle(fontSize: 20))),
+                  tile(index: 4, label: 'Backup na Nuvem', leading: const Text('☁️', style: TextStyle(fontSize: 20))),
+                ],
+              ),
             ),
             const Divider(height: 1),
             const Padding(
