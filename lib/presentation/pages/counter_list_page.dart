@@ -33,27 +33,43 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
         return 'Anual';
     }
   }
-  String _pluralize(int value, String singular, String plural) => value == 1 ? singular : plural;
-  
-  void _shareCounter(BuildContext context, Counter counter, DateTime effectiveDate, bool isFuture) {
+
+  String _pluralize(int value, String singular, String plural) =>
+      value == 1 ? singular : plural;
+
+  void _shareCounter(
+    BuildContext context,
+    Counter counter,
+    DateTime effectiveDate,
+    bool isFuture,
+  ) {
     final now = DateTime.now();
     final comps = _calendarComponents(now, effectiveDate);
     final timeText = isFuture ? 'Faltam' : 'Passaram';
-    
+
     String formattedTime = '';
-    if (comps.years > 0) formattedTime += '${comps.years} ano${comps.years == 1 ? '' : 's'}, ';
-    if (comps.months > 0) formattedTime += '${comps.months} mês${comps.months == 1 ? '' : 'es'}, ';
-    if (comps.days > 0) formattedTime += '${comps.days} dia${comps.days == 1 ? '' : 's'}, ';
-    if (comps.hours > 0) formattedTime += '${comps.hours} hora${comps.hours == 1 ? '' : 's'}, ';
-    if (comps.minutes > 0) formattedTime += '${comps.minutes} minuto${comps.minutes == 1 ? '' : 's'}, ';
-    if (comps.seconds > 0) formattedTime += '${comps.seconds} segundo${comps.seconds == 1 ? '' : 's'}, ';
-    
+    if (comps.years > 0)
+      formattedTime += '${comps.years} ano${comps.years == 1 ? '' : 's'}, ';
+    if (comps.months > 0)
+      formattedTime += '${comps.months} mês${comps.months == 1 ? '' : 'es'}, ';
+    if (comps.days > 0)
+      formattedTime += '${comps.days} dia${comps.days == 1 ? '' : 's'}, ';
+    if (comps.hours > 0)
+      formattedTime += '${comps.hours} hora${comps.hours == 1 ? '' : 's'}, ';
+    if (comps.minutes > 0)
+      formattedTime +=
+          '${comps.minutes} minuto${comps.minutes == 1 ? '' : 's'}, ';
+    if (comps.seconds > 0)
+      formattedTime +=
+          '${comps.seconds} segundo${comps.seconds == 1 ? '' : 's'}, ';
+
     // Remove a vírgula final se houver tempo formatado
     if (formattedTime.endsWith(', ')) {
       formattedTime = formattedTime.substring(0, formattedTime.length - 2);
     }
-    
-    final shareText = '''
+
+    final shareText =
+        '''
 📊 **${counter.name}**
 
 ${counter.description ?? 'Sem descrição'}
@@ -70,11 +86,12 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
     final sanitizedSubject = sanitizeForShare('Contador: ${counter.name}');
     Share.share(sanitizedText, subject: sanitizedSubject);
   }
-  
+
   TimeDiffComponents _calendarComponents(DateTime a, DateTime b) {
     // Usa diferença de calendário normalizada em horário local
     return calendarDiff(a, b);
   }
+
   final TextEditingController _searchCtrl = TextEditingController();
   String _search = '';
   Set<String> _selectedCategories = {};
@@ -126,7 +143,10 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
           children: [
             Row(
               children: [
-                const Text('Contadores', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
+                const Text(
+                  'Contadores',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(width: 8),
                 Tooltip(
                   message: _showSearch ? 'Ocultar filtro' : 'Mostrar filtro',
@@ -138,107 +158,137 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
               ],
             ),
             const SizedBox(height: 12),
-            if (_showSearch) Row(children: [
-              Expanded(
-                child: SizedBox(
-                  height: 48,
-                    child: TextField(
-                    controller: _searchCtrl,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                      hintText: 'Buscar por descrição ou nome...',
-                      filled: true,
-                      fillColor: scheme.surfaceContainerHighest,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      isDense: true,
-                      suffixIcon: _searchCtrl.text.isNotEmpty
-                          ? Tooltip(
-                              message: 'Limpar busca',
-                              child: IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () async {
-                                  setState(() {
-                                    _searchCtrl.clear();
-                                    _search = '';
-                                  });
-                                  try {
-                                    final prefs = await SharedPreferences.getInstance();
-                                    await prefs.remove(_prefsKeyFilterSearch);
-                                  } catch (_) {
-                                    // Ignora erros de persistência
-                                  }
-                                },
-                              ),
-                            )
-                          : null,
+            if (_showSearch)
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: TextField(
+                        controller: _searchCtrl,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.search, size: 20),
+                          prefixIconConstraints: const BoxConstraints(
+                            minWidth: 40,
+                            minHeight: 40,
+                          ),
+                          hintText: 'Buscar por descrição ou nome...',
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          isDense: true,
+                          suffixIcon: _searchCtrl.text.isNotEmpty
+                              ? Tooltip(
+                                  message: 'Limpar busca',
+                                  child: IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () async {
+                                      setState(() {
+                                        _searchCtrl.clear();
+                                        _search = '';
+                                      });
+                                      try {
+                                        final prefs =
+                                            await SharedPreferences.getInstance();
+                                        await prefs.remove(
+                                          _prefsKeyFilterSearch,
+                                        );
+                                      } catch (_) {
+                                        // Ignora erros de persistência
+                                      }
+                                    },
+                                  ),
+                                )
+                              : null,
+                        ),
+                        onChanged: (v) async {
+                          final nv = v.trim();
+                          setState(() => _search = nv);
+                          try {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setString(_prefsKeyFilterSearch, nv);
+                          } catch (_) {
+                            // Ignora erros de persistência
+                          }
+                        },
+                      ),
                     ),
-                    onChanged: (v) async {
-                      final nv = v.trim();
-                      setState(() => _search = nv);
-                      try {
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setString(_prefsKeyFilterSearch, nv);
-                      } catch (_) {
-                        // Ignora erros de persistência
-                      }
-                    },
                   ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              SizedBox(
-                height: 48,
-                child: FilledButton.tonal(
-                  style: FilledButton.styleFrom(shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(horizontal: 16)),
-                  onPressed: () async {
-                    setState(() {
-                      _search = '';
-                      _searchCtrl.clear();
-                      _selectedCategories.clear();
-                    });
-                    try {
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.remove(_prefsKeyFilterSearch);
-                      await prefs.remove(_prefsKeyFilterCategory); // legado
-                      await prefs.remove(_prefsKeyFilterCategories);
-                    } catch (_) {
-                      // Ignora erros de persistência
-                    }
-                  },
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.filter_alt_off),
-                      SizedBox(width: 8),
-                      Text('Limpar filtros'),
-                    ],
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    height: 48,
+                    child: FilledButton.tonal(
+                      style: FilledButton.styleFrom(
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      onPressed: () async {
+                        setState(() {
+                          _search = '';
+                          _searchCtrl.clear();
+                          _selectedCategories.clear();
+                        });
+                        try {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.remove(_prefsKeyFilterSearch);
+                          await prefs.remove(_prefsKeyFilterCategory); // legado
+                          await prefs.remove(_prefsKeyFilterCategories);
+                        } catch (_) {
+                          // Ignora erros de persistência
+                        }
+                      },
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.filter_alt_off),
+                          SizedBox(width: 8),
+                          Text('Limpar filtros'),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ]),
             const SizedBox(height: 8),
             // Linha de etiquetas (chips) selecionáveis de categorias
             countersAsync.when(
-              loading: () => const SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: CircularProgressIndicator())),
+              loading: () => const SizedBox(
+                height: 32,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: CircularProgressIndicator(),
+                ),
+              ),
               error: (e, _) => const SizedBox.shrink(),
               data: (items) {
                 final presentCats = <String>{
                   for (final c in items)
-                    if ((c.category ?? '').trim().isNotEmpty) (c.category!)
+                    if ((c.category ?? '').trim().isNotEmpty) (c.category!),
                 };
 
                 final catsData = categoriesAsync.asData?.value ?? const [];
-                final nameByNormalized = {for (final cat in catsData) cat.normalized: cat.name};
+                final nameByNormalized = {
+                  for (final cat in catsData) cat.normalized: cat.name,
+                };
 
-                final present = <String>{...presentCats, ..._selectedCategories};
+                final present = <String>{
+                  ...presentCats,
+                  ..._selectedCategories,
+                };
 
                 final chips = present.map((norm) {
                   final selected = _selectedCategories.contains(norm);
                   final scheme = Theme.of(context).colorScheme;
                   final labelStyle = TextStyle(
-                    color: selected ? scheme.onPrimaryContainer : scheme.onSecondaryContainer,
+                    color: selected
+                        ? scheme.onPrimaryContainer
+                        : scheme.onSecondaryContainer,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                     fontSize: 12,
                   );
@@ -249,13 +299,23 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                     avatar: Icon(
                       Icons.local_offer,
                       size: 14,
-                      color: selected ? scheme.onPrimaryContainer : scheme.onSecondaryContainer,
+                      color: selected
+                          ? scheme.onPrimaryContainer
+                          : scheme.onSecondaryContainer,
                     ),
-                    label: Text(nameByNormalized[norm] ?? norm, style: labelStyle),
-                    visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+                    label: Text(
+                      nameByNormalized[norm] ?? norm,
+                      style: labelStyle,
+                    ),
+                    visualDensity: const VisualDensity(
+                      horizontal: -2,
+                      vertical: -2,
+                    ),
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     labelPadding: const EdgeInsets.symmetric(horizontal: 6),
-                    backgroundColor: selected ? scheme.primaryContainer : scheme.secondaryContainer,
+                    backgroundColor: selected
+                        ? scheme.primaryContainer
+                        : scheme.secondaryContainer,
                     selectedColor: scheme.primaryContainer,
                     side: BorderSide(
                       color: selected ? scheme.primary : scheme.outlineVariant,
@@ -272,7 +332,10 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                       });
                       try {
                         final prefs = await SharedPreferences.getInstance();
-                        await prefs.setStringList(_prefsKeyFilterCategories, _selectedCategories.toList());
+                        await prefs.setStringList(
+                          _prefsKeyFilterCategories,
+                          _selectedCategories.toList(),
+                        );
                       } catch (_) {
                         // Ignora erros de persistência
                       }
@@ -282,40 +345,49 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
 
                 return Align(
                   alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: chips,
-                  ),
+                  child: Wrap(spacing: 6, runSpacing: 6, children: chips),
                 );
               },
             ),
             const SizedBox(height: 16),
             countersAsync.when(
-              loading: () => const Expanded(child: Center(child: CircularProgressIndicator())),
+              loading: () => const Expanded(
+                child: Center(child: CircularProgressIndicator()),
+              ),
               error: (e, _) => Expanded(child: Text('Erro ao carregar: $e')),
               data: (items) {
                 var filtered = items.where((c) {
                   final q = _search.toLowerCase();
-                  final matchesSearch = _search.isEmpty ||
+                  final matchesSearch =
+                      _search.isEmpty ||
                       c.name.toLowerCase().contains(q) ||
                       (c.description?.toLowerCase().contains(q) ?? false);
                   final cat = (c.category ?? '').trim();
-                  final matchesCat = _selectedCategories.isEmpty || (cat.isNotEmpty && _selectedCategories.contains(cat));
+                  final matchesCat =
+                      _selectedCategories.isEmpty ||
+                      (cat.isNotEmpty && _selectedCategories.contains(cat));
                   return matchesSearch && matchesCat;
                 }).toList();
 
                 // Ordena alfabeticamente por nome (case-insensitive)
-                filtered.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+                filtered.sort(
+                  (a, b) =>
+                      a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+                );
 
                 if (filtered.isEmpty) {
-                  return const Expanded(child: Center(child: Text('Nenhum contador encontrado.')));
+                  return const Expanded(
+                    child: Center(child: Text('Nenhum contador encontrado.')),
+                  );
                 }
 
                 // Rebuild a cada segundo para contagem dinâmica
                 return Expanded(
                   child: StreamBuilder<DateTime>(
-                    stream: Stream<DateTime>.periodic(const Duration(seconds: 1), (_) => DateTime.now()),
+                    stream: Stream<DateTime>.periodic(
+                      const Duration(seconds: 1),
+                      (_) => DateTime.now(),
+                    ),
                     initialData: DateTime.now(),
                     builder: (context, snap) {
                       final now = snap.data ?? DateTime.now();
@@ -348,251 +420,456 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                 ? baseLocal
                                 : nextRecurringDate(baseLocal, rec, now);
                             final isFuture = effectiveDate.isAfter(now);
-                            final comps = _calendarComponents(now, effectiveDate);
+                            final comps = _calendarComponents(
+                              now,
+                              effectiveDate,
+                            );
                             final days = comps.days;
                             final hours = comps.hours;
                             final mins = comps.minutes;
                             final secs = comps.seconds;
-                            final tint = isFuture ? scheme.primaryContainer : scheme.errorContainer;
+                            final tint = isFuture
+                                ? scheme.primaryContainer
+                                : scheme.errorContainer;
 
                             return Card(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               elevation: 0,
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(12),
-                                onTap: () => context.go('/counter/${c.id}/edit'),
+                                onTap: () =>
+                                    context.go('/counter/${c.id}/edit'),
                                 child: Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                                    border: Border.all(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.outlineVariant,
+                                    ),
                                     gradient: LinearGradient(
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: isFuture
-                                          ? [scheme.primaryContainer.withValues(alpha: 0.6), scheme.primaryContainer.withValues(alpha: 0.3)]
-                                          : [scheme.errorContainer.withValues(alpha: 0.6), scheme.errorContainer.withValues(alpha: 0.3)],
+                                          ? [
+                                              scheme.primaryContainer
+                                                  .withValues(alpha: 0.6),
+                                              scheme.primaryContainer
+                                                  .withValues(alpha: 0.3),
+                                            ]
+                                          : [
+                                              scheme.errorContainer.withValues(
+                                                alpha: 0.6,
+                                              ),
+                                              scheme.errorContainer.withValues(
+                                                alpha: 0.3,
+                                              ),
+                                            ],
                                     ),
                                   ),
                                   padding: const EdgeInsets.all(12),
                                   child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          // Header com ícone, título e ações
-                                          Row(
-                                            children: [
-                                              // Ícone principal mais compacto
-                                              Container(
-                                                padding: const EdgeInsets.all(4),
-                                                decoration: BoxDecoration(
-                                                  color: isFuture
-                                                      ? scheme.primary.withValues(alpha: 0.1)
-                                                      : scheme.error.withValues(alpha: 0.1),
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                                child: Text(
-                                                  isFuture ? '🗓️' : '🕰️',
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    color: isFuture ? scheme.primary : scheme.error,
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              // Título com mais espaço
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      c.name,
-                                                      style: const TextStyle(
-                                                        fontSize: 20,
-                                                        fontWeight: FontWeight.w700,
-                                                        height: 1.2
-                                                      ),
-                                                      maxLines: 2,
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              // Botões de ação compactos
-                                              Container(
-                                                decoration: BoxDecoration(
-                                                  color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Tooltip(
-                                                      message: 'Histórico',
-                                                      child: Material(
-                                                        color: Colors.transparent,
-                                                        child: InkWell(
-                                                          borderRadius: BorderRadius.circular(6),
-                                                          onTap: () => context.go('/counter/${c.id}/history'),
-                                                          child: const Padding(
-                                                            padding: EdgeInsets.all(8),
-                                                            child: const Icon(
-                                                              Icons.history,
-                                                              size: 16.8,
-                                                              color: Colors.grey,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const VerticalDivider(width: 1),
-                                                    Tooltip(
-                                                      message: 'Compartilhar',
-                                                      child: Material(
-                                                        color: Colors.transparent,
-                                                        child: InkWell(
-                                                          borderRadius: BorderRadius.circular(6),
-                                                          onTap: () => _shareCounter(context, c, effectiveDate, isFuture),
-                                                          child: const Padding(
-                                                            padding: EdgeInsets.all(8),
-                                                            child: const Icon(
-                                                              Icons.share,
-                                                              size: 16.8,
-                                                              color: Colors.grey,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const VerticalDivider(width: 1),
-                                                    Tooltip(
-                                                      message: 'Excluir',
-                                                      child: Material(
-                                                        color: Colors.transparent,
-                                                        child: InkWell(
-                                                          borderRadius: BorderRadius.circular(6),
-                                                          onTap: () async {
-                                                            final confirm = await showDialog<bool>(
-                                                              context: context,
-                                                              builder: (ctx) => AlertDialog(
-                                                                title: const Text('Excluir contador'),
-                                                                content: const Text('Tem certeza que deseja excluir? Esta ação não pode ser desfeita.'),
-                                                                actions: [
-                                                                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
-                                                                  TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Excluir')),
-                                                                ],
-                                                              ),
-                                                            );
-                                                            if (confirm == true) {
-                                                              await repo.delete(c.id!);
-                                                              if (context.mounted) {
-                                                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contador excluído')));
-                                                              }
-                                                            }
-                                                          },
-                                                          child: const Padding(
-                                                            padding: EdgeInsets.all(8),
-                                                            child: const Icon(
-                                                              Icons.delete_outline,
-                                                              size: 16.8,
-                                                              color: Colors.grey,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 6),
-                                          FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            alignment: Alignment.centerLeft,
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            // Header com ícone, título e ações
+                                            Row(
                                               children: [
-                                                if (comps.years > 0) ...[
-                                                  _CounterBox(
-                                                    value: comps.years,
-                                                    label: _pluralize(comps.years, 'Ano', 'Anos'),
-                                                    tint: tint,
+                                                // Ícone principal mais compacto
+                                                Container(
+                                                  padding: const EdgeInsets.all(
+                                                    4,
                                                   ),
-                                                  const SizedBox(width: 4),
-                                                ],
-                                                if (comps.months > 0) ...[
-                                                  _CounterBox(
-                                                    value: comps.months,
-                                                    label: _pluralize(comps.months, 'Mês', 'Meses'),
-                                                    tint: tint,
+                                                  decoration: BoxDecoration(
+                                                    color: isFuture
+                                                        ? scheme.primary
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              )
+                                                        : scheme.error
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
                                                   ),
-                                                  const SizedBox(width: 4),
-                                                ],
-                                                _CounterBox(value: days, label: _pluralize(days, 'Dia', 'Dias'), tint: tint),
-                                                const SizedBox(width: 4),
-                                                _CounterBox(value: hours, label: _pluralize(hours, 'Hora', 'Horas'), tint: tint),
-                                                const SizedBox(width: 4),
-                                                _CounterBox(value: mins, label: _pluralize(mins, 'Minuto', 'Minutos'), tint: tint),
-                                                const SizedBox(width: 4),
-                                                _CounterBox(value: secs, label: _pluralize(secs, 'Segundo', 'Segundos'), tint: tint),
+                                                  child: Text(
+                                                    isFuture ? '🗓️' : '🕰️',
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      color: isFuture
+                                                          ? scheme.primary
+                                                          : scheme.error,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                // Título com mais espaço
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        c.name,
+                                                        style: const TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          height: 1.2,
+                                                        ),
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                // Botões de ação compactos
+                                                Container(
+                                                  decoration: BoxDecoration(
+                                                    color: scheme
+                                                        .surfaceContainerHighest
+                                                        .withValues(alpha: 0.3),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Tooltip(
+                                                        message: 'Histórico',
+                                                        child: Material(
+                                                          color: Colors
+                                                              .transparent,
+                                                          child: InkWell(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
+                                                            onTap: () => context.go(
+                                                              '/counter/${c.id}/history',
+                                                            ),
+                                                            child: const Padding(
+                                                              padding:
+                                                                  EdgeInsets.all(
+                                                                    8,
+                                                                  ),
+                                                              child: Icon(
+                                                                Icons.history,
+                                                                size: 16.8,
+                                                                color:
+                                                                    Colors.grey,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const VerticalDivider(
+                                                        width: 1,
+                                                      ),
+                                                      Tooltip(
+                                                        message: 'Compartilhar',
+                                                        child: Material(
+                                                          color: Colors
+                                                              .transparent,
+                                                          child: InkWell(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
+                                                            onTap: () =>
+                                                                _shareCounter(
+                                                                  context,
+                                                                  c,
+                                                                  effectiveDate,
+                                                                  isFuture,
+                                                                ),
+                                                            child: const Padding(
+                                                              padding:
+                                                                  EdgeInsets.all(
+                                                                    8,
+                                                                  ),
+                                                              child: Icon(
+                                                                Icons.share,
+                                                                size: 16.8,
+                                                                color:
+                                                                    Colors.grey,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const VerticalDivider(
+                                                        width: 1,
+                                                      ),
+                                                      Tooltip(
+                                                        message: 'Excluir',
+                                                        child: Material(
+                                                          color: Colors
+                                                              .transparent,
+                                                          child: InkWell(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
+                                                            onTap: () async {
+                                                              final confirm = await showDialog<bool>(
+                                                                context:
+                                                                    context,
+                                                                builder: (ctx) => AlertDialog(
+                                                                  title: const Text(
+                                                                    'Excluir contador',
+                                                                  ),
+                                                                  content:
+                                                                      const Text(
+                                                                        'Tem certeza que deseja excluir? Esta ação não pode ser desfeita.',
+                                                                      ),
+                                                                  actions: [
+                                                                    TextButton(
+                                                                      onPressed: () =>
+                                                                          Navigator.of(
+                                                                            ctx,
+                                                                          ).pop(
+                                                                            false,
+                                                                          ),
+                                                                      child: const Text(
+                                                                        'Cancelar',
+                                                                      ),
+                                                                    ),
+                                                                    TextButton(
+                                                                      onPressed: () =>
+                                                                          Navigator.of(
+                                                                            ctx,
+                                                                          ).pop(
+                                                                            true,
+                                                                          ),
+                                                                      child: const Text(
+                                                                        'Excluir',
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              );
+                                                              if (confirm ==
+                                                                  true) {
+                                                                await repo
+                                                                    .delete(
+                                                                      c.id!,
+                                                                    );
+                                                                if (context
+                                                                    .mounted) {
+                                                                  ScaffoldMessenger.of(
+                                                                    context,
+                                                                  ).showSnackBar(
+                                                                    const SnackBar(
+                                                                      content: Text(
+                                                                        'Contador excluído',
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                }
+                                                              }
+                                                            },
+                                                            child: const Padding(
+                                                              padding:
+                                                                  EdgeInsets.all(
+                                                                    8,
+                                                                  ),
+                                                              child: Icon(
+                                                                Icons
+                                                                    .delete_outline,
+                                                                size: 16.8,
+                                                                color:
+                                                                    Colors.grey,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
                                               ],
                                             ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              if ((c.category ?? '').trim().isNotEmpty) ...[
-                                                Chip(
-                                                  avatar: Text('🏷️', style: TextStyle(fontSize: 14, color: scheme.onSecondaryContainer)),
-                                                  label: Text(c.category!),
-                                                  visualDensity: VisualDensity.compact,
-                                                  backgroundColor: scheme.secondaryContainer,
-                                                  labelStyle: TextStyle(color: scheme.onSecondaryContainer),
-                                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                ),
-                                                const SizedBox(width: 8),
-                                              ],
-                                              if (rec != Recurrence.none) ...[
-                                                Chip(
-                                                  avatar: Text('🔁', style: TextStyle(fontSize: 16, color: scheme.onTertiaryContainer)),
-                                                  label: Text(_labelForRecurrence(rec)),
-                                                  visualDensity: VisualDensity.compact,
-                                                  backgroundColor: scheme.tertiaryContainer,
-                                                  labelStyle: TextStyle(color: scheme.onTertiaryContainer),
-                                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                ),
-                                                const SizedBox(width: 8),
-                                              ],
-                                              Flexible(
-                                                child: Text(
-                                                  DateFormat('dd/MM/yyyy HH:mm').format(effectiveDate),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
-                                                ),
+                                            const SizedBox(height: 6),
+                                            FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  if (comps.years > 0) ...[
+                                                    _CounterBox(
+                                                      value: comps.years,
+                                                      label: _pluralize(
+                                                        comps.years,
+                                                        'Ano',
+                                                        'Anos',
+                                                      ),
+                                                      tint: tint,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                  ],
+                                                  if (comps.months > 0) ...[
+                                                    _CounterBox(
+                                                      value: comps.months,
+                                                      label: _pluralize(
+                                                        comps.months,
+                                                        'Mês',
+                                                        'Meses',
+                                                      ),
+                                                      tint: tint,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                  ],
+                                                  _CounterBox(
+                                                    value: days,
+                                                    label: _pluralize(
+                                                      days,
+                                                      'Dia',
+                                                      'Dias',
+                                                    ),
+                                                    tint: tint,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  _CounterBox(
+                                                    value: hours,
+                                                    label: _pluralize(
+                                                      hours,
+                                                      'Hora',
+                                                      'Horas',
+                                                    ),
+                                                    tint: tint,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  _CounterBox(
+                                                    value: mins,
+                                                    label: _pluralize(
+                                                      mins,
+                                                      'Minuto',
+                                                      'Minutos',
+                                                    ),
+                                                    tint: tint,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  _CounterBox(
+                                                    value: secs,
+                                                    label: _pluralize(
+                                                      secs,
+                                                      'Segundo',
+                                                      'Segundos',
+                                                    ),
+                                                    tint: tint,
+                                                  ),
+                                                ],
                                               ),
-                                            ],
-                                          ),
-                                        ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                if ((c.category ?? '')
+                                                    .trim()
+                                                    .isNotEmpty) ...[
+                                                  Chip(
+                                                    avatar: Text(
+                                                      '🏷️',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color: scheme
+                                                            .onSecondaryContainer,
+                                                      ),
+                                                    ),
+                                                    label: Text(c.category!),
+                                                    visualDensity:
+                                                        VisualDensity.compact,
+                                                    backgroundColor: scheme
+                                                        .secondaryContainer,
+                                                    labelStyle: TextStyle(
+                                                      color: scheme
+                                                          .onSecondaryContainer,
+                                                    ),
+                                                    materialTapTargetSize:
+                                                        MaterialTapTargetSize
+                                                            .shrinkWrap,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                ],
+                                                if (rec != Recurrence.none) ...[
+                                                  Chip(
+                                                    avatar: Text(
+                                                      '🔁',
+                                                      style: TextStyle(
+                                                        fontSize: 16,
+                                                        color: scheme
+                                                            .onTertiaryContainer,
+                                                      ),
+                                                    ),
+                                                    label: Text(
+                                                      _labelForRecurrence(rec),
+                                                    ),
+                                                    visualDensity:
+                                                        VisualDensity.compact,
+                                                    backgroundColor: scheme
+                                                        .tertiaryContainer,
+                                                    labelStyle: TextStyle(
+                                                      color: scheme
+                                                          .onTertiaryContainer,
+                                                    ),
+                                                    materialTapTargetSize:
+                                                        MaterialTapTargetSize
+                                                            .shrinkWrap,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                ],
+                                                Flexible(
+                                                  child: Text(
+                                                    DateFormat(
+                                                      'dd/MM/yyyy HH:mm',
+                                                    ).format(effectiveDate),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: scheme
+                                                          .onSurfaceVariant,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
+                            );
                           }
 
                           if (crossAxisCount == 1) {
                             // Em telas estreitas, use ListView para permitir altura variável dos cards
                             return ListView.separated(
                               itemCount: filtered.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 16),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 16),
                               itemBuilder: (context, index) => buildCard(index),
                             );
                           }
@@ -600,12 +877,13 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                           // Para múltiplas colunas, aumente a altura dos cards para evitar overflow
                           final aspectRatio = crossAxisCount == 2 ? 1.8 : 2.1;
                           return GridView.builder(
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: crossAxisCount,
-                              childAspectRatio: aspectRatio,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                            ),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  childAspectRatio: aspectRatio,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                ),
                             itemCount: filtered.length,
                             itemBuilder: (context, index) => buildCard(index),
                           );
@@ -633,7 +911,11 @@ class _CounterBox extends StatelessWidget {
   final int value;
   final String label;
   final Color tint;
-  const _CounterBox({required this.value, required this.label, required this.tint});
+  const _CounterBox({
+    required this.value,
+    required this.label,
+    required this.tint,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -648,13 +930,24 @@ class _CounterBox extends StatelessWidget {
           colors: [tint.withValues(alpha: 0.85), tint.withValues(alpha: 0.5)],
         ),
         boxShadow: [
-          BoxShadow(color: tint.withValues(alpha: 0.28), blurRadius: 4, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: tint.withValues(alpha: 0.28),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('$value', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: scheme.onSurface)),
+          Text(
+            '$value',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: scheme.onSurface,
+            ),
+          ),
           const SizedBox(height: 2),
           Text(
             label,
