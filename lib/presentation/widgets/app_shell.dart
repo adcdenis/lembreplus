@@ -94,7 +94,6 @@ class AppShell extends ConsumerWidget {
                   NavigationRailDestination(icon: Text('🧮', style: TextStyle(fontSize: 20)), selectedIcon: Text('🧮', style: TextStyle(fontSize: 20)), label: Text('Contadores')),
                   NavigationRailDestination(icon: Text('📈', style: TextStyle(fontSize: 20)), selectedIcon: Text('📈', style: TextStyle(fontSize: 20)), label: Text('Relatórios')),
                   NavigationRailDestination(icon: Text('🔄', style: TextStyle(fontSize: 20)), selectedIcon: Text('🔄', style: TextStyle(fontSize: 20)), label: Text('Backup')),
-                  NavigationRailDestination(icon: Text('☁️', style: TextStyle(fontSize: 20)), selectedIcon: Text('☁️', style: TextStyle(fontSize: 20)), label: Text('Backup na Nuvem')),
                 ],
               ),
               const VerticalDivider(width: 1),
@@ -122,7 +121,7 @@ class AppShell extends ConsumerWidget {
     if (location.startsWith('/counters')) return 1;
     if (location.startsWith('/reports')) return 2;
     if (location.startsWith('/backup')) return 3;
-    if (location.startsWith('/cloud-backup')) return 4;
+    if (location.startsWith('/cloud-backup')) return 3;
     return 0; // dashboard default
   }
 
@@ -138,9 +137,6 @@ class AppShell extends ConsumerWidget {
         context.go('/reports');
         break;
       case 3:
-        context.go('/backup');
-        break;
-      case 4:
         context.go('/cloud-backup');
         break;
     }
@@ -159,7 +155,7 @@ class _AppDrawer extends StatelessWidget {
     if (location.startsWith('/counters')) selectedIndex = 1;
     if (location.startsWith('/reports')) selectedIndex = 2;
     if (location.startsWith('/backup')) selectedIndex = 3;
-    if (location.startsWith('/cloud-backup')) selectedIndex = 4;
+    if (location.startsWith('/cloud-backup')) selectedIndex = 3;
 
     Widget tile({required int index, required String label, required Widget leading}) {
       final selected = selectedIndex == index;
@@ -228,7 +224,6 @@ class _AppDrawer extends StatelessWidget {
                   tile(index: 1, label: 'Contadores', leading: const Text('🧮', style: TextStyle(fontSize: 20))),
                   tile(index: 2, label: 'Relatórios', leading: const Text('📈', style: TextStyle(fontSize: 20))),
                   tile(index: 3, label: 'Backup', leading: const Text('🔄', style: TextStyle(fontSize: 20))),
-                  tile(index: 4, label: 'Backup na Nuvem', leading: const Text('☁️', style: TextStyle(fontSize: 20))),
                 ],
               ),
             ),

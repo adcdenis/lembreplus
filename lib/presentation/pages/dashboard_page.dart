@@ -45,13 +45,7 @@ class DashboardPage extends ConsumerWidget {
           final endMonth = DateTime(now.year, now.month + 1, 1);
           final monthCount = counters.where((c) => inRange(effectiveDate(c.eventDate, c.recurrence), startMonth, endMonth)).length;
 
-          // Próximos eventos (próximos 5)
-          final upcoming = counters
-              .map((c) => (c, effectiveDate(c.eventDate, c.recurrence)))
-              .where((t) => !isPast(t.$2, now: now))
-              .toList()
-            ..sort((a, b) => a.$2.compareTo(b.$2));
-          final nextFive = upcoming.take(5).toList();
+          
 
           // Distribuição por categoria
           final Map<String, int> byCategory = {};
@@ -114,16 +108,34 @@ class DashboardPage extends ConsumerWidget {
                     context,
                     title: 'Próximos Eventos',
                     emoji: '⏳',
-                    child: Column(
-                      children: [
-                        for (final t in nextFive)
-                          _upcomingTile(context, t.$1.name, t.$1.category, t.$2, now),
-                        if (nextFive.isEmpty)
-                          Padding(
+                    child: StreamBuilder<DateTime>(
+                      stream: Stream<DateTime>.periodic(const Duration(seconds: 1), (_) => DateTime.now()),
+                      initialData: DateTime.now(),
+                      builder: (context, snap) {
+                        final n = snap.data ?? DateTime.now();
+                        final upcomingDyn = counters
+                            .map((c) {
+                              final r = Recurrence.fromString(c.recurrence);
+                              final d = nextRecurringDate(c.eventDate, r, n);
+                              return (c, d);
+                            })
+                            .where((t) => !isPast(t.$2, now: n))
+                            .toList()
+                          ..sort((a, b) => a.$2.compareTo(b.$2));
+                        final nextFiveDyn = upcomingDyn.take(5).toList();
+                        if (nextFiveDyn.isEmpty) {
+                          return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8.0),
                             child: Text('Sem eventos futuros', style: TextStyle(color: cs.onSurface.withValues(alpha: 0.7))),
-                          ),
-                      ],
+                          );
+                        }
+                        return Column(
+                          children: [
+                            for (final t in nextFiveDyn)
+                              _upcomingTile(context, t.$1.name, t.$1.category, t.$2, n),
+                          ],
+                        );
+                      },
                     ),
                   );
 
@@ -188,6 +200,8 @@ class DashboardPage extends ConsumerWidget {
       ),
     );
   }
+
+  String _pluralize(int v, String singular, String plural) => v == 1 ? singular : plural;
 
   Widget _statCard(BuildContext context, {required String title, required int value, required Color color, required String emoji, required double width}) {
     final cs = Theme.of(context).colorScheme;
@@ -273,7 +287,7 @@ class DashboardPage extends ConsumerWidget {
   Widget _upcomingTile(BuildContext context, String name, String? category, DateTime date, DateTime now) {
     final cs = Theme.of(context).colorScheme;
     final df = DateFormat('dd/MM/yyyy');
-    final daysLeft = durationDiff(now, date).days; // usa duração normalizada
+    final cal = calendarDiff(now, date);
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.all(12),
@@ -309,9 +323,61 @@ class DashboardPage extends ConsumerWidget {
                     ),
                 ],
               ),
+              const SizedBox(height: 8),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (cal.years > 0) ...[
+                      _DashCounterBox(context: context, value: cal.years, label: _pluralize(cal.years, 'Ano', 'Anos'), tint: cs.primaryContainer),
+                      const SizedBox(width: 4),
+                    ],
+                    if (cal.months > 0) ...[
+                      _DashCounterBox(context: context, value: cal.months, label: _pluralize(cal.months, 'Mês', 'Meses'), tint: cs.primaryContainer),
+                      const SizedBox(width: 4),
+                    ],
+                    _DashCounterBox(context: context, value: cal.days, label: _pluralize(cal.days, 'Dia', 'Dias'), tint: cs.primaryContainer),
+                    const SizedBox(width: 4),
+                    _DashCounterBox(context: context, value: cal.hours, label: _pluralize(cal.hours, 'Hora', 'Horas'), tint: cs.primaryContainer),
+                    const SizedBox(width: 4),
+                    _DashCounterBox(context: context, value: cal.minutes, label: _pluralize(cal.minutes, 'Minuto', 'Minutos'), tint: cs.primaryContainer),
+                    const SizedBox(width: 4),
+                    _DashCounterBox(context: context, value: cal.seconds, label: _pluralize(cal.seconds, 'Segundo', 'Segundos'), tint: cs.primaryContainer),
+                  ],
+                ),
+              ),
             ]),
           ),
-          Text('$daysLeft dias', style: const TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox.shrink(),
+        ],
+      ),
+    );
+  }
+
+  // Box de contador visualmente alinhado com a lista de contadores
+  Widget _DashCounterBox({required BuildContext context, required int value, required String label, required Color tint}) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [tint.withValues(alpha: 0.85), tint.withValues(alpha: 0.5)],
+        ),
+        boxShadow: [
+          BoxShadow(color: tint.withValues(alpha: 0.28), blurRadius: 4, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$value', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: cs.onSurface)),
+          const SizedBox(height: 2),
+          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
         ],
       ),
     );

@@ -6,8 +6,7 @@ import '../pages/counter_form_page.dart';
 import '../pages/counter_list_page.dart';
 import '../pages/counter_history_page.dart';
 import '../pages/reports_page.dart';
-import '../pages/backup_page.dart';
-import '../pages/cloud_backup_page.dart';
+import '../pages/backup_tabs_page.dart';
 import '../widgets/app_shell.dart';
 
 class AppRouter {
@@ -64,12 +63,12 @@ class AppRouter {
           GoRoute(
             path: '/backup',
             name: 'backup',
-            pageBuilder: (context, state) => const MaterialPage(child: BackupPage()),
+            pageBuilder: (context, state) => MaterialPage(child: const BackupTabsPage(initialIndex: 1)),
           ),
           GoRoute(
             path: '/cloud-backup',
             name: 'cloud_backup',
-            pageBuilder: (context, state) => const MaterialPage(child: CloudBackupPage()),
+            pageBuilder: (context, state) => MaterialPage(child: const BackupTabsPage(initialIndex: 0)),
           ),
         ],
       ),
