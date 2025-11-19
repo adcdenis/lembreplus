@@ -647,18 +647,30 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
 
     // Agendamento de notificação
     if (savedId != null) {
-      if (_alertOffset != null) {
-        final scheduledDate = dt.subtract(Duration(minutes: _alertOffset!));
-        if (scheduledDate.isAfter(DateTime.now())) {
-          await notifService.scheduleNotification(
-            id: savedId,
-            title: 'Lembrete de Evento',
-            body: 'O evento "${_nameCtrl.text}" será em ${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} às ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
-            scheduledDate: scheduledDate,
+      try {
+        if (_alertOffset != null) {
+          final scheduledDate = dt.subtract(Duration(minutes: _alertOffset!));
+          if (scheduledDate.isAfter(DateTime.now())) {
+            await notifService.scheduleNotification(
+              id: savedId,
+              title: 'Lembrete de Evento',
+              body: 'O evento "${_nameCtrl.text}" será em ${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} às ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
+              scheduledDate: scheduledDate,
+            );
+          }
+        } else {
+          await notifService.cancelNotification(savedId);
+        }
+      } catch (e) {
+        debugPrint('Erro ao agendar notificação: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Contador salvo, mas erro ao agendar notificação: $e'),
+              backgroundColor: Colors.orange,
+            ),
           );
         }
-      } else {
-        await notifService.cancelNotification(savedId);
       }
     }
 
