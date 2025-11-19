@@ -81,8 +81,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   }
 
   String _formatDiff(DateTime target) {
-    final diff = durationDiff(_now, target);
+    final diff = calendarDiff(_now, target);
     final parts = <String>[];
+    if (diff.years > 0) parts.add('${diff.years} ano${diff.years == 1 ? '' : 's'}');
+    if (diff.months > 0) parts.add('${diff.months} m${diff.months == 1 ? 'ês' : 'eses'}');
     if (diff.days > 0) parts.add('${diff.days} dia${diff.days == 1 ? '' : 's'}');
     if (diff.hours > 0) parts.add('${diff.hours} hora${diff.hours == 1 ? '' : 's'}');
     if (diff.minutes > 0) parts.add('${diff.minutes} minuto${diff.minutes == 1 ? '' : 's'}');
@@ -229,7 +231,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                           SizedBox(
                             width: itemWidth,
                             child: DropdownButtonFormField<String>(
-                              value: _type,
+                              key: ValueKey(_type),
+                              initialValue: _type,
                               items: const [
                                 DropdownMenuItem(value: 'Todos', child: Text('Todos')),
                                 DropdownMenuItem(value: 'Passado', child: Text('Passado')),
@@ -242,7 +245,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                           SizedBox(
                             width: itemWidth,
                             child: DropdownButtonFormField<String>(
-                              value: _recurrence,
+                              key: ValueKey(_recurrence),
+                              initialValue: _recurrence,
                               items: const [
                                 DropdownMenuItem(value: 'Todos', child: Text('Todos')),
                                 DropdownMenuItem(value: 'Nenhuma', child: Text('Nenhuma')),
@@ -263,7 +267,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                               return SizedBox(
                                 width: itemWidth,
                                 child: DropdownButtonFormField<String>(
-                                  value: _category,
+                                  key: ValueKey(_category),
+                                  initialValue: _category,
                                   items: items
                                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                                       .toList(),
@@ -365,7 +370,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                           final c = filtered[i];
                           final eff = _effectiveDate(c.eventDate, c.recurrence);
                           final past = isPast(eff, now: _now);
-                          final diff = durationDiff(_now, eff);
+                          final diff = calendarDiff(_now, eff);
                           
                           final tint = !past ? cs.primaryContainer : cs.errorContainer;
                           final recurrenceVal = Recurrence.fromString(c.recurrence);
