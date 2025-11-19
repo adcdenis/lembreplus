@@ -12,6 +12,7 @@ class Counters extends Table {
   DateTimeColumn get eventDate => dateTime()();
   TextColumn get category => text().nullable()();
   TextColumn get recurrence => text().nullable()();
+  IntColumn get alertOffset => integer().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime().nullable()();
 }
@@ -40,10 +41,15 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.test() : super(openTestConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(counters, counters.alertOffset);
+          }
+        },
         beforeOpen: (details) async {
           // Garante que chaves estrangeiras estejam ativadas (necessário para CASCADE funcionar)
           await customStatement('PRAGMA foreign_keys = ON');
@@ -68,6 +74,7 @@ class AppDatabase extends _$AppDatabase {
     required DateTime eventDate,
     String? category,
     String? recurrence,
+    int? alertOffset,
     required DateTime createdAt,
     DateTime? updatedAt,
   }) async {
@@ -78,6 +85,7 @@ class AppDatabase extends _$AppDatabase {
       eventDate: Value(eventDate),
       category: Value(category),
       recurrence: Value(recurrence),
+      alertOffset: Value(alertOffset),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     ));

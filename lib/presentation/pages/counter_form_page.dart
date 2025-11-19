@@ -7,6 +7,7 @@ import 'package:lembreplus/domain/recurrence.dart';
 import 'package:lembreplus/data/models/category.dart' as cat;
 import 'package:lembreplus/domain/category_utils.dart';
 import 'package:lembreplus/domain/time_utils.dart';
+import 'package:lembreplus/services/notification_service.dart';
 
 class CounterFormPage extends ConsumerStatefulWidget {
   final int? counterId;
@@ -26,12 +27,18 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
   DateTime _date = DateTime.now();
   TimeOfDay _time = TimeOfDay.now();
   String _recurrence = Recurrence.none.name;
+  int? _alertOffset; // Minutes before event
   DateTime? _createdAt;
 
   @override
   void initState() {
     super.initState();
     _loadForEditIfNeeded();
+    // Initialize notification service and request permissions
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final notifService = ref.read(notificationServiceProvider);
+      notifService.init().then((_) => notifService.requestPermissions());
+    });
   }
 
   Future<void> _loadForEditIfNeeded() async {
@@ -54,6 +61,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
           _date = base;
           _time = TimeOfDay(hour: base.hour, minute: base.minute);
           _recurrence = c.recurrence ?? Recurrence.none.name;
+          _alertOffset = c.alertOffset;
           _createdAt = c.createdAt;
         });
       }
@@ -469,6 +477,66 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Notificação',
+                border: OutlineInputBorder(),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int?>(
+                  value: _alertOffset,
+                  hint: const Text('Sem notificação'),
+                  items: [
+                    const DropdownMenuItem(
+                      value: null,
+                      child: Text('Sem notificação'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 2,
+                      child: Text('2 minutos antes'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 3,
+                      child: Text('3 minutos antes'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 15,
+                      child: Text('15 minutos antes'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 30,
+                      child: Text('30 minutos antes'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 60,
+                      child: Text('1 hora antes'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 180,
+                      child: Text('3 horas antes'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 360,
+                      child: Text('6 horas antes'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 720,
+                      child: Text('12 horas antes'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 1440,
+                      child: Text('24 horas antes'),
+                    ),
+                    const DropdownMenuItem(
+                      value: 2880,
+                      child: Text('48 horas antes'),
+                    ),
+                  ],
+                  onChanged: (v) => setState(() => _alertOffset = v),
+                ),
+              ),
+            ),
             const SizedBox(height: 20),
             Row(
               children: [
@@ -509,6 +577,8 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     if (!_formKey.currentState!.validate()) return;
     final repo = ref.read(counterRepositoryProvider);
     final categoryRepo = ref.read(categoryRepositoryProvider);
+    final notifService = ref.read(notificationServiceProvider);
+    
     final dt = DateTime(
       _date.year,
       _date.month,
@@ -526,6 +596,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
       );
     }
 
+    int? savedId;
     if (widget.counterId == null) {
       final now = DateTime.now();
       final c = model.Counter(
@@ -538,15 +609,15 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
             ? null
             : _categoryCtrl.text.trim(),
         recurrence: _recurrence,
+        alertOffset: _alertOffset,
         createdAt: now,
         updatedAt: now,
       );
-      await repo.createWithHistory(c);
+      savedId = await repo.createWithHistory(c);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Contador criado com sucesso')),
       );
-      context.go('/counters');
     } else {
       final now = DateTime.now();
       final c = model.Counter(
@@ -560,16 +631,38 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
             ? null
             : _categoryCtrl.text.trim(),
         recurrence: _recurrence,
+        alertOffset: _alertOffset,
         createdAt: _createdAt ?? now,
         updatedAt: now,
       );
       final ok = await repo.updateWithHistory(c);
+      savedId = widget.counterId;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(ok ? 'Contador atualizado' : 'Falha ao atualizar'),
         ),
       );
+    }
+
+    // Agendamento de notificação
+    if (savedId != null) {
+      if (_alertOffset != null) {
+        final scheduledDate = dt.subtract(Duration(minutes: _alertOffset!));
+        if (scheduledDate.isAfter(DateTime.now())) {
+          await notifService.scheduleNotification(
+            id: savedId,
+            title: 'Lembrete de Evento',
+            body: 'O evento "${_nameCtrl.text}" será em ${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} às ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
+            scheduledDate: scheduledDate,
+          );
+        }
+      } else {
+        await notifService.cancelNotification(savedId);
+      }
+    }
+
+    if (mounted) {
       context.go('/counters');
     }
   }

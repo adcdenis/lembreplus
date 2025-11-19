@@ -29,6 +29,7 @@ class CounterRepository {
         })(),
         category: r.category,
         recurrence: r.recurrence,
+        alertOffset: r.alertOffset,
         createdAt: (() {
           final ca = r.createdAt.isUtc ? r.createdAt.toLocal() : r.createdAt;
           return DateTime(
@@ -67,6 +68,7 @@ class CounterRepository {
         eventDate: Value(c.eventDate),
         category: Value(c.category),
         recurrence: Value(c.recurrence),
+        alertOffset: Value(c.alertOffset),
         createdAt: Value(c.createdAt),
         updatedAt: Value(c.updatedAt),
       );

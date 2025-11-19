@@ -27,6 +27,7 @@ mixin _$Counter {
   DateTime get eventDate => throw _privateConstructorUsedError;
   String? get category => throw _privateConstructorUsedError;
   String? get recurrence => throw _privateConstructorUsedError;
+  int? get alertOffset => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
@@ -51,6 +52,7 @@ abstract class $CounterCopyWith<$Res> {
     DateTime eventDate,
     String? category,
     String? recurrence,
+    int? alertOffset,
     DateTime createdAt,
     DateTime? updatedAt,
   });
@@ -77,6 +79,7 @@ class _$CounterCopyWithImpl<$Res, $Val extends Counter>
     Object? eventDate = null,
     Object? category = freezed,
     Object? recurrence = freezed,
+    Object? alertOffset = freezed,
     Object? createdAt = null,
     Object? updatedAt = freezed,
   }) {
@@ -106,6 +109,10 @@ class _$CounterCopyWithImpl<$Res, $Val extends Counter>
                 ? _value.recurrence
                 : recurrence // ignore: cast_nullable_to_non_nullable
                       as String?,
+            alertOffset: freezed == alertOffset
+                ? _value.alertOffset
+                : alertOffset // ignore: cast_nullable_to_non_nullable
+                      as int?,
             createdAt: null == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -135,6 +142,7 @@ abstract class _$$CounterImplCopyWith<$Res> implements $CounterCopyWith<$Res> {
     DateTime eventDate,
     String? category,
     String? recurrence,
+    int? alertOffset,
     DateTime createdAt,
     DateTime? updatedAt,
   });
@@ -160,6 +168,7 @@ class __$$CounterImplCopyWithImpl<$Res>
     Object? eventDate = null,
     Object? category = freezed,
     Object? recurrence = freezed,
+    Object? alertOffset = freezed,
     Object? createdAt = null,
     Object? updatedAt = freezed,
   }) {
@@ -189,6 +198,10 @@ class __$$CounterImplCopyWithImpl<$Res>
             ? _value.recurrence
             : recurrence // ignore: cast_nullable_to_non_nullable
                   as String?,
+        alertOffset: freezed == alertOffset
+            ? _value.alertOffset
+            : alertOffset // ignore: cast_nullable_to_non_nullable
+                  as int?,
         createdAt: null == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -212,6 +225,7 @@ class _$CounterImpl implements _Counter {
     required this.eventDate,
     this.category,
     this.recurrence,
+    this.alertOffset,
     required this.createdAt,
     this.updatedAt,
   });
@@ -232,13 +246,15 @@ class _$CounterImpl implements _Counter {
   @override
   final String? recurrence;
   @override
+  final int? alertOffset;
+  @override
   final DateTime createdAt;
   @override
   final DateTime? updatedAt;
 
   @override
   String toString() {
-    return 'Counter(id: $id, name: $name, description: $description, eventDate: $eventDate, category: $category, recurrence: $recurrence, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Counter(id: $id, name: $name, description: $description, eventDate: $eventDate, category: $category, recurrence: $recurrence, alertOffset: $alertOffset, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -256,6 +272,8 @@ class _$CounterImpl implements _Counter {
                 other.category == category) &&
             (identical(other.recurrence, recurrence) ||
                 other.recurrence == recurrence) &&
+            (identical(other.alertOffset, alertOffset) ||
+                other.alertOffset == alertOffset) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -272,6 +290,7 @@ class _$CounterImpl implements _Counter {
     eventDate,
     category,
     recurrence,
+    alertOffset,
     createdAt,
     updatedAt,
   );
@@ -298,6 +317,7 @@ abstract class _Counter implements Counter {
     required final DateTime eventDate,
     final String? category,
     final String? recurrence,
+    final int? alertOffset,
     required final DateTime createdAt,
     final DateTime? updatedAt,
   }) = _$CounterImpl;
@@ -316,6 +336,8 @@ abstract class _Counter implements Counter {
   String? get category;
   @override
   String? get recurrence;
+  @override
+  int? get alertOffset;
   @override
   DateTime get createdAt;
   @override

@@ -75,6 +75,17 @@ class $CountersTable extends Counters
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _alertOffsetMeta = const VerificationMeta(
+    'alertOffset',
+  );
+  @override
+  late final GeneratedColumn<int> alertOffset = GeneratedColumn<int>(
+    'alert_offset',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -105,6 +116,7 @@ class $CountersTable extends Counters
     eventDate,
     category,
     recurrence,
+    alertOffset,
     createdAt,
     updatedAt,
   ];
@@ -160,6 +172,15 @@ class $CountersTable extends Counters
         recurrence.isAcceptableOrUnknown(data['recurrence']!, _recurrenceMeta),
       );
     }
+    if (data.containsKey('alert_offset')) {
+      context.handle(
+        _alertOffsetMeta,
+        alertOffset.isAcceptableOrUnknown(
+          data['alert_offset']!,
+          _alertOffsetMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -207,6 +228,10 @@ class $CountersTable extends Counters
         DriftSqlType.string,
         data['${effectivePrefix}recurrence'],
       ),
+      alertOffset: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}alert_offset'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -231,6 +256,7 @@ class CounterRow extends DataClass implements Insertable<CounterRow> {
   final DateTime eventDate;
   final String? category;
   final String? recurrence;
+  final int? alertOffset;
   final DateTime createdAt;
   final DateTime? updatedAt;
   const CounterRow({
@@ -240,6 +266,7 @@ class CounterRow extends DataClass implements Insertable<CounterRow> {
     required this.eventDate,
     this.category,
     this.recurrence,
+    this.alertOffset,
     required this.createdAt,
     this.updatedAt,
   });
@@ -257,6 +284,9 @@ class CounterRow extends DataClass implements Insertable<CounterRow> {
     }
     if (!nullToAbsent || recurrence != null) {
       map['recurrence'] = Variable<String>(recurrence);
+    }
+    if (!nullToAbsent || alertOffset != null) {
+      map['alert_offset'] = Variable<int>(alertOffset);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || updatedAt != null) {
@@ -279,6 +309,9 @@ class CounterRow extends DataClass implements Insertable<CounterRow> {
       recurrence: recurrence == null && nullToAbsent
           ? const Value.absent()
           : Value(recurrence),
+      alertOffset: alertOffset == null && nullToAbsent
+          ? const Value.absent()
+          : Value(alertOffset),
       createdAt: Value(createdAt),
       updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
@@ -298,6 +331,7 @@ class CounterRow extends DataClass implements Insertable<CounterRow> {
       eventDate: serializer.fromJson<DateTime>(json['eventDate']),
       category: serializer.fromJson<String?>(json['category']),
       recurrence: serializer.fromJson<String?>(json['recurrence']),
+      alertOffset: serializer.fromJson<int?>(json['alertOffset']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
     );
@@ -312,6 +346,7 @@ class CounterRow extends DataClass implements Insertable<CounterRow> {
       'eventDate': serializer.toJson<DateTime>(eventDate),
       'category': serializer.toJson<String?>(category),
       'recurrence': serializer.toJson<String?>(recurrence),
+      'alertOffset': serializer.toJson<int?>(alertOffset),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
     };
@@ -324,6 +359,7 @@ class CounterRow extends DataClass implements Insertable<CounterRow> {
     DateTime? eventDate,
     Value<String?> category = const Value.absent(),
     Value<String?> recurrence = const Value.absent(),
+    Value<int?> alertOffset = const Value.absent(),
     DateTime? createdAt,
     Value<DateTime?> updatedAt = const Value.absent(),
   }) => CounterRow(
@@ -333,6 +369,7 @@ class CounterRow extends DataClass implements Insertable<CounterRow> {
     eventDate: eventDate ?? this.eventDate,
     category: category.present ? category.value : this.category,
     recurrence: recurrence.present ? recurrence.value : this.recurrence,
+    alertOffset: alertOffset.present ? alertOffset.value : this.alertOffset,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
   );
@@ -348,6 +385,9 @@ class CounterRow extends DataClass implements Insertable<CounterRow> {
       recurrence: data.recurrence.present
           ? data.recurrence.value
           : this.recurrence,
+      alertOffset: data.alertOffset.present
+          ? data.alertOffset.value
+          : this.alertOffset,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -362,6 +402,7 @@ class CounterRow extends DataClass implements Insertable<CounterRow> {
           ..write('eventDate: $eventDate, ')
           ..write('category: $category, ')
           ..write('recurrence: $recurrence, ')
+          ..write('alertOffset: $alertOffset, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -376,6 +417,7 @@ class CounterRow extends DataClass implements Insertable<CounterRow> {
     eventDate,
     category,
     recurrence,
+    alertOffset,
     createdAt,
     updatedAt,
   );
@@ -389,6 +431,7 @@ class CounterRow extends DataClass implements Insertable<CounterRow> {
           other.eventDate == this.eventDate &&
           other.category == this.category &&
           other.recurrence == this.recurrence &&
+          other.alertOffset == this.alertOffset &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -400,6 +443,7 @@ class CountersCompanion extends UpdateCompanion<CounterRow> {
   final Value<DateTime> eventDate;
   final Value<String?> category;
   final Value<String?> recurrence;
+  final Value<int?> alertOffset;
   final Value<DateTime> createdAt;
   final Value<DateTime?> updatedAt;
   const CountersCompanion({
@@ -409,6 +453,7 @@ class CountersCompanion extends UpdateCompanion<CounterRow> {
     this.eventDate = const Value.absent(),
     this.category = const Value.absent(),
     this.recurrence = const Value.absent(),
+    this.alertOffset = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -419,6 +464,7 @@ class CountersCompanion extends UpdateCompanion<CounterRow> {
     required DateTime eventDate,
     this.category = const Value.absent(),
     this.recurrence = const Value.absent(),
+    this.alertOffset = const Value.absent(),
     required DateTime createdAt,
     this.updatedAt = const Value.absent(),
   }) : name = Value(name),
@@ -431,6 +477,7 @@ class CountersCompanion extends UpdateCompanion<CounterRow> {
     Expression<DateTime>? eventDate,
     Expression<String>? category,
     Expression<String>? recurrence,
+    Expression<int>? alertOffset,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -441,6 +488,7 @@ class CountersCompanion extends UpdateCompanion<CounterRow> {
       if (eventDate != null) 'event_date': eventDate,
       if (category != null) 'category': category,
       if (recurrence != null) 'recurrence': recurrence,
+      if (alertOffset != null) 'alert_offset': alertOffset,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -453,6 +501,7 @@ class CountersCompanion extends UpdateCompanion<CounterRow> {
     Value<DateTime>? eventDate,
     Value<String?>? category,
     Value<String?>? recurrence,
+    Value<int?>? alertOffset,
     Value<DateTime>? createdAt,
     Value<DateTime?>? updatedAt,
   }) {
@@ -463,6 +512,7 @@ class CountersCompanion extends UpdateCompanion<CounterRow> {
       eventDate: eventDate ?? this.eventDate,
       category: category ?? this.category,
       recurrence: recurrence ?? this.recurrence,
+      alertOffset: alertOffset ?? this.alertOffset,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -489,6 +539,9 @@ class CountersCompanion extends UpdateCompanion<CounterRow> {
     if (recurrence.present) {
       map['recurrence'] = Variable<String>(recurrence.value);
     }
+    if (alertOffset.present) {
+      map['alert_offset'] = Variable<int>(alertOffset.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -507,6 +560,7 @@ class CountersCompanion extends UpdateCompanion<CounterRow> {
           ..write('eventDate: $eventDate, ')
           ..write('category: $category, ')
           ..write('recurrence: $recurrence, ')
+          ..write('alertOffset: $alertOffset, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1157,6 +1211,7 @@ typedef $$CountersTableCreateCompanionBuilder =
       required DateTime eventDate,
       Value<String?> category,
       Value<String?> recurrence,
+      Value<int?> alertOffset,
       required DateTime createdAt,
       Value<DateTime?> updatedAt,
     });
@@ -1168,6 +1223,7 @@ typedef $$CountersTableUpdateCompanionBuilder =
       Value<DateTime> eventDate,
       Value<String?> category,
       Value<String?> recurrence,
+      Value<int?> alertOffset,
       Value<DateTime> createdAt,
       Value<DateTime?> updatedAt,
     });
@@ -1234,6 +1290,11 @@ class $$CountersTableFilterComposer
 
   ColumnFilters<String> get recurrence => $composableBuilder(
     column: $table.recurrence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get alertOffset => $composableBuilder(
+    column: $table.alertOffset,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1312,6 +1373,11 @@ class $$CountersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get alertOffset => $composableBuilder(
+    column: $table.alertOffset,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -1351,6 +1417,11 @@ class $$CountersTableAnnotationComposer
 
   GeneratedColumn<String> get recurrence => $composableBuilder(
     column: $table.recurrence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get alertOffset => $composableBuilder(
+    column: $table.alertOffset,
     builder: (column) => column,
   );
 
@@ -1420,6 +1491,7 @@ class $$CountersTableTableManager
                 Value<DateTime> eventDate = const Value.absent(),
                 Value<String?> category = const Value.absent(),
                 Value<String?> recurrence = const Value.absent(),
+                Value<int?> alertOffset = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
               }) => CountersCompanion(
@@ -1429,6 +1501,7 @@ class $$CountersTableTableManager
                 eventDate: eventDate,
                 category: category,
                 recurrence: recurrence,
+                alertOffset: alertOffset,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -1440,6 +1513,7 @@ class $$CountersTableTableManager
                 required DateTime eventDate,
                 Value<String?> category = const Value.absent(),
                 Value<String?> recurrence = const Value.absent(),
+                Value<int?> alertOffset = const Value.absent(),
                 required DateTime createdAt,
                 Value<DateTime?> updatedAt = const Value.absent(),
               }) => CountersCompanion.insert(
@@ -1449,6 +1523,7 @@ class $$CountersTableTableManager
                 eventDate: eventDate,
                 category: category,
                 recurrence: recurrence,
+                alertOffset: alertOffset,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
