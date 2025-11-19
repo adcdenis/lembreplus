@@ -184,106 +184,114 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 children: [
                   const Text('Filtros', style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      SizedBox(
-                        width: 170,
-                        child: TextField(
-                          readOnly: true,
-                          decoration: InputDecoration(
-                            labelText: 'Data início',
-                            hintText: 'dd/mm/aaaa',
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.calendar_today),
-                              onPressed: () => _pickStartDate(context),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final itemWidth = (constraints.maxWidth - 12) / 2;
+                      return Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          SizedBox(
+                            width: itemWidth,
+                            child: TextField(
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                labelText: 'Data início',
+                                hintText: 'dd/mm/aaaa',
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.calendar_today),
+                                  onPressed: () => _pickStartDate(context),
+                                ),
+                              ),
+                              controller: TextEditingController(text: _startDate == null ? '' : df.format(_startDate!)),
+                              onTap: () => _pickStartDate(context),
                             ),
                           ),
-                          controller: TextEditingController(text: _startDate == null ? '' : df.format(_startDate!)),
-                          onTap: () => _pickStartDate(context),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 170,
-                        child: TextField(
-                          readOnly: true,
-                          decoration: InputDecoration(
-                            labelText: 'Data fim',
-                            hintText: 'dd/mm/aaaa',
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.calendar_today),
-                              onPressed: () => _pickEndDate(context),
+                          SizedBox(
+                            width: itemWidth,
+                            child: TextField(
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                labelText: 'Data fim',
+                                hintText: 'dd/mm/aaaa',
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.calendar_today),
+                                  onPressed: () => _pickEndDate(context),
+                                ),
+                              ),
+                              controller: TextEditingController(text: _endDate == null ? '' : df.format(_endDate!)),
+                              onTap: () => _pickEndDate(context),
                             ),
                           ),
-                          controller: TextEditingController(text: _endDate == null ? '' : df.format(_endDate!)),
-                          onTap: () => _pickEndDate(context),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 170,
-                        child: DropdownButtonFormField<String>(
-                          value: _type,
-                          items: const [
-                            DropdownMenuItem(value: 'Todos', child: Text('Todos')),
-                            DropdownMenuItem(value: 'Passado', child: Text('Passado')),
-                            DropdownMenuItem(value: 'Futuro', child: Text('Futuro')),
-                          ],
-                          onChanged: (v) => setState(() => _type = v ?? 'Todos'),
-                          decoration: const InputDecoration(labelText: 'Tipo'),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 180,
-                        child: DropdownButtonFormField<String>(
-                          value: _recurrence,
-                          items: const [
-                            DropdownMenuItem(value: 'Todos', child: Text('Todos')),
-                            DropdownMenuItem(value: 'Nenhuma', child: Text('Nenhuma')),
-                            DropdownMenuItem(value: 'Semanal', child: Text('Semanal')),
-                            DropdownMenuItem(value: 'Mensal', child: Text('Mensal')),
-                            DropdownMenuItem(value: 'Anual', child: Text('Anual')),
-                          ],
-                          onChanged: (v) => setState(() => _recurrence = v ?? 'Todos'),
-                          decoration: const InputDecoration(labelText: 'Tipo de repetição'),
-                        ),
-                      ),
-                      categoriesAsync.when(
-                        loading: () => const SizedBox(width: 180, child: LinearProgressIndicator()),
-                        error: (e, st) => SizedBox(width: 180, child: Text('Erro categorias')), 
-                        data: (cats) {
-                          final items = ['Todas', ...cats.map((c) => c.name)];
-                          if (!items.contains(_category)) _category = 'Todas';
-                          return SizedBox(
-                            width: 200,
+                          SizedBox(
+                            width: itemWidth,
                             child: DropdownButtonFormField<String>(
-                              value: _category,
-                              items: items
-                                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                                  .toList(),
-                              onChanged: (v) => setState(() => _category = v ?? 'Todas'),
-                              decoration: const InputDecoration(labelText: 'Categoria'),
+                              value: _type,
+                              items: const [
+                                DropdownMenuItem(value: 'Todos', child: Text('Todos')),
+                                DropdownMenuItem(value: 'Passado', child: Text('Passado')),
+                                DropdownMenuItem(value: 'Futuro', child: Text('Futuro')),
+                              ],
+                              onChanged: (v) => setState(() => _type = v ?? 'Todos'),
+                              decoration: const InputDecoration(labelText: 'Tipo'),
                             ),
-                          );
-                        },
-                      ),
-                      SizedBox(
-                        width: 220,
-                        child: TextField(
-                          controller: _descCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Descrição',
-                            hintText: 'Filtrar por texto na descrição',
                           ),
-                          onChanged: (_) => setState(() {}),
-                        ),
-                      ),
-                      FilledButton.tonalIcon(
-                        onPressed: _clearFilters,
-                        icon: const Icon(Icons.filter_alt_off),
-                        label: const Text('Limpar filtros'),
-                      ),
-                    ],
+                          SizedBox(
+                            width: itemWidth,
+                            child: DropdownButtonFormField<String>(
+                              value: _recurrence,
+                              items: const [
+                                DropdownMenuItem(value: 'Todos', child: Text('Todos')),
+                                DropdownMenuItem(value: 'Nenhuma', child: Text('Nenhuma')),
+                                DropdownMenuItem(value: 'Semanal', child: Text('Semanal')),
+                                DropdownMenuItem(value: 'Mensal', child: Text('Mensal')),
+                                DropdownMenuItem(value: 'Anual', child: Text('Anual')),
+                              ],
+                              onChanged: (v) => setState(() => _recurrence = v ?? 'Todos'),
+                              decoration: const InputDecoration(labelText: 'Tipo de repetição'),
+                            ),
+                          ),
+                          categoriesAsync.when(
+                            loading: () => SizedBox(width: itemWidth, child: const LinearProgressIndicator()),
+                            error: (e, st) => SizedBox(width: itemWidth, child: const Text('Erro categorias')), 
+                            data: (cats) {
+                              final items = ['Todas', ...cats.map((c) => c.name)];
+                              if (!items.contains(_category)) _category = 'Todas';
+                              return SizedBox(
+                                width: itemWidth,
+                                child: DropdownButtonFormField<String>(
+                                  value: _category,
+                                  items: items
+                                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                                      .toList(),
+                                  onChanged: (v) => setState(() => _category = v ?? 'Todas'),
+                                  decoration: const InputDecoration(labelText: 'Categoria'),
+                                ),
+                              );
+                            },
+                          ),
+                          SizedBox(
+                            width: itemWidth,
+                            child: TextField(
+                              controller: _descCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Descrição',
+                                hintText: 'Filtrar por texto na descrição',
+                              ),
+                              onChanged: (_) => setState(() {}),
+                            ),
+                          ),
+                          SizedBox(
+                            width: constraints.maxWidth, // Full width for the button
+                            child: FilledButton.tonalIcon(
+                              onPressed: _clearFilters,
+                              icon: const Icon(Icons.filter_alt_off),
+                              label: const Text('Limpar filtros'),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 12),
