@@ -1,12 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:lembreplus/domain/recurrence.dart';
 import 'package:lembreplus/domain/time_utils.dart';
 import 'package:lembreplus/state/providers.dart';
+import 'package:lembreplus/core/text_sanitizer.dart';
+import 'package:lembreplus/data/models/counter.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
+
+  String _labelForRecurrence(Recurrence r) {
+    switch (r) {
+      case Recurrence.none:
+        return 'Nenhuma';
+      case Recurrence.weekly:
+        return 'Semanal';
+      case Recurrence.monthly:
+        return 'Mensal';
+      case Recurrence.yearly:
+        return 'Anual';
+    }
+  }
+
+  void _shareCounter(
+    BuildContext context,
+    Counter counter,
+    DateTime effectiveDate,
+    bool isFuture,
+  ) {
+    final now = DateTime.now();
+    final comps = calendarDiff(now, effectiveDate);
+    final timeText = isFuture ? 'Faltam' : 'Passaram';
+
+    String formattedTime = '';
+    if (comps.years > 0) {
+      formattedTime += '${comps.years} ano${comps.years == 1 ? '' : 's'}, ';
+    }
+    if (comps.months > 0) {
+      formattedTime += '${comps.months} mês${comps.months == 1 ? '' : 'es'}, ';
+    }
+    if (comps.days > 0) {
+      formattedTime += '${comps.days} dia${comps.days == 1 ? '' : 's'}, ';
+    }
+    if (comps.hours > 0) {
+      formattedTime += '${comps.hours} hora${comps.hours == 1 ? '' : 's'}, ';
+    }
+    if (comps.minutes > 0) {
+      formattedTime += '${comps.minutes} minuto${comps.minutes == 1 ? '' : 's'}, ';
+    }
+    if (comps.seconds > 0) {
+      formattedTime += '${comps.seconds} segundo${comps.seconds == 1 ? '' : 's'}, ';
+    }
+
+    // Remove a vírgula final se houver tempo formatado
+    if (formattedTime.endsWith(', ')) {
+      formattedTime = formattedTime.substring(0, formattedTime.length - 2);
+    }
+
+    final shareText =
+        '''
+📊 **${counter.name}**
+
+${counter.description ?? 'Sem descrição'}
+
+📅 **Data do evento:** ${DateFormat('dd/MM/yyyy HH:mm').format(counter.eventDate)}
+🔄 **Repetição:** ${_labelForRecurrence(Recurrence.fromString(counter.recurrence))}
+${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.category}\n' : ''}
+⏰ **Tempo ${timeText.toLowerCase()}:** ${formattedTime.isNotEmpty ? formattedTime : 'menos de 1 segundo'}
+
+📱 Compartilhado por Lembre+
+''';
+
+    final sanitizedText = sanitizeForShare(shareText);
+    final sanitizedSubject = sanitizeForShare('Contador: ${counter.name}');
+    Share.share(sanitizedText, subject: sanitizedSubject);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -132,7 +202,7 @@ class DashboardPage extends ConsumerWidget {
                         return Column(
                           children: [
                             for (final t in nextFiveDyn)
-                              _upcomingTile(context, t.$1.name, t.$1.category, t.$2, n),
+                              _upcomingTile(context, t.$1, t.$2, n),
                           ],
                         );
                       },
@@ -284,7 +354,7 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _upcomingTile(BuildContext context, String name, String? category, DateTime date, DateTime now) {
+  Widget _upcomingTile(BuildContext context, Counter counter, DateTime date, DateTime now) {
     final cs = Theme.of(context).colorScheme;
     final df = DateFormat('dd/MM/yyyy');
     final cal = calendarDiff(now, date);
@@ -301,11 +371,24 @@ class DashboardPage extends ConsumerWidget {
         children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w600),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      counter.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.share, size: 20),
+                    color: cs.onSurfaceVariant,
+                    onPressed: () => _shareCounter(context, counter, date, true),
+                    tooltip: 'Compartilhar',
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
               Wrap(
@@ -314,10 +397,10 @@ class DashboardPage extends ConsumerWidget {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(df.format(date), style: TextStyle(color: cs.onSurfaceVariant)),
-                  if (category != null)
+                  if (counter.category != null)
                     Chip(
                       avatar: const Text('🏷️'),
-                      label: Text(category),
+                      label: Text(counter.category!),
                       visualDensity: VisualDensity.compact,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
