@@ -197,6 +197,27 @@ class _AppDrawer extends StatelessWidget {
               child: Row(
                 children: [
                   CircleAvatar(
+                    radius: 22,
+                    backgroundColor: cs.onPrimary.withValues(alpha: 0.15),
+                    child: const Icon(Icons.event_note, color: Colors.white),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text('Lembre+', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text('Organize seus lembretes', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
                 children: [
                   tile(index: 0, label: 'Dashboard', leading: const Text('📋', style: TextStyle(fontSize: 20))),
                   tile(index: 1, label: 'Contadores', leading: const Text('🧮', style: TextStyle(fontSize: 20))),
