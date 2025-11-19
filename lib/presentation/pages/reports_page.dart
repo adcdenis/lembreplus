@@ -152,13 +152,16 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     await shareFile(file, mimeType: 'application/pdf');
   }
 
+  String _pluralize(int value, String singular, String plural) =>
+      value == 1 ? singular : plural;
+
   @override
   Widget build(BuildContext context) {
     final countersAsync = ref.watch(countersProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final cs = Theme.of(context).colorScheme;
     final df = DateFormat('dd/MM/yyyy');
-    final tf = DateFormat('HH:mm');
+
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -362,53 +365,145 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                           final c = filtered[i];
                           final eff = _effectiveDate(c.eventDate, c.recurrence);
                           final past = isPast(eff, now: _now);
-                          final diffStr = _formatDiff(eff);
-                          final label = past ? 'Passaram $diffStr' : 'Faltam $diffStr';
-                              final timeColor = past ? Colors.red : Colors.blue;
-                              final recurrenceVal = Recurrence.fromString(c.recurrence);
-                              return Container(
-                                decoration: BoxDecoration(
-                                  color: cs.surfaceContainerHighest.withValues(alpha: 0.06),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                                child: ListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: Text(
-                                    c.name,
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '${df.format(c.eventDate)} • ${tf.format(c.eventDate)}',
-                                        style: TextStyle(color: cs.onSurfaceVariant),
+                          final diff = durationDiff(_now, eff);
+                          
+                          final tint = !past ? cs.primaryContainer : cs.errorContainer;
+                          final recurrenceVal = Recurrence.fromString(c.recurrence);
+
+                          return Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: cs.outlineVariant),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: !past
+                                    ? [
+                                        cs.primaryContainer.withValues(alpha: 0.6),
+                                        cs.primaryContainer.withValues(alpha: 0.3),
+                                      ]
+                                    : [
+                                        cs.errorContainer.withValues(alpha: 0.6),
+                                        cs.errorContainer.withValues(alpha: 0.3),
+                                      ],
+                              ),
+                            ),
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: !past
+                                            ? cs.primary.withValues(alpha: 0.1)
+                                            : cs.error.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                      if ((c.category ?? '').isNotEmpty)
-                                        Text(
-                                          c.category!,
-                                          style: TextStyle(color: cs.onSurfaceVariant),
-                                        ),
-                                      if (recurrenceVal != Recurrence.none)
-                                        Text(
-                                          _labelForRecurrence(recurrenceVal),
-                                          style: TextStyle(color: cs.onSurfaceVariant),
-                                        ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        label,
+                                      child: Text(
+                                        !past ? '🗓️' : '🕰️',
                                         style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          color: timeColor,
+                                          fontSize: 16,
+                                          color: !past ? cs.primary : cs.error,
                                         ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        c.name,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (diff.years > 0) ...[
+                                        _CounterBox(
+                                          value: diff.years,
+                                          label: _pluralize(diff.years, 'Ano', 'Anos'),
+                                          tint: tint,
+                                        ),
+                                        const SizedBox(width: 4),
+                                      ],
+                                      if (diff.months > 0) ...[
+                                        _CounterBox(
+                                          value: diff.months,
+                                          label: _pluralize(diff.months, 'Mês', 'Meses'),
+                                          tint: tint,
+                                        ),
+                                        const SizedBox(width: 4),
+                                      ],
+                                      _CounterBox(
+                                        value: diff.days,
+                                        label: _pluralize(diff.days, 'Dia', 'Dias'),
+                                        tint: tint,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      _CounterBox(
+                                        value: diff.hours,
+                                        label: _pluralize(diff.hours, 'Hora', 'Horas'),
+                                        tint: tint,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      _CounterBox(
+                                        value: diff.minutes,
+                                        label: _pluralize(diff.minutes, 'Minuto', 'Minutos'),
+                                        tint: tint,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      _CounterBox(
+                                        value: diff.seconds,
+                                        label: _pluralize(diff.seconds, 'Segundo', 'Segundos'),
+                                        tint: tint,
                                       ),
                                     ],
                                   ),
-                                  trailing: null,
                                 ),
-                              );
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 4,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    if ((c.category ?? '').trim().isNotEmpty)
+                                      Chip(
+                                        avatar: Text('🏷️', style: TextStyle(fontSize: 14, color: cs.onSecondaryContainer)),
+                                        label: Text(c.category!),
+                                        visualDensity: VisualDensity.compact,
+                                        backgroundColor: cs.secondaryContainer,
+                                        labelStyle: TextStyle(color: cs.onSecondaryContainer),
+                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                    if (recurrenceVal != Recurrence.none)
+                                      Chip(
+                                        avatar: Text('🔁', style: TextStyle(fontSize: 16, color: cs.onTertiaryContainer)),
+                                        label: Text(_labelForRecurrence(recurrenceVal)),
+                                        visualDensity: VisualDensity.compact,
+                                        backgroundColor: cs.tertiaryContainer,
+                                        labelStyle: TextStyle(color: cs.onTertiaryContainer),
+                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                    Text(
+                                      DateFormat('dd/MM/yyyy HH:mm').format(eff),
+                                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
                         },
                       ),
                     ],
@@ -416,6 +511,48 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 ),
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CounterBox extends StatelessWidget {
+  final int value;
+  final String label;
+  final Color tint;
+  const _CounterBox({required this.value, required this.label, required this.tint});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [tint.withValues(alpha: 0.85), tint.withValues(alpha: 0.5)],
+        ),
+        boxShadow: [
+          BoxShadow(color: tint.withValues(alpha: 0.28), blurRadius: 4, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$value',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: scheme.onSurface),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 10, color: scheme.onSurfaceVariant),
           ),
         ],
       ),

@@ -414,20 +414,20 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (cal.years > 0) ...[
-                      _DashCounterBox(context: context, value: cal.years, label: _pluralize(cal.years, 'Ano', 'Anos'), tint: cs.primaryContainer),
+                      _dashCounterBox(context: context, value: cal.years, label: _pluralize(cal.years, 'Ano', 'Anos'), tint: cs.primaryContainer),
                       const SizedBox(width: 4),
                     ],
                     if (cal.months > 0) ...[
-                      _DashCounterBox(context: context, value: cal.months, label: _pluralize(cal.months, 'Mês', 'Meses'), tint: cs.primaryContainer),
+                      _dashCounterBox(context: context, value: cal.months, label: _pluralize(cal.months, 'Mês', 'Meses'), tint: cs.primaryContainer),
                       const SizedBox(width: 4),
                     ],
-                    _DashCounterBox(context: context, value: cal.days, label: _pluralize(cal.days, 'Dia', 'Dias'), tint: cs.primaryContainer),
+                    _dashCounterBox(context: context, value: cal.days, label: _pluralize(cal.days, 'Dia', 'Dias'), tint: cs.primaryContainer),
                     const SizedBox(width: 4),
-                    _DashCounterBox(context: context, value: cal.hours, label: _pluralize(cal.hours, 'Hora', 'Horas'), tint: cs.primaryContainer),
+                    _dashCounterBox(context: context, value: cal.hours, label: _pluralize(cal.hours, 'Hora', 'Horas'), tint: cs.primaryContainer),
                     const SizedBox(width: 4),
-                    _DashCounterBox(context: context, value: cal.minutes, label: _pluralize(cal.minutes, 'Minuto', 'Minutos'), tint: cs.primaryContainer),
+                    _dashCounterBox(context: context, value: cal.minutes, label: _pluralize(cal.minutes, 'Minuto', 'Minutos'), tint: cs.primaryContainer),
                     const SizedBox(width: 4),
-                    _DashCounterBox(context: context, value: cal.seconds, label: _pluralize(cal.seconds, 'Segundo', 'Segundos'), tint: cs.primaryContainer),
+                    _dashCounterBox(context: context, value: cal.seconds, label: _pluralize(cal.seconds, 'Segundo', 'Segundos'), tint: cs.primaryContainer),
                   ],
                 ),
               ),
@@ -440,7 +440,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
   }
 
   // Box de contador visualmente alinhado com a lista de contadores
-  Widget _DashCounterBox({required BuildContext context, required int value, required String label, required Color tint}) {
+  Widget _dashCounterBox({required BuildContext context, required int value, required String label, required Color tint}) {
     final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),

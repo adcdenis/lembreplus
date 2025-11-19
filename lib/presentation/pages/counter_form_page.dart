@@ -50,6 +50,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
           _nameCtrl.text = c.name;
           _descCtrl.text = c.description ?? '';
           _categoryCtrl.text = c.category ?? '';
+          _categoryFieldCtrl?.text = c.category ?? '';
           _date = base;
           _time = TimeOfDay(hour: base.hour, minute: base.minute);
           _recurrence = c.recurrence ?? Recurrence.none.name;
@@ -90,6 +91,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                 labelText: 'Nome',
                 border: OutlineInputBorder(),
               ),
+              maxLength: 100,
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? 'Informe um nome' : null,
             ),
@@ -101,6 +103,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                 border: OutlineInputBorder(),
               ),
               maxLines: 2,
+              maxLength: 300,
             ),
             const SizedBox(height: 12),
             Column(
@@ -134,9 +137,14 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                       (context, textController, focusNode, onFieldSubmitted) {
                         // Guarda referência para sincronizar quando chips/botões atualizam a categoria
                         _categoryFieldCtrl = textController;
+                        if (_categoryCtrl.text.isNotEmpty &&
+                            textController.text.isEmpty) {
+                          textController.text = _categoryCtrl.text;
+                        }
                         return TextFormField(
                           controller: textController,
                           focusNode: focusNode,
+                          maxLength: 100,
                           onChanged: (v) {
                             // Mantém _categoryCtrl como fonte de verdade para outros widgets
                             _categoryCtrl

@@ -329,6 +329,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                     onSelected: (v) async {
                       setState(() {
                         if (v) {
+                          _selectedCategories.clear();
                           _selectedCategories.add(norm);
                         } else {
                           _selectedCategories.remove(norm);

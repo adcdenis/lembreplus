@@ -207,7 +207,7 @@ class _AppDrawer extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
                         Text('Lembre+', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
-                        Text('Organize seus lembretes', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                        Text('Organize seus contadores', style: TextStyle(fontSize: 12, color: Colors.white70)),
                       ],
                     ),
                   ),
