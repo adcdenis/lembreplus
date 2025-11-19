@@ -1176,12 +1176,272 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
   }
 }
 
+class $CounterAlertsTable extends CounterAlerts
+    with TableInfo<$CounterAlertsTable, CounterAlertRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CounterAlertsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _counterIdMeta = const VerificationMeta(
+    'counterId',
+  );
+  @override
+  late final GeneratedColumn<int> counterId = GeneratedColumn<int>(
+    'counter_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES counters (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _offsetMinutesMeta = const VerificationMeta(
+    'offsetMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> offsetMinutes = GeneratedColumn<int>(
+    'offset_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, counterId, offsetMinutes];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'counter_alerts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CounterAlertRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('counter_id')) {
+      context.handle(
+        _counterIdMeta,
+        counterId.isAcceptableOrUnknown(data['counter_id']!, _counterIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_counterIdMeta);
+    }
+    if (data.containsKey('offset_minutes')) {
+      context.handle(
+        _offsetMinutesMeta,
+        offsetMinutes.isAcceptableOrUnknown(
+          data['offset_minutes']!,
+          _offsetMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_offsetMinutesMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CounterAlertRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CounterAlertRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      counterId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}counter_id'],
+      )!,
+      offsetMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}offset_minutes'],
+      )!,
+    );
+  }
+
+  @override
+  $CounterAlertsTable createAlias(String alias) {
+    return $CounterAlertsTable(attachedDatabase, alias);
+  }
+}
+
+class CounterAlertRow extends DataClass implements Insertable<CounterAlertRow> {
+  final int id;
+  final int counterId;
+  final int offsetMinutes;
+  const CounterAlertRow({
+    required this.id,
+    required this.counterId,
+    required this.offsetMinutes,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['counter_id'] = Variable<int>(counterId);
+    map['offset_minutes'] = Variable<int>(offsetMinutes);
+    return map;
+  }
+
+  CounterAlertsCompanion toCompanion(bool nullToAbsent) {
+    return CounterAlertsCompanion(
+      id: Value(id),
+      counterId: Value(counterId),
+      offsetMinutes: Value(offsetMinutes),
+    );
+  }
+
+  factory CounterAlertRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CounterAlertRow(
+      id: serializer.fromJson<int>(json['id']),
+      counterId: serializer.fromJson<int>(json['counterId']),
+      offsetMinutes: serializer.fromJson<int>(json['offsetMinutes']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'counterId': serializer.toJson<int>(counterId),
+      'offsetMinutes': serializer.toJson<int>(offsetMinutes),
+    };
+  }
+
+  CounterAlertRow copyWith({int? id, int? counterId, int? offsetMinutes}) =>
+      CounterAlertRow(
+        id: id ?? this.id,
+        counterId: counterId ?? this.counterId,
+        offsetMinutes: offsetMinutes ?? this.offsetMinutes,
+      );
+  CounterAlertRow copyWithCompanion(CounterAlertsCompanion data) {
+    return CounterAlertRow(
+      id: data.id.present ? data.id.value : this.id,
+      counterId: data.counterId.present ? data.counterId.value : this.counterId,
+      offsetMinutes: data.offsetMinutes.present
+          ? data.offsetMinutes.value
+          : this.offsetMinutes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CounterAlertRow(')
+          ..write('id: $id, ')
+          ..write('counterId: $counterId, ')
+          ..write('offsetMinutes: $offsetMinutes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, counterId, offsetMinutes);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CounterAlertRow &&
+          other.id == this.id &&
+          other.counterId == this.counterId &&
+          other.offsetMinutes == this.offsetMinutes);
+}
+
+class CounterAlertsCompanion extends UpdateCompanion<CounterAlertRow> {
+  final Value<int> id;
+  final Value<int> counterId;
+  final Value<int> offsetMinutes;
+  const CounterAlertsCompanion({
+    this.id = const Value.absent(),
+    this.counterId = const Value.absent(),
+    this.offsetMinutes = const Value.absent(),
+  });
+  CounterAlertsCompanion.insert({
+    this.id = const Value.absent(),
+    required int counterId,
+    required int offsetMinutes,
+  }) : counterId = Value(counterId),
+       offsetMinutes = Value(offsetMinutes);
+  static Insertable<CounterAlertRow> custom({
+    Expression<int>? id,
+    Expression<int>? counterId,
+    Expression<int>? offsetMinutes,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (counterId != null) 'counter_id': counterId,
+      if (offsetMinutes != null) 'offset_minutes': offsetMinutes,
+    });
+  }
+
+  CounterAlertsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? counterId,
+    Value<int>? offsetMinutes,
+  }) {
+    return CounterAlertsCompanion(
+      id: id ?? this.id,
+      counterId: counterId ?? this.counterId,
+      offsetMinutes: offsetMinutes ?? this.offsetMinutes,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (counterId.present) {
+      map['counter_id'] = Variable<int>(counterId.value);
+    }
+    if (offsetMinutes.present) {
+      map['offset_minutes'] = Variable<int>(offsetMinutes.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CounterAlertsCompanion(')
+          ..write('id: $id, ')
+          ..write('counterId: $counterId, ')
+          ..write('offsetMinutes: $offsetMinutes')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $CountersTable counters = $CountersTable(this);
   late final $CounterHistoryTable counterHistory = $CounterHistoryTable(this);
   late final $CategoriesTable categories = $CategoriesTable(this);
+  late final $CounterAlertsTable counterAlerts = $CounterAlertsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1190,6 +1450,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     counters,
     counterHistory,
     categories,
+    counterAlerts,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -1199,6 +1460,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('counter_history', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'counters',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('counter_alerts', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -1248,6 +1516,24 @@ final class $$CountersTableReferences
     ).filter((f) => f.counterId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_counterHistoryRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$CounterAlertsTable, List<CounterAlertRow>>
+  _counterAlertsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.counterAlerts,
+    aliasName: $_aliasNameGenerator(db.counters.id, db.counterAlerts.counterId),
+  );
+
+  $$CounterAlertsTableProcessedTableManager get counterAlertsRefs {
+    final manager = $$CounterAlertsTableTableManager(
+      $_db,
+      $_db.counterAlerts,
+    ).filter((f) => f.counterId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_counterAlertsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -1324,6 +1610,31 @@ class $$CountersTableFilterComposer
           }) => $$CounterHistoryTableFilterComposer(
             $db: $db,
             $table: $db.counterHistory,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> counterAlertsRefs(
+    Expression<bool> Function($$CounterAlertsTableFilterComposer f) f,
+  ) {
+    final $$CounterAlertsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.counterAlerts,
+      getReferencedColumn: (t) => t.counterId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CounterAlertsTableFilterComposer(
+            $db: $db,
+            $table: $db.counterAlerts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1455,6 +1766,31 @@ class $$CountersTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> counterAlertsRefs<T extends Object>(
+    Expression<T> Function($$CounterAlertsTableAnnotationComposer a) f,
+  ) {
+    final $$CounterAlertsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.counterAlerts,
+      getReferencedColumn: (t) => t.counterId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CounterAlertsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.counterAlerts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$CountersTableTableManager
@@ -1470,7 +1806,10 @@ class $$CountersTableTableManager
           $$CountersTableUpdateCompanionBuilder,
           (CounterRow, $$CountersTableReferences),
           CounterRow,
-          PrefetchHooks Function({bool counterHistoryRefs})
+          PrefetchHooks Function({
+            bool counterHistoryRefs,
+            bool counterAlertsRefs,
+          })
         > {
   $$CountersTableTableManager(_$AppDatabase db, $CountersTable table)
     : super(
@@ -1535,37 +1874,63 @@ class $$CountersTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({counterHistoryRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (counterHistoryRefs) db.counterHistory,
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (counterHistoryRefs)
-                    await $_getPrefetchedData<
-                      CounterRow,
-                      $CountersTable,
-                      CounterHistoryRow
-                    >(
-                      currentTable: table,
-                      referencedTable: $$CountersTableReferences
-                          ._counterHistoryRefsTable(db),
-                      managerFromTypedResult: (p0) => $$CountersTableReferences(
-                        db,
-                        table,
-                        p0,
-                      ).counterHistoryRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.counterId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({counterHistoryRefs = false, counterAlertsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (counterHistoryRefs) db.counterHistory,
+                    if (counterAlertsRefs) db.counterAlerts,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (counterHistoryRefs)
+                        await $_getPrefetchedData<
+                          CounterRow,
+                          $CountersTable,
+                          CounterHistoryRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CountersTableReferences
+                              ._counterHistoryRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CountersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).counterHistoryRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.counterId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (counterAlertsRefs)
+                        await $_getPrefetchedData<
+                          CounterRow,
+                          $CountersTable,
+                          CounterAlertRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CountersTableReferences
+                              ._counterAlertsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CountersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).counterAlertsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.counterId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -1582,7 +1947,7 @@ typedef $$CountersTableProcessedTableManager =
       $$CountersTableUpdateCompanionBuilder,
       (CounterRow, $$CountersTableReferences),
       CounterRow,
-      PrefetchHooks Function({bool counterHistoryRefs})
+      PrefetchHooks Function({bool counterHistoryRefs, bool counterAlertsRefs})
     >;
 typedef $$CounterHistoryTableCreateCompanionBuilder =
     CounterHistoryCompanion Function({
@@ -2063,6 +2428,288 @@ typedef $$CategoriesTableProcessedTableManager =
       CategoryRow,
       PrefetchHooks Function()
     >;
+typedef $$CounterAlertsTableCreateCompanionBuilder =
+    CounterAlertsCompanion Function({
+      Value<int> id,
+      required int counterId,
+      required int offsetMinutes,
+    });
+typedef $$CounterAlertsTableUpdateCompanionBuilder =
+    CounterAlertsCompanion Function({
+      Value<int> id,
+      Value<int> counterId,
+      Value<int> offsetMinutes,
+    });
+
+final class $$CounterAlertsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $CounterAlertsTable, CounterAlertRow> {
+  $$CounterAlertsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $CountersTable _counterIdTable(_$AppDatabase db) =>
+      db.counters.createAlias(
+        $_aliasNameGenerator(db.counterAlerts.counterId, db.counters.id),
+      );
+
+  $$CountersTableProcessedTableManager get counterId {
+    final $_column = $_itemColumn<int>('counter_id')!;
+
+    final manager = $$CountersTableTableManager(
+      $_db,
+      $_db.counters,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_counterIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$CounterAlertsTableFilterComposer
+    extends Composer<_$AppDatabase, $CounterAlertsTable> {
+  $$CounterAlertsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get offsetMinutes => $composableBuilder(
+    column: $table.offsetMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CountersTableFilterComposer get counterId {
+    final $$CountersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.counterId,
+      referencedTable: $db.counters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CountersTableFilterComposer(
+            $db: $db,
+            $table: $db.counters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CounterAlertsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CounterAlertsTable> {
+  $$CounterAlertsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get offsetMinutes => $composableBuilder(
+    column: $table.offsetMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CountersTableOrderingComposer get counterId {
+    final $$CountersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.counterId,
+      referencedTable: $db.counters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CountersTableOrderingComposer(
+            $db: $db,
+            $table: $db.counters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CounterAlertsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CounterAlertsTable> {
+  $$CounterAlertsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get offsetMinutes => $composableBuilder(
+    column: $table.offsetMinutes,
+    builder: (column) => column,
+  );
+
+  $$CountersTableAnnotationComposer get counterId {
+    final $$CountersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.counterId,
+      referencedTable: $db.counters,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CountersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.counters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CounterAlertsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CounterAlertsTable,
+          CounterAlertRow,
+          $$CounterAlertsTableFilterComposer,
+          $$CounterAlertsTableOrderingComposer,
+          $$CounterAlertsTableAnnotationComposer,
+          $$CounterAlertsTableCreateCompanionBuilder,
+          $$CounterAlertsTableUpdateCompanionBuilder,
+          (CounterAlertRow, $$CounterAlertsTableReferences),
+          CounterAlertRow,
+          PrefetchHooks Function({bool counterId})
+        > {
+  $$CounterAlertsTableTableManager(_$AppDatabase db, $CounterAlertsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CounterAlertsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CounterAlertsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CounterAlertsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> counterId = const Value.absent(),
+                Value<int> offsetMinutes = const Value.absent(),
+              }) => CounterAlertsCompanion(
+                id: id,
+                counterId: counterId,
+                offsetMinutes: offsetMinutes,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int counterId,
+                required int offsetMinutes,
+              }) => CounterAlertsCompanion.insert(
+                id: id,
+                counterId: counterId,
+                offsetMinutes: offsetMinutes,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$CounterAlertsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({counterId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (counterId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.counterId,
+                                referencedTable: $$CounterAlertsTableReferences
+                                    ._counterIdTable(db),
+                                referencedColumn: $$CounterAlertsTableReferences
+                                    ._counterIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$CounterAlertsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CounterAlertsTable,
+      CounterAlertRow,
+      $$CounterAlertsTableFilterComposer,
+      $$CounterAlertsTableOrderingComposer,
+      $$CounterAlertsTableAnnotationComposer,
+      $$CounterAlertsTableCreateCompanionBuilder,
+      $$CounterAlertsTableUpdateCompanionBuilder,
+      (CounterAlertRow, $$CounterAlertsTableReferences),
+      CounterAlertRow,
+      PrefetchHooks Function({bool counterId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2073,4 +2720,6 @@ class $AppDatabaseManager {
       $$CounterHistoryTableTableManager(_db, _db.counterHistory);
   $$CategoriesTableTableManager get categories =>
       $$CategoriesTableTableManager(_db, _db.categories);
+  $$CounterAlertsTableTableManager get counterAlerts =>
+      $$CounterAlertsTableTableManager(_db, _db.counterAlerts);
 }

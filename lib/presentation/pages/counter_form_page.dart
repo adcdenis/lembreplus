@@ -27,7 +27,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
   DateTime _date = DateTime.now();
   TimeOfDay _time = TimeOfDay.now();
   String _recurrence = Recurrence.none.name;
-  int? _alertOffset; // Minutes before event
+  List<int> _alertOffsets = []; // List of alert offsets in minutes
   DateTime? _createdAt;
 
   @override
@@ -61,7 +61,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
           _date = base;
           _time = TimeOfDay(hour: base.hour, minute: base.minute);
           _recurrence = c.recurrence ?? Recurrence.none.name;
-          _alertOffset = c.alertOffset;
+          _alertOffsets = List.from(c.alertOffsets);
           _createdAt = c.createdAt;
         });
       }
@@ -478,64 +478,61 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
               ),
             ),
             const SizedBox(height: 12),
-            InputDecorator(
-              decoration: const InputDecoration(
-                labelText: 'Notificação',
-                border: OutlineInputBorder(),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<int?>(
-                  value: _alertOffset,
-                  hint: const Text('Sem notificação'),
-                  items: [
-                    const DropdownMenuItem(
-                      value: null,
-                      child: Text('Sem notificação'),
+            // Alert Management Section
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Lembretes',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
-                    const DropdownMenuItem(
-                      value: 2,
-                      child: Text('2 minutos antes'),
-                    ),
-                    const DropdownMenuItem(
-                      value: 3,
-                      child: Text('3 minutos antes'),
-                    ),
-                    const DropdownMenuItem(
-                      value: 15,
-                      child: Text('15 minutos antes'),
-                    ),
-                    const DropdownMenuItem(
-                      value: 30,
-                      child: Text('30 minutos antes'),
-                    ),
-                    const DropdownMenuItem(
-                      value: 60,
-                      child: Text('1 hora antes'),
-                    ),
-                    const DropdownMenuItem(
-                      value: 180,
-                      child: Text('3 horas antes'),
-                    ),
-                    const DropdownMenuItem(
-                      value: 360,
-                      child: Text('6 horas antes'),
-                    ),
-                    const DropdownMenuItem(
-                      value: 720,
-                      child: Text('12 horas antes'),
-                    ),
-                    const DropdownMenuItem(
-                      value: 1440,
-                      child: Text('24 horas antes'),
-                    ),
-                    const DropdownMenuItem(
-                      value: 2880,
-                      child: Text('48 horas antes'),
-                    ),
+                    if (_alertOffsets.length < 5)
+                      TextButton.icon(
+                        onPressed: _showAddAlertDialog,
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Adicionar'),
+                      ),
                   ],
-                  onChanged: (v) => setState(() => _alertOffset = v),
                 ),
-              ),
+                const SizedBox(height: 8),
+                if (_alertOffsets.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Nenhum lembrete configurado',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  )
+                else
+                  ..._alertOffsets.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final offset = entry.value;
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: const Icon(Icons.notifications_active),
+                        title: Text(_formatAlertOffset(offset)),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              _alertOffsets.removeAt(index);
+                            });
+                          },
+                        ),
+                      ),
+                    );
+                  }).toList(),
+              ],
             ),
             const SizedBox(height: 20),
             Row(
@@ -609,7 +606,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
             ? null
             : _categoryCtrl.text.trim(),
         recurrence: _recurrence,
-        alertOffset: _alertOffset,
+        alertOffsets: _alertOffsets,
         createdAt: now,
         updatedAt: now,
       );
@@ -631,7 +628,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
             ? null
             : _categoryCtrl.text.trim(),
         recurrence: _recurrence,
-        alertOffset: _alertOffset,
+        alertOffsets: _alertOffsets,
         createdAt: _createdAt ?? now,
         updatedAt: now,
       );
@@ -648,18 +645,17 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     // Agendamento de notificação
     if (savedId != null) {
       try {
-        if (_alertOffset != null) {
-          final scheduledDate = dt.subtract(Duration(minutes: _alertOffset!));
-          if (scheduledDate.isAfter(DateTime.now())) {
-            await notifService.scheduleNotification(
-              id: savedId,
-              title: 'Lembrete de Evento',
-              body: 'O evento "${_nameCtrl.text}" será em ${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} às ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}',
-              scheduledDate: scheduledDate,
-            );
-          }
-        } else {
-          await notifService.cancelNotification(savedId);
+        // Cancelar notificações antigas primeiro
+        await notifService.cancelNotificationsForCounter(savedId);
+        
+        // Agendar novas notificações
+        if (_alertOffsets.isNotEmpty) {
+          await notifService.scheduleNotifications(
+            counterId: savedId,
+            eventName: _nameCtrl.text,
+            eventDate: dt,
+            offsetsMinutes: _alertOffsets,
+          );
         }
       } catch (e) {
         debugPrint('Erro ao agendar notificação: $e');
@@ -677,5 +673,100 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     if (mounted) {
       context.go('/counters');
     }
+  }
+
+  String _formatAlertOffset(int minutes) {
+    if (minutes < 60) {
+      return '$minutes ${minutes == 1 ? 'minuto' : 'minutos'} antes';
+    } else if (minutes < 1440) {
+      final hours = minutes ~/ 60;
+      return '$hours ${hours == 1 ? 'hora' : 'horas'} antes';
+    } else {
+      final days = minutes ~/ 1440;
+      return '$days ${days == 1 ? 'dia' : 'dias'} antes';
+    }
+  }
+
+  void _showAddAlertDialog() {
+    int value = 1;
+    String unit = 'minutes'; // minutes, hours, days
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Adicionar Lembrete'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Valor',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (v) {
+                        final parsed = int.tryParse(v);
+                        if (parsed != null && parsed > 0) {
+                          value = parsed;
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 3,
+                    child: DropdownButtonFormField<String>(
+                      value: unit,
+                      decoration: const InputDecoration(
+                        labelText: 'Unidade',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'minutes', child: Text('Minutos')),
+                        DropdownMenuItem(value: 'hours', child: Text('Horas')),
+                        DropdownMenuItem(value: 'days', child: Text('Dias')),
+                      ],
+                      onChanged: (v) {
+                        setDialogState(() {
+                          unit = v!;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                int offsetMinutes = value;
+                if (unit == 'hours') {
+                  offsetMinutes = value * 60;
+                } else if (unit == 'days') {
+                  offsetMinutes = value * 1440;
+                }
+                
+                setState(() {
+                  _alertOffsets.add(offsetMinutes);
+                  _alertOffsets.sort(); // Sort to show in chronological order
+                });
+                Navigator.pop(context);
+              },
+              child: const Text('Adicionar'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

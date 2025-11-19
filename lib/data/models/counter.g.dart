@@ -14,7 +14,11 @@ _$CounterImpl _$$CounterImplFromJson(Map<String, dynamic> json) =>
       eventDate: DateTime.parse(json['eventDate'] as String),
       category: json['category'] as String?,
       recurrence: json['recurrence'] as String?,
-      alertOffset: (json['alertOffset'] as num?)?.toInt(),
+      alertOffsets:
+          (json['alertOffsets'] as List<dynamic>?)
+              ?.map((e) => (e as num).toInt())
+              .toList() ??
+          const [],
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: json['updatedAt'] == null
           ? null
@@ -29,7 +33,7 @@ Map<String, dynamic> _$$CounterImplToJson(_$CounterImpl instance) =>
       'eventDate': instance.eventDate.toIso8601String(),
       'category': instance.category,
       'recurrence': instance.recurrence,
-      'alertOffset': instance.alertOffset,
+      'alertOffsets': instance.alertOffsets,
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
     };

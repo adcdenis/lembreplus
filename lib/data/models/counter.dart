@@ -12,7 +12,7 @@ class Counter with _$Counter {
     required DateTime eventDate,
     String? category,
     String? recurrence,
-    int? alertOffset,
+    @Default([]) List<int> alertOffsets,
     required DateTime createdAt,
     DateTime? updatedAt,
   }) = _Counter;

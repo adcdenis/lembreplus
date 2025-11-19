@@ -62,38 +62,50 @@ class NotificationService {
     }
   }
 
-  Future<void> scheduleNotification({
-    required int id,
-    required String title,
-    required String body,
-    required DateTime scheduledDate,
+  Future<void> scheduleNotifications({
+    required int counterId,
+    required String eventName,
+    required DateTime eventDate,
+    required List<int> offsetsMinutes,
   }) async {
-    // Se a data já passou, não agenda
-    if (scheduledDate.isBefore(DateTime.now())) return;
-
-    await _notificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(scheduledDate, tz.local),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'lembreplus_channel',
-          'Lembretes',
-          channelDescription: 'Notificações de contadores agendados',
-          importance: Importance.max,
-          priority: Priority.high,
+    for (int i = 0; i < offsetsMinutes.length; i++) {
+      final offset = offsetsMinutes[i];
+      final scheduledDate = eventDate.subtract(Duration(minutes: offset));
+      
+      // Não agenda se já passou
+      if (scheduledDate.isBefore(DateTime.now())) continue;
+      
+      // ID único: counterId * 100 + index (suporta até 100 alertas por contador)
+      final notificationId = counterId * 100 + i;
+      
+      await _notificationsPlugin.zonedSchedule(
+        notificationId,
+        'Lembrete de Evento',
+        'O evento "$eventName" será em ${eventDate.day.toString().padLeft(2, '0')}/${eventDate.month.toString().padLeft(2, '0')}/${eventDate.year} às ${eventDate.hour.toString().padLeft(2, '0')}:${eventDate.minute.toString().padLeft(2, '0')}',
+        tz.TZDateTime.from(scheduledDate, tz.local),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'lembreplus_channel',
+            'Lembretes',
+            channelDescription: 'Notificações de contadores agendados',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
         ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
   }
 
-  Future<void> cancelNotification(int id) async {
-    await _notificationsPlugin.cancel(id);
+  Future<void> cancelNotificationsForCounter(int counterId) async {
+    // Cancela até 100 possíveis notificações para este contador
+    for (int i = 0; i < 100; i++) {
+      final notificationId = counterId * 100 + i;
+      await _notificationsPlugin.cancel(notificationId);
+    }
   }
 
   Future<void> cancelAll() async {

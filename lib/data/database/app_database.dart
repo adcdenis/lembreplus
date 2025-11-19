@@ -17,6 +17,13 @@ class Counters extends Table {
   DateTimeColumn get updatedAt => dateTime().nullable()();
 }
 
+@DataClassName('CategoryRow')
+class Categories extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get normalized => text()();
+}
+
 @DataClassName('CounterHistoryRow')
 class CounterHistory extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -26,28 +33,43 @@ class CounterHistory extends Table {
   DateTimeColumn get timestamp => dateTime()();
 }
 
-@DataClassName('CategoryRow')
-class Categories extends Table {
+@DataClassName('CounterAlertRow')
+class CounterAlerts extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text()();
-  TextColumn get normalized => text()();
+  IntColumn get counterId => integer().references(Counters, #id, onDelete: KeyAction.cascade)();
+  IntColumn get offsetMinutes => integer()();
 }
 
 LazyDatabase _openConnection() => openConnection();
 
-@DriftDatabase(tables: [Counters, CounterHistory, Categories])
+@DriftDatabase(tables: [Counters, CounterHistory, Categories, CounterAlerts])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.test() : super(openTestConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onUpgrade: (m, from, to) async {
           if (from < 2) {
             await m.addColumn(counters, counters.alertOffset);
+          }
+          if (from < 3) {
+            await m.createTable(counterAlerts);
+            // Migração de dados: mover alertOffset para CounterAlerts
+            final oldCounters = await select(counters).get();
+            for (final c in oldCounters) {
+              if (c.alertOffset != null) {
+                await into(counterAlerts).insert(
+                  CounterAlertsCompanion.insert(
+                    counterId: c.id,
+                    offsetMinutes: c.alertOffset!,
+                  ),
+                );
+              }
+            }
           }
         },
         beforeOpen: (details) async {
@@ -90,6 +112,11 @@ class AppDatabase extends _$AppDatabase {
       updatedAt: Value(updatedAt),
     ));
   }
+  
+  // CRUD para CounterAlerts
+  Future<int> insertAlert(CounterAlertsCompanion entry) => into(counterAlerts).insert(entry);
+  Future<void> deleteAlertsForCounter(int counterId) => (delete(counterAlerts)..where((t) => t.counterId.equals(counterId))).go();
+  Future<List<CounterAlertRow>> getAlertsForCounter(int counterId) => (select(counterAlerts)..where((t) => t.counterId.equals(counterId))).get();
 
   // CRUD básico para Categories
   Future<int> insertCategory(CategoriesCompanion entry) => into(categories).insert(entry);

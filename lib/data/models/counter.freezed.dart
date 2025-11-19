@@ -27,7 +27,7 @@ mixin _$Counter {
   DateTime get eventDate => throw _privateConstructorUsedError;
   String? get category => throw _privateConstructorUsedError;
   String? get recurrence => throw _privateConstructorUsedError;
-  int? get alertOffset => throw _privateConstructorUsedError;
+  List<int> get alertOffsets => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
@@ -52,7 +52,7 @@ abstract class $CounterCopyWith<$Res> {
     DateTime eventDate,
     String? category,
     String? recurrence,
-    int? alertOffset,
+    List<int> alertOffsets,
     DateTime createdAt,
     DateTime? updatedAt,
   });
@@ -79,7 +79,7 @@ class _$CounterCopyWithImpl<$Res, $Val extends Counter>
     Object? eventDate = null,
     Object? category = freezed,
     Object? recurrence = freezed,
-    Object? alertOffset = freezed,
+    Object? alertOffsets = null,
     Object? createdAt = null,
     Object? updatedAt = freezed,
   }) {
@@ -109,10 +109,10 @@ class _$CounterCopyWithImpl<$Res, $Val extends Counter>
                 ? _value.recurrence
                 : recurrence // ignore: cast_nullable_to_non_nullable
                       as String?,
-            alertOffset: freezed == alertOffset
-                ? _value.alertOffset
-                : alertOffset // ignore: cast_nullable_to_non_nullable
-                      as int?,
+            alertOffsets: null == alertOffsets
+                ? _value.alertOffsets
+                : alertOffsets // ignore: cast_nullable_to_non_nullable
+                      as List<int>,
             createdAt: null == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -142,7 +142,7 @@ abstract class _$$CounterImplCopyWith<$Res> implements $CounterCopyWith<$Res> {
     DateTime eventDate,
     String? category,
     String? recurrence,
-    int? alertOffset,
+    List<int> alertOffsets,
     DateTime createdAt,
     DateTime? updatedAt,
   });
@@ -168,7 +168,7 @@ class __$$CounterImplCopyWithImpl<$Res>
     Object? eventDate = null,
     Object? category = freezed,
     Object? recurrence = freezed,
-    Object? alertOffset = freezed,
+    Object? alertOffsets = null,
     Object? createdAt = null,
     Object? updatedAt = freezed,
   }) {
@@ -198,10 +198,10 @@ class __$$CounterImplCopyWithImpl<$Res>
             ? _value.recurrence
             : recurrence // ignore: cast_nullable_to_non_nullable
                   as String?,
-        alertOffset: freezed == alertOffset
-            ? _value.alertOffset
-            : alertOffset // ignore: cast_nullable_to_non_nullable
-                  as int?,
+        alertOffsets: null == alertOffsets
+            ? _value._alertOffsets
+            : alertOffsets // ignore: cast_nullable_to_non_nullable
+                  as List<int>,
         createdAt: null == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -225,10 +225,10 @@ class _$CounterImpl implements _Counter {
     required this.eventDate,
     this.category,
     this.recurrence,
-    this.alertOffset,
+    final List<int> alertOffsets = const [],
     required this.createdAt,
     this.updatedAt,
-  });
+  }) : _alertOffsets = alertOffsets;
 
   factory _$CounterImpl.fromJson(Map<String, dynamic> json) =>
       _$$CounterImplFromJson(json);
@@ -245,8 +245,15 @@ class _$CounterImpl implements _Counter {
   final String? category;
   @override
   final String? recurrence;
+  final List<int> _alertOffsets;
   @override
-  final int? alertOffset;
+  @JsonKey()
+  List<int> get alertOffsets {
+    if (_alertOffsets is EqualUnmodifiableListView) return _alertOffsets;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_alertOffsets);
+  }
+
   @override
   final DateTime createdAt;
   @override
@@ -254,7 +261,7 @@ class _$CounterImpl implements _Counter {
 
   @override
   String toString() {
-    return 'Counter(id: $id, name: $name, description: $description, eventDate: $eventDate, category: $category, recurrence: $recurrence, alertOffset: $alertOffset, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Counter(id: $id, name: $name, description: $description, eventDate: $eventDate, category: $category, recurrence: $recurrence, alertOffsets: $alertOffsets, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -272,8 +279,10 @@ class _$CounterImpl implements _Counter {
                 other.category == category) &&
             (identical(other.recurrence, recurrence) ||
                 other.recurrence == recurrence) &&
-            (identical(other.alertOffset, alertOffset) ||
-                other.alertOffset == alertOffset) &&
+            const DeepCollectionEquality().equals(
+              other._alertOffsets,
+              _alertOffsets,
+            ) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -290,7 +299,7 @@ class _$CounterImpl implements _Counter {
     eventDate,
     category,
     recurrence,
-    alertOffset,
+    const DeepCollectionEquality().hash(_alertOffsets),
     createdAt,
     updatedAt,
   );
@@ -317,7 +326,7 @@ abstract class _Counter implements Counter {
     required final DateTime eventDate,
     final String? category,
     final String? recurrence,
-    final int? alertOffset,
+    final List<int> alertOffsets,
     required final DateTime createdAt,
     final DateTime? updatedAt,
   }) = _$CounterImpl;
@@ -337,7 +346,7 @@ abstract class _Counter implements Counter {
   @override
   String? get recurrence;
   @override
-  int? get alertOffset;
+  List<int> get alertOffsets;
   @override
   DateTime get createdAt;
   @override

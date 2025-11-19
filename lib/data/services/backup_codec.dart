@@ -45,9 +45,28 @@ class BackupCodec {
 
     return {
       'version': 1,
-      'counters': counters.map((c) => c.toJson()).toList(),
-      'categories': categories.map((c) => c.toJson()).toList(),
-      'history': history.map((h) => h.toJson()).toList(),
+      'counters': counters.map((c) => {
+        'id': c.id,
+        'name': c.name,
+        'description': c.description,
+        'eventDate': c.eventDate.toIso8601String(),
+        'category': c.category,
+        'recurrence': c.recurrence,
+        'createdAt': c.createdAt.toIso8601String(),
+        'updatedAt': c.updatedAt?.toIso8601String(),
+      }).toList(),
+      'categories': categories.map((c) => {
+        'id': c.id,
+        'name': c.name,
+        'normalized': c.normalized,
+      }).toList(),
+      'history': history.map((h) => {
+        'id': h.id,
+        'counterId': h.counterId,
+        'snapshot': h.snapshot,
+        'operation': h.operation,
+        'timestamp': h.timestamp.toIso8601String(),
+      }).toList(),
     };
   }
 
