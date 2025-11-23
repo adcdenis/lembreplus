@@ -1,3 +1,5 @@
+import java.text.SimpleDateFormat
+import java.util.Date
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -45,10 +47,47 @@ android {
     }
 }
 
+
 flutter {
     source = "../.."
 }
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+}
+
+val appDisplayName = "LembrePlus"
+
+tasks.register("renameReleaseApk") {
+    group = "build"
+    description = "Copia o APK de release com nome padronizado"
+    dependsOn("assembleRelease")
+    doLast {
+        val manifest = project.file("src/main/AndroidManifest.xml").readText()
+        val labelMatch = Regex("android:label=\"([^\"]+)\"").find(manifest)
+        val appName = labelMatch?.groupValues?.get(1) ?: appDisplayName
+        val text = rootProject.file("../pubspec.yaml").readText()
+        val r = Regex("version:\\s*([\\w\\.\\-\\+]+)")
+        val m = r.find(text)
+        val raw = m?.groupValues?.get(1) ?: "0.0.0+1"
+        val ver = raw.split('+').first()
+        val ts = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val newName = "$appName-$ver-$ts.apk"
+
+        val outputsDir = layout.buildDirectory.dir("outputs/apk/release").get().asFile
+        val srcApk = outputsDir.resolve("app-release.apk")
+        if (srcApk.exists()) {
+            srcApk.copyTo(outputsDir.resolve(newName), overwrite = true)
+        }
+
+        val flutterApkDir = rootProject.layout.buildDirectory.dir("app/outputs/flutter-apk").get().asFile
+        val flutterApk = flutterApkDir.resolve("app-release.apk")
+        if (flutterApk.exists()) {
+            flutterApk.copyTo(flutterApkDir.resolve(newName), overwrite = true)
+        }
+    }
+}
+
+afterEvaluate {
+    tasks.findByName("assembleRelease")?.finalizedBy(tasks.findByName("renameReleaseApk"))
 }
