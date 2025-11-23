@@ -51,7 +51,10 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
         final now = DateTime.now();
         final rec = Recurrence.fromString(c.recurrence);
         final effective = nextRecurringDate(c.eventDate, rec, now);
-        final useEffective = rec != Recurrence.none && effective.isAfter(now) && effective != c.eventDate;
+        final useEffective =
+            rec != Recurrence.none &&
+            effective.isAfter(now) &&
+            effective != c.eventDate;
         final base = useEffective ? effective : c.eventDate;
         setState(() {
           _nameCtrl.text = c.name;
@@ -202,8 +205,8 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                                         _categoryFieldCtrl?.text = value;
                                         _categoryFieldCtrl?.selection =
                                             TextSelection.collapsed(
-                                          offset: value.length,
-                                        );
+                                              offset: value.length,
+                                            );
                                         setState(() {});
                                       },
                                     );
@@ -487,7 +490,10 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                   children: [
                     const Text(
                       'Lembretes',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     if (_alertOffsets.length < 5)
                       TextButton.icon(
@@ -531,7 +537,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                         ),
                       ),
                     );
-                  }).toList(),
+                  }),
               ],
             ),
             const SizedBox(height: 20),
@@ -575,7 +581,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     final repo = ref.read(counterRepositoryProvider);
     final categoryRepo = ref.read(categoryRepositoryProvider);
     final notifService = ref.read(notificationServiceProvider);
-    
+
     final dt = DateTime(
       _date.year,
       _date.month,
@@ -647,7 +653,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
       try {
         // Cancelar notificações antigas primeiro
         await notifService.cancelNotificationsForCounter(savedId);
-        
+
         // Agendar novas notificações
         if (_alertOffsets.isNotEmpty) {
           await notifService.scheduleNotifications(
@@ -662,7 +668,9 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Contador salvo, mas erro ao agendar notificação: $e'),
+              content: Text(
+                'Contador salvo, mas erro ao agendar notificação: $e',
+              ),
               backgroundColor: Colors.orange,
             ),
           );
@@ -721,13 +729,16 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                   Expanded(
                     flex: 3,
                     child: DropdownButtonFormField<String>(
-                      value: unit,
+                      initialValue: unit,
                       decoration: const InputDecoration(
                         labelText: 'Unidade',
                         border: OutlineInputBorder(),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'minutes', child: Text('Minutos')),
+                        DropdownMenuItem(
+                          value: 'minutes',
+                          child: Text('Minutos'),
+                        ),
                         DropdownMenuItem(value: 'hours', child: Text('Horas')),
                         DropdownMenuItem(value: 'days', child: Text('Dias')),
                       ],
@@ -755,7 +766,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                 } else if (unit == 'days') {
                   offsetMinutes = value * 1440;
                 }
-                
+
                 setState(() {
                   _alertOffsets.add(offsetMinutes);
                   _alertOffsets.sort(); // Sort to show in chronological order
