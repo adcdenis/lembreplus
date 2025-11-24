@@ -496,10 +496,76 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                       ),
                     ),
                     if (_alertOffsets.length < 5)
-                      TextButton.icon(
-                        onPressed: _showAddAlertDialog,
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Adicionar'),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isEdit) ...[
+                            IconButton(
+                              onPressed: () async {
+                                final notifService =
+                                    ref.read(notificationServiceProvider);
+                                final pending = await notifService
+                                    .getPendingNotifications();
+                                // Filtra notificações deste contador (id ~ 100 == counterId)
+                                final myAlerts = pending
+                                    .where(
+                                      (n) =>
+                                          (n.id ~/ 100) == widget.counterId,
+                                    )
+                                    .toList();
+
+                                if (context.mounted) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text(
+                                        'Notificações Ativas',
+                                      ),
+                                      content: SizedBox(
+                                        width: double.maxFinite,
+                                        child: myAlerts.isEmpty
+                                            ? const Text(
+                                                'Nenhuma notificação agendada para este contador.',
+                                              )
+                                            : ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: myAlerts.length,
+                                                itemBuilder: (ctx, i) {
+                                                  final n = myAlerts[i];
+                                                  return ListTile(
+                                                    title: Text('ID: ${n.id}'),
+                                                    subtitle: Text(
+                                                      '${n.title}\n${n.body}',
+                                                    ),
+                                                    isThreeLine: true,
+                                                  );
+                                                },
+                                              ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(ctx).pop(),
+                                          child: const Text('Fechar'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.notifications_active_outlined,
+                              ),
+                              tooltip: 'Verificar Notificações',
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          TextButton.icon(
+                            onPressed: _showAddAlertDialog,
+                            icon: const Icon(Icons.add, size: 18),
+                            label: const Text('Adicionar'),
+                          ),
+                        ],
                       ),
                   ],
                 ),

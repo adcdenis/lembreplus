@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../pages/dashboard_page.dart';
-import '../pages/counter_detail_page.dart';
 import '../pages/counter_form_page.dart';
 import '../pages/counter_list_page.dart';
 import '../pages/counter_history_page.dart';
@@ -31,14 +30,7 @@ class AppRouter {
             name: 'counter_new',
             pageBuilder: (context, state) => const MaterialPage(child: CounterFormPage()),
           ),
-          GoRoute(
-            path: '/counter/:id',
-            name: 'counter_detail',
-            pageBuilder: (context, state) {
-              final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-              return MaterialPage(child: CounterDetailPage(counterId: id));
-            },
-          ),
+
           GoRoute(
             path: '/counter/:id/history',
             name: 'counter_history',
@@ -72,6 +64,7 @@ class AppRouter {
           ),
         ],
       ),
+
     ],
   );
 }
