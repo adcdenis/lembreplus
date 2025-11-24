@@ -195,21 +195,18 @@ class NoopCloudSyncService implements CloudSyncService {
 
   void _onLocalChange() {
     if (!_auto) return;
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(seconds: 20), () async {
+    Future.microtask(() async {
       try {
         await backupNow();
-      } catch (_) {
-        // silencioso em modo Noop
-      }
+      } catch (_) {}
     });
   }
 }
 
 // Fábrica que decide implementação com base na configuração
-CloudSyncService createCloudSyncService(AppDatabase db) {
+CloudSyncService createCloudSyncService(AppDatabase db, dynamic notificationService) {
   if (useGoogleDriveCloudSync) {
-    return GoogleDriveCloudSyncService(db);
+    return GoogleDriveCloudSyncService(db, notificationService);
   }
   return NoopCloudSyncService(db);
 }

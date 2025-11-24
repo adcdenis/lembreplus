@@ -117,6 +117,18 @@ class AppDatabase extends _$AppDatabase {
   Future<int> insertAlert(CounterAlertsCompanion entry) => into(counterAlerts).insert(entry);
   Future<void> deleteAlertsForCounter(int counterId) => (delete(counterAlerts)..where((t) => t.counterId.equals(counterId))).go();
   Future<List<CounterAlertRow>> getAlertsForCounter(int counterId) => (select(counterAlerts)..where((t) => t.counterId.equals(counterId))).get();
+  Future<List<CounterAlertRow>> getAllAlerts() => select(counterAlerts).get();
+  Future<void> upsertAlertRaw({
+    required int id,
+    required int counterId,
+    required int offsetMinutes,
+  }) async {
+    await into(counterAlerts).insertOnConflictUpdate(CounterAlertsCompanion(
+      id: Value(id),
+      counterId: Value(counterId),
+      offsetMinutes: Value(offsetMinutes),
+    ));
+  }
 
   // CRUD básico para Categories
   Future<int> insertCategory(CategoriesCompanion entry) => into(categories).insert(entry);

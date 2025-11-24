@@ -1,5 +1,5 @@
-import 'dart:convert';
 import 'dart:async';
+import 'dart:convert';
 // ignore: deprecated_member_use, avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 
@@ -20,47 +20,13 @@ class BackupServiceImpl implements BackupService {
 
   @override
   Future<String> export() async {
-    final counters = await db.getAllCounters();
-    final categories = await db.getAllCategories();
-    final history = await db.getAllHistory();
-
-    final json = jsonEncode({
-      'version': 1,
-      'counters': counters
-          .map((c) => {
-                'id': c.id,
-                'name': c.name,
-                'description': c.description,
-                'eventDate': c.eventDate.toIso8601String(),
-                'category': c.category,
-                'recurrence': c.recurrence,
-                'createdAt': c.createdAt.toIso8601String(),
-                'updatedAt': c.updatedAt?.toIso8601String(),
-              })
-          .toList(),
-      'categories': categories
-          .map((cat) => {
-                'id': cat.id,
-                'name': cat.name,
-                'normalized': cat.normalized,
-              })
-          .toList(),
-      'history': history
-          .map((h) => {
-                'id': h.id,
-                'counterId': h.counterId,
-                'snapshot': h.snapshot,
-                'operation': h.operation,
-                'timestamp': h.timestamp.toIso8601String(),
-              })
-          .toList(),
-    });
-
-    final bytes = utf8.encode(json);
+    final jsonStr = await BackupCodec.encodeToJsonString(db);
+    final bytes = utf8.encode(jsonStr);
     final blob = html.Blob([bytes], 'application/json');
     final url = html.Url.createObjectUrlFromBlob(blob);
     final now = DateTime.now();
-    final ts = '${now.year.toString().padLeft(4, '0')}'
+    final ts =
+        '${now.year.toString().padLeft(4, '0')}'
         '${now.month.toString().padLeft(2, '0')}'
         '${now.day.toString().padLeft(2, '0')}'
         '_'
@@ -83,7 +49,8 @@ class BackupServiceImpl implements BackupService {
 
   @override
   Future<String> import() async {
-    final input = html.FileUploadInputElement()..accept = '.json,application/json';
+    final input = html.FileUploadInputElement()
+      ..accept = '.json,application/json';
     final completer = Completer<String>();
     input.onChange.listen((event) {
       final file = input.files?.first;
@@ -97,16 +64,25 @@ class BackupServiceImpl implements BackupService {
           final content = reader.result as String;
           final data = jsonDecode(content) as Map<String, dynamic>;
           final errors = BackupCodec.validate(data);
-          if (errors.isNotEmpty && !BackupCodec.isOnlyOrphanHistoryErrors(errors)) {
-            final report = StringBuffer('Validação falhou (${errors.length} problemas):\n');
-            for (final e in errors) { report.writeln('- $e'); }
+          if (errors.isNotEmpty &&
+              !BackupCodec.isOnlyOrphanHistoryErrors(errors)) {
+            final report = StringBuffer(
+              'Validação falhou (${errors.length} problemas):\n',
+            );
+            for (final e in errors) {
+              report.writeln('- $e');
+            }
             completer.completeError(report.toString());
             return;
           }
-          final skipped = errors.isNotEmpty ? BackupCodec.countOrphanHistory(data) : 0;
+          final skipped = errors.isNotEmpty
+              ? BackupCodec.countOrphanHistory(data)
+              : 0;
           await BackupCodec.restore(db, data);
           if (skipped > 0) {
-            completer.complete('Dados importados com sucesso (histórico ignorado: $skipped registro(s) órfão(s))');
+            completer.complete(
+              'Dados importados com sucesso (histórico ignorado: $skipped registro(s) órfão(s))',
+            );
           } else {
             completer.complete('Dados importados com sucesso');
           }

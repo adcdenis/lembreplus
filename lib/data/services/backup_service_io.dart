@@ -1,10 +1,11 @@
-import 'dart:convert';
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:lembreplus/data/database/app_database.dart';
 import 'package:lembreplus/data/services/backup_codec.dart';
+import 'package:lembreplus/services/notification_service.dart';
 
 abstract class BackupService {
   Future<String> export();
@@ -29,7 +30,8 @@ class BackupServiceImpl implements BackupService {
   Future<String> exportPath() async {
     final dir = await getApplicationDocumentsDirectory();
     final now = DateTime.now();
-    final ts = '${now.year.toString().padLeft(4, '0')}'
+    final ts =
+        '${now.year.toString().padLeft(4, '0')}'
         '${now.month.toString().padLeft(2, '0')}'
         '${now.day.toString().padLeft(2, '0')}'
         '_'
@@ -38,44 +40,8 @@ class BackupServiceImpl implements BackupService {
         '${now.second.toString().padLeft(2, '0')}';
     final filename = 'lembre_backup_$ts.json';
     final file = File('${dir.path}${Platform.pathSeparator}$filename');
-
-    final counters = await db.getAllCounters();
-    final categories = await db.getAllCategories();
-    final history = await db.getAllHistory();
-
-    final json = jsonEncode({
-      'version': 1,
-      'counters': counters
-          .map((c) => {
-                'id': c.id,
-                'name': c.name,
-                'description': c.description,
-                'eventDate': c.eventDate.toIso8601String(),
-                'category': c.category,
-                'recurrence': c.recurrence,
-                'createdAt': c.createdAt.toIso8601String(),
-                'updatedAt': c.updatedAt?.toIso8601String(),
-              })
-          .toList(),
-      'categories': categories
-          .map((cat) => {
-                'id': cat.id,
-                'name': cat.name,
-                'normalized': cat.normalized,
-              })
-          .toList(),
-      'history': history
-          .map((h) => {
-                'id': h.id,
-                'counterId': h.counterId,
-                'snapshot': h.snapshot,
-                'operation': h.operation,
-                'timestamp': h.timestamp.toIso8601String(),
-              })
-          .toList(),
-    });
-
-    await file.writeAsString(json);
+    final jsonStr = await BackupCodec.encodeToJsonString(db);
+    await file.writeAsString(jsonStr);
     return file.path;
   }
 
@@ -106,15 +72,38 @@ class BackupServiceImpl implements BackupService {
     final data = jsonDecode(content) as Map<String, dynamic>;
     final errors = BackupCodec.validate(data);
     if (errors.isNotEmpty && !BackupCodec.isOnlyOrphanHistoryErrors(errors)) {
-      final report = StringBuffer('Validação falhou (${errors.length} problemas):\n');
+      final report = StringBuffer(
+        'Validação falhou (${errors.length} problemas):\n',
+      );
       for (final e in errors) {
         report.writeln('- $e');
       }
       throw report.toString();
     }
     // Prossegue com restauração leniente quando os únicos erros são históricos órfãos
-    final skipped = errors.isNotEmpty ? BackupCodec.countOrphanHistory(data) : 0;
+    final skipped = errors.isNotEmpty
+        ? BackupCodec.countOrphanHistory(data)
+        : 0;
     await BackupCodec.restore(db, data);
+
+    // Reagendar notificações após importação
+    final notif = NotificationService();
+    await notif.init();
+    await notif.cancelAll();
+    final counters = await db.getAllCounters();
+    for (final counter in counters) {
+      final alerts = await db.getAlertsForCounter(counter.id);
+      if (alerts.isNotEmpty) {
+        final offsets = alerts.map((a) => a.offsetMinutes).toList();
+        await notif.scheduleNotifications(
+          counterId: counter.id,
+          eventName: counter.name,
+          eventDate: counter.eventDate,
+          offsetsMinutes: offsets,
+        );
+      }
+    }
+
     if (skipped > 0) {
       return 'Dados importados com sucesso de ${file.path} (histórico ignorado: $skipped registro(s) órfão(s))';
     }
@@ -128,7 +117,14 @@ class BackupServiceImpl implements BackupService {
     if (!await d.exists()) return [];
     final files = await d
         .list()
-        .where((e) => e is File && e.path.endsWith('.json') && RegExp(r'lembre_backup_\d{8}_\d{6}\.json').hasMatch(e.path.split(Platform.pathSeparator).last))
+        .where(
+          (e) =>
+              e is File &&
+              e.path.endsWith('.json') &&
+              RegExp(
+                r'lembre_backup_\d{8}_\d{6}\.json',
+              ).hasMatch(e.path.split(Platform.pathSeparator).last),
+        )
         .cast<File>()
         .toList();
     files.sort((a, b) {

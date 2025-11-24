@@ -42,9 +42,10 @@ class BackupCodec {
     final counters = await db.getAllCounters();
     final categories = await db.getAllCategories();
     final history = await db.getAllHistory();
+    final alerts = await db.getAllAlerts();
 
     return {
-      'version': 1,
+      'version': 2,
       'counters': counters.map((c) => {
         'id': c.id,
         'name': c.name,
@@ -66,6 +67,11 @@ class BackupCodec {
         'snapshot': h.snapshot,
         'operation': h.operation,
         'timestamp': h.timestamp.toIso8601String(),
+      }).toList(),
+      'alerts': alerts.map((a) => {
+        'id': a.id,
+        'counterId': a.counterId,
+        'offsetMinutes': a.offsetMinutes,
       }).toList(),
     };
   }
@@ -90,6 +96,7 @@ class BackupCodec {
     requireKey<List>('counters', (v) => v is List);
     requireKey<List>('categories', (v) => v is List);
     requireKey<List>('history', (v) => v is List);
+    // alerts é opcional para manter compatibilidade com v1
 
     // Counters
     final counters = (data['counters'] as List<dynamic>? ?? []);
@@ -157,6 +164,25 @@ class BackupCodec {
       }
     }
 
+    // Alerts (opcional)
+    if (data.containsKey('alerts')) {
+      final alerts = (data['alerts'] as List<dynamic>? ?? []);
+      for (var i = 0; i < alerts.length; i++) {
+        final m = alerts[i];
+        if (m is! Map<String, dynamic>) { errors.add('[alerts[$i]] não é um objeto'); continue; }
+        if (m['id'] is! num) errors.add('[alerts[$i]] id obrigatorio (num)');
+        if (m['counterId'] is! num) {
+          errors.add('[alerts[$i]] counterId obrigatorio (num)');
+        } else {
+          final cid = (m['counterId'] as num).toInt();
+          if (!counterIds.contains(cid)) {
+            errors.add('[alerts[$i]] counterId "$cid" não existe em counters');
+          }
+        }
+        if (m['offsetMinutes'] is! num) errors.add('[alerts[$i]] offsetMinutes obrigatorio (num)');
+      }
+    }
+
     return errors;
   }
 
@@ -165,7 +191,7 @@ class BackupCodec {
     // Executa restauração de forma atômica para evitar estados intermediários
     await db.transaction(() async {
       // Restauração completa: limpamos os dados atuais antes de inserir
-      // A remoção de counters também remove counter_history via CASCADE
+      // A remoção de counters também remove counter_history e counter_alerts via CASCADE
       await db.customStatement('DELETE FROM categories');
       await db.customStatement('DELETE FROM counters');
 
@@ -219,6 +245,21 @@ class BackupCodec {
           operation: m['operation'] as String,
           timestamp: _dateFromJson(m['timestamp']),
         );
+      }
+
+      // Recria alertas
+      if (data.containsKey('alerts')) {
+        final alerts = (data['alerts'] as List<dynamic>? ?? []);
+        for (final a in alerts) {
+          final m = a as Map<String, dynamic>;
+          final cid = (m['counterId'] as num).toInt();
+          if (!validCounterIds.contains(cid)) continue;
+          await db.upsertAlertRaw(
+            id: (m['id'] as num).toInt(),
+            counterId: cid,
+            offsetMinutes: (m['offsetMinutes'] as num).toInt(),
+          );
+        }
       }
     });
   }

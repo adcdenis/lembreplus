@@ -22,7 +22,7 @@ class BackupPage extends ConsumerWidget {
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
-          const Text('Exportar e importar dados locais (JSON).'),
+          const Text('Exportar e importar dados locais (JSON, compatível com nuvem: inclui alertas).'),
           const SizedBox(height: 24),
           Wrap(
             spacing: 12,
@@ -99,14 +99,15 @@ class BackupPage extends ConsumerWidget {
             'Web: o arquivo é baixado pelo navegador com o nome acima.',
           ),
           const SizedBox(height: 16),
-          const Text('Formato JSON (chaves, obrigatoriedade e tipos):'),
+          const Text('Formato JSON (versão 2, chaves e tipos):'),
           const SizedBox(height: 8),
           const SelectableText(
             'Raiz:\n'
-            '- version: inteiro (obrigatório)\n'
+            '- version: inteiro (obrigatório) [2]\n'
             '- counters: lista (obrigatório)\n'
             '- categories: lista (obrigatório)\n'
-            '- history: lista (obrigatório)\n\n'
+            '- history: lista (obrigatório)\n'
+            '- alerts: lista (opcional; presente na versão 2)\n\n'
             'Counter:\n'
             '- id: inteiro (obrigatório)\n'
             '- name: string (obrigatório)\n'
@@ -125,7 +126,11 @@ class BackupPage extends ConsumerWidget {
             '- counterId: inteiro (obrigatório)\n'
             '- snapshot: string (obrigatório)\n'
             '- operation: string (obrigatório)\n'
-            '- timestamp: string ISO-8601 (obrigatório)\n',
+            '- timestamp: string ISO-8601 (obrigatório)\n\n'
+            'Alerts:\n'
+            '- id: inteiro (obrigatório)\n'
+            '- counterId: inteiro (obrigatório)\n'
+            '- offsetMinutes: inteiro (obrigatório)\n',
           ),
           const SizedBox(height: 12),
           const Text('Exemplo de JSON (importação/exportação):'),
@@ -139,7 +144,7 @@ class BackupPage extends ConsumerWidget {
             ),
             child: const SelectableText(
               '{\n'
-              '  "version": 1,\n'
+              '  "version": 2,\n'
               '  "counters": [\n'
               '    {\n'
               '      "id": 1,\n'
@@ -163,6 +168,9 @@ class BackupPage extends ConsumerWidget {
               '      "operation": "create",\n'
               '      "timestamp": "2025-01-01T10:00:00.000Z"\n'
               '    }\n'
+              '  ],\n'
+              '  "alerts": [\n'
+              '    { "id": 1, "counterId": 1, "offsetMinutes": 120 }\n'
               '  ]\n'
               '}\n',
               style: TextStyle(fontFamily: 'monospace', fontSize: 13),

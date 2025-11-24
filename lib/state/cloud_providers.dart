@@ -2,11 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:lembreplus/data/services/cloud_sync_service.dart';
-import 'providers.dart' show databaseProvider; // reuse existing provider
+import 'providers.dart' show databaseProvider, notificationServiceProvider;
 
 final cloudSyncServiceProvider = Provider<CloudSyncService>((ref) {
   final db = ref.read(databaseProvider);
-  return createCloudSyncService(db);
+  final notifService = ref.read(notificationServiceProvider);
+  return createCloudSyncService(db, notifService);
 });
 
 final cloudUserProvider = StreamProvider<CloudUser?>((ref) {

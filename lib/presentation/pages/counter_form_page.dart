@@ -7,7 +7,6 @@ import 'package:lembreplus/domain/recurrence.dart';
 import 'package:lembreplus/data/models/category.dart' as cat;
 import 'package:lembreplus/domain/category_utils.dart';
 import 'package:lembreplus/domain/time_utils.dart';
-import 'package:lembreplus/services/notification_service.dart';
 
 class CounterFormPage extends ConsumerStatefulWidget {
   final int? counterId;
