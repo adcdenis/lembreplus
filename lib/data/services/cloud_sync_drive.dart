@@ -195,8 +195,9 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
           }
         }
       }
-      if (latestTs == null || latestFile == null)
+      if (latestTs == null || latestFile == null) {
         return; // nenhum arquivo compatível
+      }
 
       // Compara com timestamp salvo
       if (last.isEmpty || latestTs.compareTo(last) > 0) {
@@ -232,6 +233,7 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
                 '[CloudDrive] Iniciando restauração automática de $latestTs',
               );
               await BackupCodec.restore(db, data);
+              await _rescheduleAllNotifications();
               // Persiste metadados de restauração (para UI/providers)
               try {
                 debugPrint(
@@ -241,8 +243,9 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
                 // Também salvar explicitamente como última restauração
                 await prefs.setString(_prefsKeyLastRestoreTs, latestTs);
                 final name = latestFile.name ?? '';
-                if (name.isNotEmpty)
+                if (name.isNotEmpty) {
                   await prefs.setString(_prefsKeyLastRestoreFile, name);
+                }
                 debugPrint(
                   '[CloudDrive] Metadados gravados: timestamp=$latestTs, arquivo=$name',
                 );
@@ -637,14 +640,18 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
     try {
       debugPrint('[CloudDrive] Reagendando notificações...');
       await _notificationService.init();
+      await _notificationService.requestPermissions();
       await _notificationService.cancelAll();
       final counters = await db.getAllCounters();
       for (final counter in counters) {
         final alerts = await (db.select(
           db.counterAlerts,
         )..where((tbl) => tbl.counterId.equals(counter.id))).get();
-        if (alerts.isNotEmpty) {
-          final offsetsMinutes = alerts.map((a) => a.offsetMinutes).toList();
+        List<int> offsetsMinutes = alerts.map((a) => a.offsetMinutes).toList();
+        if (offsetsMinutes.isEmpty && counter.alertOffset != null) {
+          offsetsMinutes = [counter.alertOffset!];
+        }
+        if (offsetsMinutes.isNotEmpty) {
           await _notificationService.scheduleNotifications(
             counterId: counter.id,
             eventName: counter.name,
