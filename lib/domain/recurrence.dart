@@ -1,5 +1,7 @@
 enum Recurrence {
   none,
+  every6Hours,
+  every12Hours,
   daily,
   weekly,
   monthly,
@@ -7,6 +9,10 @@ enum Recurrence {
 
   static Recurrence fromString(String? value) {
     switch (value?.toLowerCase()) {
+      case 'every6hours':
+        return Recurrence.every6Hours;
+      case 'every12hours':
+        return Recurrence.every12Hours;
       case 'daily':
         return Recurrence.daily;
       case 'weekly':

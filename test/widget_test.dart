@@ -6,12 +6,14 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:lembreplus/main.dart';
 
 void main() {
   testWidgets('App exibe título Lembre+', (WidgetTester tester) async {
-    await tester.pumpWidget(const LembrePlusApp());
+    await tester.pumpWidget(const ProviderScope(child: LembrePlusApp()));
+    await tester.pump();
     expect(find.text('Lembre+'), findsWidgets);
   });
 }

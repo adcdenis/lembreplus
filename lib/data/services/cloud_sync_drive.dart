@@ -639,27 +639,8 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
   Future<void> _rescheduleAllNotifications() async {
     try {
       debugPrint('[CloudDrive] Reagendando notificações...');
-      await _notificationService.init();
       await _notificationService.requestPermissions();
-      await _notificationService.cancelAll();
-      final counters = await db.getAllCounters();
-      for (final counter in counters) {
-        final alerts = await (db.select(
-          db.counterAlerts,
-        )..where((tbl) => tbl.counterId.equals(counter.id))).get();
-        List<int> offsetsMinutes = alerts.map((a) => a.offsetMinutes).toList();
-        if (offsetsMinutes.isEmpty && counter.alertOffset != null) {
-          offsetsMinutes = [counter.alertOffset!];
-        }
-        if (offsetsMinutes.isNotEmpty) {
-          await _notificationService.scheduleNotifications(
-            counterId: counter.id,
-            eventName: counter.name,
-            eventDate: counter.eventDate,
-            offsetsMinutes: offsetsMinutes,
-          );
-        }
-      }
+      await _notificationService.syncAllCounterNotifications(db);
       debugPrint('[CloudDrive] Notificações reagendadas com sucesso');
     } catch (e) {
       debugPrint('[CloudDrive] Erro ao reagendar notificações: $e');

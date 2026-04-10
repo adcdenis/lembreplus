@@ -19,7 +19,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   DateTime? _endDate;
   String _type = 'Todos'; // Todos | Passado | Futuro
   String _recurrence =
-      'Todos'; // Todos | Nenhuma | Diário | Semanal | Mensal | Anual
+      'Todos'; // Todos | Nenhuma | 6 horas | 12 horas | Diário | Semanal | Mensal | Anual
   String _category = 'Todas';
   final _descCtrl = TextEditingController();
   DateTime _now = DateTime.now();
@@ -76,6 +76,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     switch (r) {
       case Recurrence.none:
         return 'Nenhuma';
+      case Recurrence.every6Hours:
+        return '6 horas';
+      case Recurrence.every12Hours:
+        return '12 horas';
       case Recurrence.daily:
         return 'Diário';
       case Recurrence.weekly:
@@ -157,6 +161,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       out = out.where((c) {
         final r = Recurrence.fromString(c.recurrence);
         return (_recurrence == 'Nenhuma' && r == Recurrence.none) ||
+            (_recurrence == '6 horas' &&
+                r == Recurrence.every6Hours) ||
+            (_recurrence == '12 horas' &&
+                r == Recurrence.every12Hours) ||
             (_recurrence == 'Diário' && r == Recurrence.daily) ||
             (_recurrence == 'Semanal' && r == Recurrence.weekly) ||
             (_recurrence == 'Mensal' && r == Recurrence.monthly) ||
@@ -333,6 +341,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                 DropdownMenuItem(
                                   value: 'Nenhuma',
                                   child: Text('Nenhuma'),
+                                ),
+                                DropdownMenuItem(
+                                  value: '6 horas',
+                                  child: Text('6 horas'),
+                                ),
+                                DropdownMenuItem(
+                                  value: '12 horas',
+                                  child: Text('12 horas'),
                                 ),
                                 DropdownMenuItem(
                                   value: 'Diário',

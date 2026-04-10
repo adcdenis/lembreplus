@@ -22,6 +22,20 @@ void main() {
   });
 
   group('nextRecurringDate', () {
+    test('6-hour recurrence advances to next 6-hour slot when past', () {
+      final base = DateTime(2025, 01, 01, 0, 0);
+      final now = DateTime(2025, 01, 01, 7, 0);
+      final nextDate = nextRecurringDate(base, Recurrence.every6Hours, now);
+      expect(nextDate, DateTime(2025, 01, 01, 12, 0));
+    });
+
+    test('12-hour recurrence advances to next 12-hour slot when past', () {
+      final base = DateTime(2025, 01, 01, 8, 0);
+      final now = DateTime(2025, 01, 02, 1, 0);
+      final nextDate = nextRecurringDate(base, Recurrence.every12Hours, now);
+      expect(nextDate, DateTime(2025, 01, 02, 8, 0));
+    });
+
     test('weekly recurrence advances to next week when past', () {
       final base = DateTime(2025, 01, 01, 10, 0);
       final now = DateTime(2025, 01, 10, 9, 0);

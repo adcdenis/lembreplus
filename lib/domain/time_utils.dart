@@ -118,6 +118,22 @@ DateTime nextRecurringDate(DateTime base, Recurrence recurrence, DateTime now) {
   if (!base.isBefore(now)) return base;
 
   switch (recurrence) {
+    case Recurrence.every6Hours:
+      final diffHours = now.difference(base).inHours;
+      final steps = diffHours ~/ 6;
+      var candidate = base.add(Duration(hours: steps * 6));
+      if (candidate.isBefore(now)) {
+        candidate = candidate.add(const Duration(hours: 6));
+      }
+      return candidate;
+    case Recurrence.every12Hours:
+      final diffHours = now.difference(base).inHours;
+      final steps = diffHours ~/ 12;
+      var candidate = base.add(Duration(hours: steps * 12));
+      if (candidate.isBefore(now)) {
+        candidate = candidate.add(const Duration(hours: 12));
+      }
+      return candidate;
     case Recurrence.daily:
       final daysDiff = now.difference(base).inDays;
       var candidate = base.add(Duration(days: daysDiff));

@@ -88,21 +88,7 @@ class BackupServiceImpl implements BackupService {
 
     // Reagendar notificações após importação
     final notif = NotificationService();
-    await notif.init();
-    await notif.cancelAll();
-    final counters = await db.getAllCounters();
-    for (final counter in counters) {
-      final alerts = await db.getAlertsForCounter(counter.id);
-      if (alerts.isNotEmpty) {
-        final offsets = alerts.map((a) => a.offsetMinutes).toList();
-        await notif.scheduleNotifications(
-          counterId: counter.id,
-          eventName: counter.name,
-          eventDate: counter.eventDate,
-          offsetsMinutes: offsets,
-        );
-      }
-    }
+    await notif.syncAllCounterNotifications(db);
 
     if (skipped > 0) {
       return 'Dados importados com sucesso de ${file.path} (histórico ignorado: $skipped registro(s) órfão(s))';

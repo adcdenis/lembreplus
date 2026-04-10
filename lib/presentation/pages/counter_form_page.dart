@@ -630,6 +630,10 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     switch (r) {
       case Recurrence.none:
         return 'Nenhuma';
+      case Recurrence.every6Hours:
+        return '6 horas';
+      case Recurrence.every12Hours:
+        return '12 horas';
       case Recurrence.daily:
         return 'Diário';
       case Recurrence.weekly:
@@ -716,18 +720,9 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     // Agendamento de notificação
     if (savedId != null) {
       try {
-        // Cancelar notificações antigas primeiro
-        await notifService.cancelNotificationsForCounter(savedId);
-
-        // Agendar novas notificações
-        if (_alertOffsets.isNotEmpty) {
-          await notifService.scheduleNotifications(
-            counterId: savedId,
-            eventName: _nameCtrl.text,
-            eventDate: dt,
-            offsetsMinutes: _alertOffsets,
-          );
-        }
+        await notifService.syncAllCounterNotifications(
+          ref.read(databaseProvider),
+        );
       } catch (e) {
         debugPrint('Erro ao agendar notificação: $e');
         if (mounted) {

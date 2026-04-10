@@ -15,6 +15,10 @@ class DashboardPage extends ConsumerWidget {
     switch (r) {
       case Recurrence.none:
         return 'Nenhuma';
+      case Recurrence.every6Hours:
+        return '6 horas';
+      case Recurrence.every12Hours:
+        return '12 horas';
       case Recurrence.daily:
         return 'Diário';
       case Recurrence.weekly:
