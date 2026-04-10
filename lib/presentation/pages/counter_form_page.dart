@@ -501,15 +501,15 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                           if (isEdit) ...[
                             IconButton(
                               onPressed: () async {
-                                final notifService =
-                                    ref.read(notificationServiceProvider);
+                                final notifService = ref.read(
+                                  notificationServiceProvider,
+                                );
                                 final pending = await notifService
                                     .getPendingNotifications();
                                 // Filtra notificações deste contador (id ~ 100 == counterId)
                                 final myAlerts = pending
                                     .where(
-                                      (n) =>
-                                          (n.id ~/ 100) == widget.counterId,
+                                      (n) => (n.id ~/ 100) == widget.counterId,
                                     )
                                     .toList();
 
@@ -517,9 +517,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                                   showDialog(
                                     context: context,
                                     builder: (ctx) => AlertDialog(
-                                      title: const Text(
-                                        'Notificações Ativas',
-                                      ),
+                                      title: const Text('Notificações Ativas'),
                                       content: SizedBox(
                                         width: double.maxFinite,
                                         child: myAlerts.isEmpty
@@ -632,6 +630,8 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     switch (r) {
       case Recurrence.none:
         return 'Nenhuma';
+      case Recurrence.daily:
+        return 'Diário';
       case Recurrence.weekly:
         return 'Semanal';
       case Recurrence.monthly:

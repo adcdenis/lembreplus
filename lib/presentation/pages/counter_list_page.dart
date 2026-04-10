@@ -25,6 +25,8 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
     switch (r) {
       case Recurrence.none:
         return 'Nenhuma';
+      case Recurrence.daily:
+        return 'Diário';
       case Recurrence.weekly:
         return 'Semanal';
       case Recurrence.monthly:
@@ -61,10 +63,12 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
       formattedTime += '${comps.hours} hora${comps.hours == 1 ? '' : 's'}, ';
     }
     if (comps.minutes > 0) {
-      formattedTime += '${comps.minutes} minuto${comps.minutes == 1 ? '' : 's'}, ';
+      formattedTime +=
+          '${comps.minutes} minuto${comps.minutes == 1 ? '' : 's'}, ';
     }
     if (comps.seconds > 0) {
-      formattedTime += '${comps.seconds} segundo${comps.seconds == 1 ? '' : 's'}, ';
+      formattedTime +=
+          '${comps.seconds} segundo${comps.seconds == 1 ? '' : 's'}, ';
     }
 
     // Remove a vírgula final se houver tempo formatado

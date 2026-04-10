@@ -118,6 +118,13 @@ DateTime nextRecurringDate(DateTime base, Recurrence recurrence, DateTime now) {
   if (!base.isBefore(now)) return base;
 
   switch (recurrence) {
+    case Recurrence.daily:
+      final daysDiff = now.difference(base).inDays;
+      var candidate = base.add(Duration(days: daysDiff));
+      if (candidate.isBefore(now)) {
+        candidate = candidate.add(const Duration(days: 1));
+      }
+      return candidate;
     case Recurrence.weekly:
       final daysDiff = now.difference(base).inDays;
       final weeksToAdd = (daysDiff ~/ 7) + 1;
@@ -155,13 +162,31 @@ DateTime _addMonths(DateTime date, int months) {
   final newYear = date.year + ((totalMonths - 1) ~/ 12);
   final newMonth = ((totalMonths - 1) % 12) + 1;
   final day = _clampDay(date.day, newYear, newMonth);
-  return DateTime(newYear, newMonth, day, date.hour, date.minute, date.second, date.millisecond, date.microsecond);
+  return DateTime(
+    newYear,
+    newMonth,
+    day,
+    date.hour,
+    date.minute,
+    date.second,
+    date.millisecond,
+    date.microsecond,
+  );
 }
 
 DateTime _addYearsClamped(DateTime date, int years) {
   final newYear = date.year + years;
   final day = _clampDay(date.day, newYear, date.month);
-  return DateTime(newYear, date.month, day, date.hour, date.minute, date.second, date.millisecond, date.microsecond);
+  return DateTime(
+    newYear,
+    date.month,
+    day,
+    date.hour,
+    date.minute,
+    date.second,
+    date.millisecond,
+    date.microsecond,
+  );
 }
 
 int _clampDay(int desiredDay, int year, int month) {
@@ -170,6 +195,8 @@ int _clampDay(int desiredDay, int year, int month) {
 }
 
 int _daysInMonth(int year, int month) {
-  final beginningNextMonth = (month == 12) ? DateTime(year + 1, 1, 1) : DateTime(year, month + 1, 1);
+  final beginningNextMonth = (month == 12)
+      ? DateTime(year + 1, 1, 1)
+      : DateTime(year, month + 1, 1);
   return beginningNextMonth.subtract(const Duration(days: 1)).day;
 }

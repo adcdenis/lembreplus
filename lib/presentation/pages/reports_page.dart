@@ -18,7 +18,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   DateTime? _startDate;
   DateTime? _endDate;
   String _type = 'Todos'; // Todos | Passado | Futuro
-  String _recurrence = 'Todos'; // Todos | Nenhuma | Semanal | Mensal | Anual
+  String _recurrence =
+      'Todos'; // Todos | Nenhuma | Diário | Semanal | Mensal | Anual
   String _category = 'Todas';
   final _descCtrl = TextEditingController();
   DateTime _now = DateTime.now();
@@ -37,7 +38,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
-    if (picked != null) setState(() => _startDate = picked);
+    if (picked != null) {
+      setState(() => _startDate = picked);
+    }
   }
 
   Future<void> _pickEndDate(BuildContext context) async {
@@ -48,7 +51,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
-    if (picked != null) setState(() => _endDate = picked);
+    if (picked != null) {
+      setState(() => _endDate = picked);
+    }
   }
 
   void _clearFilters() {
@@ -71,6 +76,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     switch (r) {
       case Recurrence.none:
         return 'Nenhuma';
+      case Recurrence.daily:
+        return 'Diário';
       case Recurrence.weekly:
         return 'Semanal';
       case Recurrence.monthly:
@@ -83,23 +90,61 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   String _formatDiff(DateTime target) {
     final diff = calendarDiff(_now, target);
     final parts = <String>[];
-    if (diff.years > 0) parts.add('${diff.years} ano${diff.years == 1 ? '' : 's'}');
-    if (diff.months > 0) parts.add('${diff.months} m${diff.months == 1 ? 'ês' : 'eses'}');
-    if (diff.days > 0) parts.add('${diff.days} dia${diff.days == 1 ? '' : 's'}');
-    if (diff.hours > 0) parts.add('${diff.hours} hora${diff.hours == 1 ? '' : 's'}');
-    if (diff.minutes > 0) parts.add('${diff.minutes} minuto${diff.minutes == 1 ? '' : 's'}');
-    if (parts.isEmpty) parts.add('${diff.seconds} segundo${diff.seconds == 1 ? '' : 's'}');
+    if (diff.years > 0) {
+      parts.add('${diff.years} ano${diff.years == 1 ? '' : 's'}');
+    }
+    if (diff.months > 0) {
+      parts.add('${diff.months} m${diff.months == 1 ? 'ês' : 'eses'}');
+    }
+    if (diff.days > 0) {
+      parts.add('${diff.days} dia${diff.days == 1 ? '' : 's'}');
+    }
+    if (diff.hours > 0) {
+      parts.add('${diff.hours} hora${diff.hours == 1 ? '' : 's'}');
+    }
+    if (diff.minutes > 0) {
+      parts.add('${diff.minutes} minuto${diff.minutes == 1 ? '' : 's'}');
+    }
+    if (parts.isEmpty) {
+      parts.add('${diff.seconds} segundo${diff.seconds == 1 ? '' : 's'}');
+    }
     return parts.join(', ');
   }
 
-  List<model.Counter> _applyFilters(List<model.Counter> list, List<String> categories) {
+  List<model.Counter> _applyFilters(
+    List<model.Counter> list,
+    List<String> categories,
+  ) {
     List<model.Counter> out = List.of(list);
     // Date range filters (inclusive day)
     if (_startDate != null) {
-      out = out.where((c) => c.eventDate.isAfter(DateTime(_startDate!.year, _startDate!.month, _startDate!.day).subtract(const Duration(seconds: 1)))).toList();
+      out = out
+          .where(
+            (c) => c.eventDate.isAfter(
+              DateTime(
+                _startDate!.year,
+                _startDate!.month,
+                _startDate!.day,
+              ).subtract(const Duration(seconds: 1)),
+            ),
+          )
+          .toList();
     }
     if (_endDate != null) {
-      out = out.where((c) => c.eventDate.isBefore(DateTime(_endDate!.year, _endDate!.month, _endDate!.day, 23, 59, 59))).toList();
+      out = out
+          .where(
+            (c) => c.eventDate.isBefore(
+              DateTime(
+                _endDate!.year,
+                _endDate!.month,
+                _endDate!.day,
+                23,
+                59,
+                59,
+              ),
+            ),
+          )
+          .toList();
     }
     if (_type != 'Todos') {
       out = out.where((c) {
@@ -112,6 +157,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       out = out.where((c) {
         final r = Recurrence.fromString(c.recurrence);
         return (_recurrence == 'Nenhuma' && r == Recurrence.none) ||
+            (_recurrence == 'Diário' && r == Recurrence.daily) ||
             (_recurrence == 'Semanal' && r == Recurrence.weekly) ||
             (_recurrence == 'Mensal' && r == Recurrence.monthly) ||
             (_recurrence == 'Anual' && r == Recurrence.yearly);
@@ -122,7 +168,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     }
     if (_descCtrl.text.trim().isNotEmpty) {
       final q = _descCtrl.text.trim().toLowerCase();
-      out = out.where((c) => (c.description ?? '').toLowerCase().contains(q)).toList();
+      out = out
+          .where((c) => (c.description ?? '').toLowerCase().contains(q))
+          .toList();
     }
     return out;
   }
@@ -136,8 +184,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         nome: c.name,
         descricao: c.description ?? '',
         dataHora: c.eventDate,
-        categoria: c.category ?? '-'
-        ,
+        categoria: c.category ?? '-',
         repeticao: _labelForRecurrence(Recurrence.fromString(c.recurrence)),
         tempoFormatado: past ? diffLabel : diffLabel,
       );
@@ -146,7 +193,11 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
   Future<void> _generateAndShareXlsx(List<ReportRow> rows) async {
     final file = await generateXlsxReport(rows);
-    await shareFile(file, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    await shareFile(
+      file,
+      mimeType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
   }
 
   Future<void> _generateAndSharePdf(List<ReportRow> rows) async {
@@ -164,17 +215,21 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     final cs = Theme.of(context).colorScheme;
     final df = DateFormat('dd/MM/yyyy');
 
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: const [
-            Text('📈', style: TextStyle(fontSize: 18)),
-            SizedBox(width: 8),
-            Text('Relatórios', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-          ]),
+          Row(
+            children: const [
+              Text('📈', style: TextStyle(fontSize: 18)),
+              SizedBox(width: 8),
+              Text(
+                'Relatórios',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           const Text('Gere relatórios detalhados dos seus contadores.'),
           const SizedBox(height: 16),
@@ -187,7 +242,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Filtros', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    'Filtros',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 12),
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -208,7 +266,11 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                   onPressed: () => _pickStartDate(context),
                                 ),
                               ),
-                              controller: TextEditingController(text: _startDate == null ? '' : df.format(_startDate!)),
+                              controller: TextEditingController(
+                                text: _startDate == null
+                                    ? ''
+                                    : df.format(_startDate!),
+                              ),
                               onTap: () => _pickStartDate(context),
                             ),
                           ),
@@ -224,7 +286,11 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                   onPressed: () => _pickEndDate(context),
                                 ),
                               ),
-                              controller: TextEditingController(text: _endDate == null ? '' : df.format(_endDate!)),
+                              controller: TextEditingController(
+                                text: _endDate == null
+                                    ? ''
+                                    : df.format(_endDate!),
+                              ),
                               onTap: () => _pickEndDate(context),
                             ),
                           ),
@@ -234,12 +300,24 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                               key: ValueKey(_type),
                               initialValue: _type,
                               items: const [
-                                DropdownMenuItem(value: 'Todos', child: Text('Todos')),
-                                DropdownMenuItem(value: 'Passado', child: Text('Passado')),
-                                DropdownMenuItem(value: 'Futuro', child: Text('Futuro')),
+                                DropdownMenuItem(
+                                  value: 'Todos',
+                                  child: Text('Todos'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Passado',
+                                  child: Text('Passado'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Futuro',
+                                  child: Text('Futuro'),
+                                ),
                               ],
-                              onChanged: (v) => setState(() => _type = v ?? 'Todos'),
-                              decoration: const InputDecoration(labelText: 'Tipo'),
+                              onChanged: (v) =>
+                                  setState(() => _type = v ?? 'Todos'),
+                              decoration: const InputDecoration(
+                                labelText: 'Tipo',
+                              ),
                             ),
                           ),
                           SizedBox(
@@ -248,32 +326,73 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                               key: ValueKey(_recurrence),
                               initialValue: _recurrence,
                               items: const [
-                                DropdownMenuItem(value: 'Todos', child: Text('Todos')),
-                                DropdownMenuItem(value: 'Nenhuma', child: Text('Nenhuma')),
-                                DropdownMenuItem(value: 'Semanal', child: Text('Semanal')),
-                                DropdownMenuItem(value: 'Mensal', child: Text('Mensal')),
-                                DropdownMenuItem(value: 'Anual', child: Text('Anual')),
+                                DropdownMenuItem(
+                                  value: 'Todos',
+                                  child: Text('Todos'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Nenhuma',
+                                  child: Text('Nenhuma'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Diário',
+                                  child: Text('Diário'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Semanal',
+                                  child: Text('Semanal'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Mensal',
+                                  child: Text('Mensal'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Anual',
+                                  child: Text('Anual'),
+                                ),
                               ],
-                              onChanged: (v) => setState(() => _recurrence = v ?? 'Todos'),
-                              decoration: const InputDecoration(labelText: 'Tipo de repetição'),
+                              onChanged: (v) =>
+                                  setState(() => _recurrence = v ?? 'Todos'),
+                              decoration: const InputDecoration(
+                                labelText: 'Tipo de repetição',
+                              ),
                             ),
                           ),
                           categoriesAsync.when(
-                            loading: () => SizedBox(width: itemWidth, child: const LinearProgressIndicator()),
-                            error: (e, st) => SizedBox(width: itemWidth, child: const Text('Erro categorias')), 
+                            loading: () => SizedBox(
+                              width: itemWidth,
+                              child: const LinearProgressIndicator(),
+                            ),
+                            error: (e, st) => SizedBox(
+                              width: itemWidth,
+                              child: const Text('Erro categorias'),
+                            ),
                             data: (cats) {
-                              final items = ['Todas', ...cats.map((c) => c.name)];
-                              if (!items.contains(_category)) _category = 'Todas';
+                              final items = [
+                                'Todas',
+                                ...cats.map((c) => c.name),
+                              ];
+                              if (!items.contains(_category)) {
+                                _category = 'Todas';
+                              }
                               return SizedBox(
                                 width: itemWidth,
                                 child: DropdownButtonFormField<String>(
                                   key: ValueKey(_category),
                                   initialValue: _category,
                                   items: items
-                                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                                      .map(
+                                        (c) => DropdownMenuItem(
+                                          value: c,
+                                          child: Text(c),
+                                        ),
+                                      )
                                       .toList(),
-                                  onChanged: (v) => setState(() => _category = v ?? 'Todas'),
-                                  decoration: const InputDecoration(labelText: 'Categoria'),
+                                  onChanged: (v) =>
+                                      setState(() => _category = v ?? 'Todas'),
+                                  decoration: const InputDecoration(
+                                    labelText: 'Categoria',
+                                  ),
                                 ),
                               );
                             },
@@ -290,7 +409,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                             ),
                           ),
                           SizedBox(
-                            width: constraints.maxWidth, // Full width for the button
+                            width: constraints
+                                .maxWidth, // Full width for the button
                             child: FilledButton.tonalIcon(
                               onPressed: _clearFilters,
                               icon: const Icon(Icons.filter_alt_off),
@@ -317,27 +437,39 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                         loading: () => const SizedBox(),
                         error: (e, st) => const SizedBox(),
                         data: (counters) {
-                          final cats = categoriesAsync.maybeWhen(data: (v) => v.map((c) => c.name).toList(), orElse: () => <String>[]);
+                          final cats = categoriesAsync.maybeWhen(
+                            data: (v) => v.map((c) => c.name).toList(),
+                            orElse: () => <String>[],
+                          );
                           final filtered = _applyFilters(counters, cats);
                           final rows = _toReportRows(filtered);
-                          return Wrap(spacing: 8, children: [
-                            FilledButton.icon(
-                              onPressed: rows.isEmpty ? null : () => _generateAndShareXlsx(rows),
-                              icon: const Icon(Icons.grid_on),
-                              label: const Text('Gerar Excel'),
-                            ),
-                            FilledButton.icon(
-                              onPressed: rows.isEmpty ? null : () => _generateAndSharePdf(rows),
-                              icon: const Icon(Icons.picture_as_pdf),
-                              label: const Text('Gerar PDF'),
-                            ),
-                            Text('Atualizado às ${DateFormat('HH:mm').format(_now)}',
-                                style: TextStyle(color: cs.onSurfaceVariant)),
-                          ]);
+                          return Wrap(
+                            spacing: 8,
+                            children: [
+                              FilledButton.icon(
+                                onPressed: rows.isEmpty
+                                    ? null
+                                    : () => _generateAndShareXlsx(rows),
+                                icon: const Icon(Icons.grid_on),
+                                label: const Text('Gerar Excel'),
+                              ),
+                              FilledButton.icon(
+                                onPressed: rows.isEmpty
+                                    ? null
+                                    : () => _generateAndSharePdf(rows),
+                                icon: const Icon(Icons.picture_as_pdf),
+                                label: const Text('Gerar PDF'),
+                              ),
+                              Text(
+                                'Atualizado às ${DateFormat('HH:mm').format(_now)}',
+                                style: TextStyle(color: cs.onSurfaceVariant),
+                              ),
+                            ],
+                          );
                         },
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
@@ -349,7 +481,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, st) => Center(child: Text('Erro ao carregar: $e')),
             data: (counters) {
-              final cats = categoriesAsync.maybeWhen(data: (v) => v.map((c) => c.name).toList(), orElse: () => <String>[]);
+              final cats = categoriesAsync.maybeWhen(
+                data: (v) => v.map((c) => c.name).toList(),
+                orElse: () => <String>[],
+              );
               final filtered = _applyFilters(counters, cats);
 
               return Card(
@@ -358,8 +493,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${filtered.length} contador(es) encontrado(s)',
-                          style: const TextStyle(fontWeight: FontWeight.w600)),
+                      Text(
+                        '${filtered.length} contador(es) encontrado(s)',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       const SizedBox(height: 8),
                       ListView.separated(
                         shrinkWrap: true,
@@ -371,9 +508,13 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                           final eff = _effectiveDate(c.eventDate, c.recurrence);
                           final past = isPast(eff, now: _now);
                           final diff = calendarDiff(_now, eff);
-                          
-                          final tint = !past ? cs.primaryContainer : cs.errorContainer;
-                          final recurrenceVal = Recurrence.fromString(c.recurrence);
+
+                          final tint = !past
+                              ? cs.primaryContainer
+                              : cs.errorContainer;
+                          final recurrenceVal = Recurrence.fromString(
+                            c.recurrence,
+                          );
 
                           return Container(
                             decoration: BoxDecoration(
@@ -384,12 +525,20 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                 end: Alignment.bottomRight,
                                 colors: !past
                                     ? [
-                                        cs.primaryContainer.withValues(alpha: 0.6),
-                                        cs.primaryContainer.withValues(alpha: 0.3),
+                                        cs.primaryContainer.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                        cs.primaryContainer.withValues(
+                                          alpha: 0.3,
+                                        ),
                                       ]
                                     : [
-                                        cs.errorContainer.withValues(alpha: 0.6),
-                                        cs.errorContainer.withValues(alpha: 0.3),
+                                        cs.errorContainer.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                        cs.errorContainer.withValues(
+                                          alpha: 0.3,
+                                        ),
                                       ],
                               ),
                             ),
@@ -437,7 +586,11 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                       if (diff.years > 0) ...[
                                         _CounterBox(
                                           value: diff.years,
-                                          label: _pluralize(diff.years, 'Ano', 'Anos'),
+                                          label: _pluralize(
+                                            diff.years,
+                                            'Ano',
+                                            'Anos',
+                                          ),
                                           tint: tint,
                                         ),
                                         const SizedBox(width: 4),
@@ -445,32 +598,52 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                       if (diff.months > 0) ...[
                                         _CounterBox(
                                           value: diff.months,
-                                          label: _pluralize(diff.months, 'Mês', 'Meses'),
+                                          label: _pluralize(
+                                            diff.months,
+                                            'Mês',
+                                            'Meses',
+                                          ),
                                           tint: tint,
                                         ),
                                         const SizedBox(width: 4),
                                       ],
                                       _CounterBox(
                                         value: diff.days,
-                                        label: _pluralize(diff.days, 'Dia', 'Dias'),
+                                        label: _pluralize(
+                                          diff.days,
+                                          'Dia',
+                                          'Dias',
+                                        ),
                                         tint: tint,
                                       ),
                                       const SizedBox(width: 4),
                                       _CounterBox(
                                         value: diff.hours,
-                                        label: _pluralize(diff.hours, 'Hora', 'Horas'),
+                                        label: _pluralize(
+                                          diff.hours,
+                                          'Hora',
+                                          'Horas',
+                                        ),
                                         tint: tint,
                                       ),
                                       const SizedBox(width: 4),
                                       _CounterBox(
                                         value: diff.minutes,
-                                        label: _pluralize(diff.minutes, 'Minuto', 'Minutos'),
+                                        label: _pluralize(
+                                          diff.minutes,
+                                          'Minuto',
+                                          'Minutos',
+                                        ),
                                         tint: tint,
                                       ),
                                       const SizedBox(width: 4),
                                       _CounterBox(
                                         value: diff.seconds,
-                                        label: _pluralize(diff.seconds, 'Segundo', 'Segundos'),
+                                        label: _pluralize(
+                                          diff.seconds,
+                                          'Segundo',
+                                          'Segundos',
+                                        ),
                                         tint: tint,
                                       ),
                                     ],
@@ -484,25 +657,50 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                   children: [
                                     if ((c.category ?? '').trim().isNotEmpty)
                                       Chip(
-                                        avatar: Text('🏷️', style: TextStyle(fontSize: 14, color: cs.onSecondaryContainer)),
+                                        avatar: Text(
+                                          '🏷️',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: cs.onSecondaryContainer,
+                                          ),
+                                        ),
                                         label: Text(c.category!),
                                         visualDensity: VisualDensity.compact,
                                         backgroundColor: cs.secondaryContainer,
-                                        labelStyle: TextStyle(color: cs.onSecondaryContainer),
-                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        labelStyle: TextStyle(
+                                          color: cs.onSecondaryContainer,
+                                        ),
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
                                       ),
                                     if (recurrenceVal != Recurrence.none)
                                       Chip(
-                                        avatar: Text('🔁', style: TextStyle(fontSize: 16, color: cs.onTertiaryContainer)),
-                                        label: Text(_labelForRecurrence(recurrenceVal)),
+                                        avatar: Text(
+                                          '🔁',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: cs.onTertiaryContainer,
+                                          ),
+                                        ),
+                                        label: Text(
+                                          _labelForRecurrence(recurrenceVal),
+                                        ),
                                         visualDensity: VisualDensity.compact,
                                         backgroundColor: cs.tertiaryContainer,
-                                        labelStyle: TextStyle(color: cs.onTertiaryContainer),
-                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        labelStyle: TextStyle(
+                                          color: cs.onTertiaryContainer,
+                                        ),
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
                                       ),
                                     Text(
-                                      DateFormat('dd/MM/yyyy HH:mm').format(eff),
-                                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                                      DateFormat(
+                                        'dd/MM/yyyy HH:mm',
+                                      ).format(eff),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: cs.onSurfaceVariant,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -527,7 +725,11 @@ class _CounterBox extends StatelessWidget {
   final int value;
   final String label;
   final Color tint;
-  const _CounterBox({required this.value, required this.label, required this.tint});
+  const _CounterBox({
+    required this.value,
+    required this.label,
+    required this.tint,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -542,7 +744,11 @@ class _CounterBox extends StatelessWidget {
           colors: [tint.withValues(alpha: 0.85), tint.withValues(alpha: 0.5)],
         ),
         boxShadow: [
-          BoxShadow(color: tint.withValues(alpha: 0.28), blurRadius: 4, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: tint.withValues(alpha: 0.28),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -550,7 +756,11 @@ class _CounterBox extends StatelessWidget {
         children: [
           Text(
             '$value',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: scheme.onSurface),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: scheme.onSurface,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
