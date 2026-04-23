@@ -130,10 +130,9 @@ class NotificationService {
       }
       if (offsetsMinutes.isEmpty) continue;
 
-      final recurrence = Recurrence.fromString(counter.recurrence);
-      final effectiveEventDate = recurrence == Recurrence.none
+      final effectiveEventDate = RecurrenceDefinition.parse(counter.recurrence).isNone
           ? counter.eventDate
-          : nextRecurringDate(counter.eventDate, recurrence, now);
+          : nextRecurringDateFromString(counter.eventDate, counter.recurrence, now);
 
       await scheduleNotifications(
         counterId: counter.id,

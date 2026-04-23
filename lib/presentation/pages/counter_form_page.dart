@@ -26,6 +26,8 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
   DateTime _date = DateTime.now();
   TimeOfDay _time = TimeOfDay.now();
   String _recurrence = Recurrence.none.name;
+  int _customRecurrenceValue = 1;
+  String _customRecurrenceUnit = 'hours';
   List<int> _alertOffsets = []; // List of alert offsets in minutes
   DateTime? _createdAt;
 
@@ -48,10 +50,12 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
       if (c != null) {
         // Ajuste: para itens recorrentes vencidos, prefira próxima ocorrência
         final now = DateTime.now();
-        final rec = Recurrence.fromString(c.recurrence);
-        final effective = nextRecurringDate(c.eventDate, rec, now);
+        final definition = RecurrenceDefinition.parse(c.recurrence);
+        final effective = definition.isNone
+            ? c.eventDate
+            : nextRecurringDateFromString(c.eventDate, c.recurrence, now);
         final useEffective =
-            rec != Recurrence.none &&
+            !definition.isNone &&
             effective.isAfter(now) &&
             effective != c.eventDate;
         final base = useEffective ? effective : c.eventDate;
@@ -62,7 +66,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
           _categoryFieldCtrl?.text = c.category ?? '';
           _date = base;
           _time = TimeOfDay(hour: base.hour, minute: base.minute);
-          _recurrence = c.recurrence ?? Recurrence.none.name;
+          _loadRecurrence(c.recurrence);
           _alertOffsets = List.from(c.alertOffsets);
           _createdAt = c.createdAt;
         });
@@ -95,6 +99,103 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _date,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) {
+                        setState(
+                          () => _date = DateTime(
+                            picked.year,
+                            picked.month,
+                            picked.day,
+                            _date.hour,
+                            _date.minute,
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.date_range, size: 18),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 36),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 10,
+                      ),
+                    ),
+                    label: Text(
+                      '${_date.day.toString().padLeft(2, '0')}/${_date.month.toString().padLeft(2, '0')}/${_date.year.toString().substring(2)}',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: _time,
+                      );
+                      if (picked != null) {
+                        setState(() => _time = picked);
+                      }
+                    },
+                    icon: const Icon(Icons.access_time, size: 18),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 36),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 10,
+                      ),
+                    ),
+                    label: Text(
+                      _time.format(context),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      final now = DateTime.now();
+                      setState(() {
+                        _date = DateTime(
+                          now.year,
+                          now.month,
+                          now.day,
+                          now.hour,
+                          now.minute,
+                        );
+                        _time = TimeOfDay(hour: now.hour, minute: now.minute);
+                      });
+                    },
+                    icon: const Icon(Icons.schedule, size: 18),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 36),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 10,
+                      ),
+                    ),
+                    label: const Text(
+                      'Agora',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             TextFormField(
               controller: _nameCtrl,
               decoration: const InputDecoration(
@@ -410,73 +511,95 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _date,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        setState(
-                          () => _date = DateTime(
-                            picked.year,
-                            picked.month,
-                            picked.day,
-                            _date.hour,
-                            _date.minute,
-                          ),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.date_range),
-                    label: Text(
-                      'Data: ${_date.day}/${_date.month}/${_date.year}',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final picked = await showTimePicker(
-                        context: context,
-                        initialTime: _time,
-                      );
-                      if (picked != null) {
-                        setState(() => _time = picked);
-                      }
-                    },
-                    icon: const Icon(Icons.access_time),
-                    label: Text('Hora: ${_time.format(context)}'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
             InputDecorator(
               decoration: const InputDecoration(
                 labelText: 'Recorrência',
                 border: OutlineInputBorder(),
               ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _recurrence,
-                  items: Recurrence.values
-                      .map(
-                        (r) => DropdownMenuItem(
-                          value: r.name,
-                          child: Text(_labelForRecurrence(r)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _recurrence,
+                      items: [
+                        ...Recurrence.values
+                            .where((r) =>
+                                r != Recurrence.every6Hours &&
+                                r != Recurrence.every12Hours)
+                            .map(
+                              (r) => DropdownMenuItem(
+                                value: r.name,
+                                child: Text(_labelForRecurrence(r)),
+                              ),
+                            ),
+                        const DropdownMenuItem(
+                          value: 'custom',
+                          child: Text('Personalizado'),
                         ),
-                      )
-                      .toList(),
-                  onChanged: (v) =>
-                      setState(() => _recurrence = v ?? Recurrence.none.name),
-                ),
+                      ],
+                      onChanged: (v) => setState(() {
+                        _recurrence = v ?? Recurrence.none.name;
+                      }),
+                    ),
+                  ),
+                  if (_recurrence == 'custom') ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: TextFormField(
+                            initialValue: _customRecurrenceValue.toString(),
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Valor',
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (v) {
+                              final parsed = int.tryParse(v);
+                              if (parsed != null && parsed > 0) {
+                                setState(() {
+                                  _customRecurrenceValue = parsed;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 3,
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _customRecurrenceUnit,
+                            decoration: const InputDecoration(
+                              labelText: 'Unidade',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'hours',
+                                child: Text('Horas'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'days',
+                                child: Text('Dias'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'years',
+                                child: Text('Anos'),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              setState(() {
+                                _customRecurrenceUnit = v ?? 'hours';
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
             ),
             const SizedBox(height: 12),
@@ -626,6 +749,32 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     );
   }
 
+  void _loadRecurrence(String? recurrence) {
+    final definition = RecurrenceDefinition.parse(recurrence);
+    if (definition.isCustom) {
+      _recurrence = 'custom';
+      _customRecurrenceValue = definition.count!;
+      _customRecurrenceUnit = definition.unit!.name;
+      return;
+    }
+
+    if (definition.recurrence == Recurrence.every6Hours) {
+      _recurrence = 'custom';
+      _customRecurrenceValue = 6;
+      _customRecurrenceUnit = 'hours';
+      return;
+    }
+
+    if (definition.recurrence == Recurrence.every12Hours) {
+      _recurrence = 'custom';
+      _customRecurrenceValue = 12;
+      _customRecurrenceUnit = 'hours';
+      return;
+    }
+
+    _recurrence = definition.recurrence.name;
+  }
+
   String _labelForRecurrence(Recurrence r) {
     switch (r) {
       case Recurrence.none:
@@ -680,7 +829,9 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
         category: _categoryCtrl.text.trim().isEmpty
             ? null
             : _categoryCtrl.text.trim(),
-        recurrence: _recurrence,
+        recurrence: _recurrence == 'custom'
+            ? '$_customRecurrenceValue $_customRecurrenceUnit'
+            : _recurrence,
         alertOffsets: _alertOffsets,
         createdAt: now,
         updatedAt: now,
@@ -702,7 +853,9 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
         category: _categoryCtrl.text.trim().isEmpty
             ? null
             : _categoryCtrl.text.trim(),
-        recurrence: _recurrence,
+        recurrence: _recurrence == 'custom'
+            ? '$_customRecurrenceValue $_customRecurrenceUnit'
+            : _recurrence,
         alertOffsets: _alertOffsets,
         createdAt: _createdAt ?? now,
         updatedAt: now,

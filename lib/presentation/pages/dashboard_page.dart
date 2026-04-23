@@ -11,23 +11,8 @@ import 'package:lembreplus/data/models/counter.dart';
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
-  String _labelForRecurrence(Recurrence r) {
-    switch (r) {
-      case Recurrence.none:
-        return 'Nenhuma';
-      case Recurrence.every6Hours:
-        return '6 horas';
-      case Recurrence.every12Hours:
-        return '12 horas';
-      case Recurrence.daily:
-        return 'Diário';
-      case Recurrence.weekly:
-        return 'Semanal';
-      case Recurrence.monthly:
-        return 'Mensal';
-      case Recurrence.yearly:
-        return 'Anual';
-    }
+  String _labelForRecurrenceString(String? recurrence) {
+    return RecurrenceDefinition.parse(recurrence).label;
   }
 
   void _shareCounter(
@@ -74,7 +59,7 @@ class DashboardPage extends ConsumerWidget {
 ${counter.description ?? 'Sem descrição'}
 
 📅 **Data do evento:** ${DateFormat('dd/MM/yyyy HH:mm').format(counter.eventDate)}
-🔄 **Repetição:** ${_labelForRecurrence(Recurrence.fromString(counter.recurrence))}
+🔄 **Repetição:** ${_labelForRecurrenceString(counter.recurrence)}
 ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.category}\n' : ''}
 ⏰ **Tempo ${timeText.toLowerCase()}:** ${formattedTime.isNotEmpty ? formattedTime : 'menos de 1 segundo'}
 
@@ -99,15 +84,17 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
         data: (counters) {
           final now = DateTime.now();
           DateTime effectiveDate(DateTime base, String? recurrence) {
-            final r = Recurrence.fromString(recurrence);
-            return nextRecurringDate(base, r, now);
+            final definition = RecurrenceDefinition.parse(recurrence);
+            return definition.isNone
+                ? base
+                : nextRecurringDateFromString(base, recurrence, now);
           }
 
           // Métricas principais
           final total = counters.length;
           final recurring = counters
               .where(
-                (c) => Recurrence.fromString(c.recurrence) != Recurrence.none,
+                (c) => !RecurrenceDefinition.parse(c.recurrence).isNone,
               )
               .length;
           final past = counters
@@ -303,14 +290,16 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                           final upcomingDyn =
                               counters
                                   .map((c) {
-                                    final r = Recurrence.fromString(
+                                    final definition = RecurrenceDefinition.parse(
                                       c.recurrence,
                                     );
-                                    final d = nextRecurringDate(
-                                      c.eventDate,
-                                      r,
-                                      n,
-                                    );
+                                    final d = definition.isNone
+                                        ? c.eventDate
+                                        : nextRecurringDateFromString(
+                                            c.eventDate,
+                                            c.recurrence,
+                                            n,
+                                          );
                                     return (c, d);
                                   })
                                   .where((t) => !isPast(t.$2, now: n))

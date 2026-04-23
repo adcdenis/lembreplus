@@ -68,27 +68,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   }
 
   DateTime _effectiveDate(DateTime base, String? recurrence) {
-    final r = Recurrence.fromString(recurrence);
-    return nextRecurringDate(base, r, _now);
+    final definition = RecurrenceDefinition.parse(recurrence);
+    return definition.isNone
+        ? base
+        : nextRecurringDateFromString(base, recurrence, _now);
   }
 
-  String _labelForRecurrence(Recurrence r) {
-    switch (r) {
-      case Recurrence.none:
-        return 'Nenhuma';
-      case Recurrence.every6Hours:
-        return '6 horas';
-      case Recurrence.every12Hours:
-        return '12 horas';
-      case Recurrence.daily:
-        return 'Diário';
-      case Recurrence.weekly:
-        return 'Semanal';
-      case Recurrence.monthly:
-        return 'Mensal';
-      case Recurrence.yearly:
-        return 'Anual';
-    }
+  String _labelForRecurrenceString(String? recurrence) {
+    return RecurrenceDefinition.parse(recurrence).label;
   }
 
   String _formatDiff(DateTime target) {
@@ -159,16 +146,16 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     }
     if (_recurrence != 'Todos') {
       out = out.where((c) {
-        final r = Recurrence.fromString(c.recurrence);
-        return (_recurrence == 'Nenhuma' && r == Recurrence.none) ||
+        final definition = RecurrenceDefinition.parse(c.recurrence);
+        return (_recurrence == 'Nenhuma' && definition.isNone) ||
             (_recurrence == '6 horas' &&
-                r == Recurrence.every6Hours) ||
+                definition.recurrence == Recurrence.every6Hours) ||
             (_recurrence == '12 horas' &&
-                r == Recurrence.every12Hours) ||
-            (_recurrence == 'Diário' && r == Recurrence.daily) ||
-            (_recurrence == 'Semanal' && r == Recurrence.weekly) ||
-            (_recurrence == 'Mensal' && r == Recurrence.monthly) ||
-            (_recurrence == 'Anual' && r == Recurrence.yearly);
+                definition.recurrence == Recurrence.every12Hours) ||
+            (_recurrence == 'Diário' && definition.recurrence == Recurrence.daily) ||
+            (_recurrence == 'Semanal' && definition.recurrence == Recurrence.weekly) ||
+            (_recurrence == 'Mensal' && definition.recurrence == Recurrence.monthly) ||
+            (_recurrence == 'Anual' && definition.recurrence == Recurrence.yearly);
       }).toList();
     }
     if (_category != 'Todas') {
@@ -193,7 +180,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         descricao: c.description ?? '',
         dataHora: c.eventDate,
         categoria: c.category ?? '-',
-        repeticao: _labelForRecurrence(Recurrence.fromString(c.recurrence)),
+        repeticao: _labelForRecurrenceString(c.recurrence),
         tempoFormatado: past ? diffLabel : diffLabel,
       );
     }).toList();
@@ -528,7 +515,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                           final tint = !past
                               ? cs.primaryContainer
                               : cs.errorContainer;
-                          final recurrenceVal = Recurrence.fromString(
+                          final definition = RecurrenceDefinition.parse(
                             c.recurrence,
                           );
 
@@ -689,7 +676,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                         materialTapTargetSize:
                                             MaterialTapTargetSize.shrinkWrap,
                                       ),
-                                    if (recurrenceVal != Recurrence.none)
+                                    if (!definition.isNone)
                                       Chip(
                                         avatar: Text(
                                           '🔁',
@@ -699,7 +686,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                           ),
                                         ),
                                         label: Text(
-                                          _labelForRecurrence(recurrenceVal),
+                                          definition.label,
                                         ),
                                         visualDensity: VisualDensity.compact,
                                         backgroundColor: cs.tertiaryContainer,

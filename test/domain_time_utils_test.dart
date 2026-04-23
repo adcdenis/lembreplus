@@ -57,4 +57,34 @@ void main() {
       expect(nextDate, DateTime(2026, 03, 10, 8, 30));
     });
   });
+
+  group('nextRecurringDateFromString', () {
+    test('custom hourly recurrence advances to next interval when past', () {
+      final base = DateTime(2025, 01, 01, 8, 0);
+      final now = DateTime(2025, 01, 01, 11, 1);
+      final nextDate = nextRecurringDateFromString(base, '3 hours', now);
+      expect(nextDate, DateTime(2025, 01, 01, 14, 0));
+    });
+
+    test('custom daily recurrence advances correctly', () {
+      final base = DateTime(2025, 01, 01, 10, 0);
+      final now = DateTime(2025, 01, 05, 9, 0);
+      final nextDate = nextRecurringDateFromString(base, '2 days', now);
+      expect(nextDate, DateTime(2025, 01, 05, 10, 0));
+    });
+
+    test('custom yearly recurrence advances by multiple years', () {
+      final base = DateTime(2024, 03, 10, 8, 30);
+      final now = DateTime(2026, 03, 11, 8, 30);
+      final nextDate = nextRecurringDateFromString(base, '2 years', now);
+      expect(nextDate, DateTime(2028, 03, 10, 8, 30));
+    });
+
+    test('invalid recurrence returns base date', () {
+      final base = DateTime(2025, 01, 01, 10, 0);
+      final now = DateTime(2025, 01, 02, 10, 0);
+      final nextDate = nextRecurringDateFromString(base, 'unknown', now);
+      expect(nextDate, base);
+    });
+  });
 }

@@ -164,6 +164,64 @@ DateTime nextRecurringDate(DateTime base, Recurrence recurrence, DateTime now) {
   }
 }
 
+DateTime nextRecurringDateFromString(
+  DateTime base,
+  String? recurrence,
+  DateTime now,
+) {
+  final definition = RecurrenceDefinition.parse(recurrence);
+  if (definition.isNone) {
+    return base;
+  }
+  if (definition.isCustom) {
+    return _nextRecurringDateCustom(
+      base,
+      definition.count!,
+      definition.unit!,
+      now,
+    );
+  }
+  return nextRecurringDate(base, definition.recurrence, now);
+}
+
+DateTime _nextRecurringDateCustom(
+  DateTime base,
+  int count,
+  RecurrenceUnit unit,
+  DateTime now,
+) {
+  base = base.toLocal();
+  now = now.toLocal();
+  if (!base.isBefore(now)) return base;
+
+  switch (unit) {
+    case RecurrenceUnit.hours:
+      final diff = now.difference(base);
+      final steps = diff.inHours ~/ count;
+      var candidate = base.add(Duration(hours: steps * count));
+      if (candidate.isBefore(now)) {
+        candidate = candidate.add(Duration(hours: count));
+      }
+      return candidate;
+    case RecurrenceUnit.days:
+      final diff = now.difference(base);
+      final steps = diff.inDays ~/ count;
+      var candidate = base.add(Duration(days: steps * count));
+      if (candidate.isBefore(now)) {
+        candidate = candidate.add(Duration(days: count));
+      }
+      return candidate;
+    case RecurrenceUnit.years:
+      final yearsDiff = now.year - base.year;
+      final steps = yearsDiff ~/ count;
+      var candidate = _addYearsClamped(base, steps * count);
+      if (candidate.isBefore(now)) {
+        candidate = _addYearsClamped(base, (steps + 1) * count);
+      }
+      return candidate;
+  }
+}
+
 int _monthsBetween(DateTime start, DateTime end) {
   var months = (end.year - start.year) * 12 + (end.month - start.month);
   final candidate = _addMonths(start, months);

@@ -21,23 +21,8 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
   static const _prefsKeyFilterSearch = 'counter_list_filter_search';
   static const _prefsKeyFilterCategory = 'counter_list_filter_category';
   static const _prefsKeyFilterCategories = 'counter_list_filter_categories';
-  String _labelForRecurrence(Recurrence r) {
-    switch (r) {
-      case Recurrence.none:
-        return 'Nenhuma';
-      case Recurrence.every6Hours:
-        return '6 horas';
-      case Recurrence.every12Hours:
-        return '12 horas';
-      case Recurrence.daily:
-        return 'Diário';
-      case Recurrence.weekly:
-        return 'Semanal';
-      case Recurrence.monthly:
-        return 'Mensal';
-      case Recurrence.yearly:
-        return 'Anual';
-    }
+  String _labelForRecurrenceString(String? recurrence) {
+    return RecurrenceDefinition.parse(recurrence).label;
   }
 
   String _pluralize(int value, String singular, String plural) =>
@@ -87,7 +72,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
 ${counter.description ?? 'Sem descrição'}
 
 📅 **Data do evento:** ${DateFormat('dd/MM/yyyy HH:mm').format(counter.eventDate)}
-🔄 **Repetição:** ${_labelForRecurrence(Recurrence.fromString(counter.recurrence))}
+🔄 **Repetição:** ${_labelForRecurrenceString(counter.recurrence)}
 ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.category}\n' : ''}
 ⏰ **Tempo ${timeText.toLowerCase()}:** ${formattedTime.isNotEmpty ? formattedTime : 'menos de 1 segundo'}
 
@@ -417,7 +402,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
 
                           Widget buildCard(int index) {
                             final c = filtered[index];
-                            final rec = Recurrence.fromString(c.recurrence);
+                            final definition = RecurrenceDefinition.parse(c.recurrence);
                             // Usa reconstrução ingênua local para garantir semântica de parede
                             final baseLocal = DateTime(
                               c.eventDate.year,
@@ -429,9 +414,13 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                               c.eventDate.millisecond,
                               c.eventDate.microsecond,
                             );
-                            final effectiveDate = rec == Recurrence.none
+                            final effectiveDate = definition.isNone
                                 ? baseLocal
-                                : nextRecurringDate(baseLocal, rec, now);
+                                : nextRecurringDateFromString(
+                                    baseLocal,
+                                    c.recurrence,
+                                    now,
+                                  );
                             final isFuture = effectiveDate.isAfter(now);
                             final comps = _calendarComponents(
                               now,
@@ -823,7 +812,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                                   ),
                                                   const SizedBox(width: 8),
                                                 ],
-                                                if (rec != Recurrence.none) ...[
+                                                if (!definition.isNone) ...[
                                                   Chip(
                                                     avatar: Text(
                                                       '🔁',
@@ -834,7 +823,8 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                                       ),
                                                     ),
                                                     label: Text(
-                                                      _labelForRecurrence(rec),
+                                                      _labelForRecurrenceString(
+                                                          c.recurrence),
                                                     ),
                                                     visualDensity:
                                                         VisualDensity.compact,
