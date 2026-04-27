@@ -482,7 +482,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                               CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            // Header com ícone, título e ações
+                                            // Header com ícone e título
                                             Row(
                                               children: [
                                                 // Ícone principal mais compacto
@@ -516,194 +516,19 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                                   ),
                                                 ),
                                                 const SizedBox(width: 12),
-                                                // Título com mais espaço
+                                                // Título
                                                 Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        c.name,
-                                                        style: const TextStyle(
-                                                          fontSize: 20,
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                          height: 1.2,
-                                                        ),
-                                                        maxLines: 2,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                // Botões de ação compactos
-                                                Container(
-                                                  decoration: BoxDecoration(
-                                                    color: scheme
-                                                        .surfaceContainerHighest
-                                                        .withValues(alpha: 0.3),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Tooltip(
-                                                        message: 'Histórico',
-                                                        child: Material(
-                                                          color: Colors
-                                                              .transparent,
-                                                          child: InkWell(
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  6,
-                                                                ),
-                                                            onTap: () => context.go(
-                                                              '/counter/${c.id}/history',
-                                                            ),
-                                                            child: const Padding(
-                                                              padding:
-                                                                  EdgeInsets.all(
-                                                                    8,
-                                                                  ),
-                                                              child: Icon(
-                                                                Icons.history,
-                                                                size: 16.8,
-                                                                color:
-                                                                    Colors.grey,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      const VerticalDivider(
-                                                        width: 1,
-                                                      ),
-                                                      Tooltip(
-                                                        message: 'Compartilhar',
-                                                        child: Material(
-                                                          color: Colors
-                                                              .transparent,
-                                                          child: InkWell(
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  6,
-                                                                ),
-                                                            onTap: () =>
-                                                                _shareCounter(
-                                                                  context,
-                                                                  c,
-                                                                  effectiveDate,
-                                                                  isFuture,
-                                                                ),
-                                                            child: const Padding(
-                                                              padding:
-                                                                  EdgeInsets.all(
-                                                                    8,
-                                                                  ),
-                                                              child: Icon(
-                                                                Icons.share,
-                                                                size: 16.8,
-                                                                color:
-                                                                    Colors.grey,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      const VerticalDivider(
-                                                        width: 1,
-                                                      ),
-                                                      Tooltip(
-                                                        message: 'Excluir',
-                                                        child: Material(
-                                                          color: Colors
-                                                              .transparent,
-                                                          child: InkWell(
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  6,
-                                                                ),
-                                                            onTap: () async {
-                                                              final confirm = await showDialog<bool>(
-                                                                context:
-                                                                    context,
-                                                                builder: (ctx) => AlertDialog(
-                                                                  title: const Text(
-                                                                    'Excluir contador',
-                                                                  ),
-                                                                  content:
-                                                                      const Text(
-                                                                        'Tem certeza que deseja excluir? Esta ação não pode ser desfeita.',
-                                                                      ),
-                                                                  actions: [
-                                                                    TextButton(
-                                                                      onPressed: () =>
-                                                                          Navigator.of(
-                                                                            ctx,
-                                                                          ).pop(
-                                                                            false,
-                                                                          ),
-                                                                      child: const Text(
-                                                                        'Cancelar',
-                                                                      ),
-                                                                    ),
-                                                                    TextButton(
-                                                                      onPressed: () =>
-                                                                          Navigator.of(
-                                                                            ctx,
-                                                                          ).pop(
-                                                                            true,
-                                                                          ),
-                                                                      child: const Text(
-                                                                        'Excluir',
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              );
-                                                              if (confirm ==
-                                                                  true) {
-                                                                await repo
-                                                                    .delete(
-                                                                      c.id!,
-                                                                    );
-                                                                if (context
-                                                                    .mounted) {
-                                                                  ScaffoldMessenger.of(
-                                                                    context,
-                                                                  ).showSnackBar(
-                                                                    const SnackBar(
-                                                                      content: Text(
-                                                                        'Contador excluído',
-                                                                      ),
-                                                                    ),
-                                                                  );
-                                                                }
-                                                              }
-                                                            },
-                                                            child: const Padding(
-                                                              padding:
-                                                                  EdgeInsets.all(
-                                                                    8,
-                                                                  ),
-                                                              child: Icon(
-                                                                Icons
-                                                                    .delete_outline,
-                                                                size: 16.8,
-                                                                color:
-                                                                    Colors.grey,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
+                                                  child: Text(
+                                                    c.name,
+                                                    style: const TextStyle(
+                                                      fontSize: 20,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      height: 1.2,
+                                                    ),
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow
+                                                        .ellipsis,
                                                   ),
                                                 ),
                                               ],
@@ -856,6 +681,91 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                                   ),
                                                 ),
                                               ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      // Coluna de ações - fora do card principal
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: scheme.surfaceContainerHighest
+                                              .withValues(alpha: 0.3),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        padding: const EdgeInsets.all(4),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Tooltip(
+                                              message: 'Histórico',
+                                              child: InkWell(
+                                                borderRadius: BorderRadius.circular(6),
+                                                onTap: () => context.go('/counter/${c.id}/history'),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(6),
+                                                  child: Icon(
+                                                    Icons.history,
+                                                    size: 18,
+                                                    color: scheme.primary,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Tooltip(
+                                              message: 'Compartilhar',
+                                              child: InkWell(
+                                                borderRadius: BorderRadius.circular(6),
+                                                onTap: () => _shareCounter(context, c, effectiveDate, isFuture),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(6),
+                                                  child: Icon(
+                                                    Icons.share,
+                                                    size: 18,
+                                                    color: scheme.primary,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Tooltip(
+                                              message: 'Excluir',
+                                              child: InkWell(
+                                                borderRadius: BorderRadius.circular(6),
+                                                onTap: () async {
+                                                  final confirm = await showDialog<bool>(
+                                                    context: context,
+                                                    builder: (ctx) => AlertDialog(
+                                                      title: const Text('Excluir contador'),
+                                                      content: const Text('Tem certeza que deseja excluir? Esta ação não pode ser desfeita.'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () => Navigator.of(ctx).pop(false),
+                                                          child: const Text('Cancelar'),
+                                                        ),
+                                                        TextButton(
+                                                          onPressed: () => Navigator.of(ctx).pop(true),
+                                                          child: const Text('Excluir'),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                  if (confirm == true) {
+                                                    await repo.delete(c.id!);
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        const SnackBar(content: Text('Contador excluído')),
+                                                      );
+                                                    }
+                                                  }
+                                                },
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(6),
+                                                  child: Icon(
+                                                    Icons.delete_outline,
+                                                    size: 18,
+                                                    color: scheme.error,
+                                                  ),
+                                                ),
+                                              ),
                                             ),
                                           ],
                                         ),
