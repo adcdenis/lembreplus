@@ -21,6 +21,7 @@ class _CounterListPageState extends ConsumerState<CounterListPage> {
   static const _prefsKeyFilterSearch = 'counter_list_filter_search';
   static const _prefsKeyFilterCategory = 'counter_list_filter_category';
   static const _prefsKeyFilterCategories = 'counter_list_filter_categories';
+  static const _prefsKeySelectedCategory = 'counter_list_selected_category';
   String _labelForRecurrenceString(String? recurrence) {
     return RecurrenceDefinition.parse(recurrence).label;
   }
@@ -130,7 +131,12 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/counter/new'),
+        onPressed: () {
+          final selectedCat = _selectedCategories.isNotEmpty
+              ? _selectedCategories.first
+              : null;
+          context.go('/counter/new', extra: selectedCat);
+        },
         child: const Text('➕', style: TextStyle(fontSize: 24)),
       ),
       body: Padding(
@@ -334,6 +340,12 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                           _prefsKeyFilterCategories,
                           _selectedCategories.toList(),
                         );
+                        // Salva a categoria selecionada para usar no novo contador
+                        if (v) {
+                          await prefs.setString(_prefsKeySelectedCategory, norm);
+                        } else {
+                          await prefs.remove(_prefsKeySelectedCategory);
+                        }
                       } catch (_) {
                         // Ignora erros de persistência
                       }

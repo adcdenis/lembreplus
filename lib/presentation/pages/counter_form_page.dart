@@ -10,7 +10,8 @@ import 'package:lembreplus/domain/time_utils.dart';
 
 class CounterFormPage extends ConsumerStatefulWidget {
   final int? counterId;
-  const CounterFormPage({super.key, this.counterId});
+  final String? initialCategory;
+  const CounterFormPage({super.key, this.counterId, this.initialCategory});
 
   @override
   ConsumerState<CounterFormPage> createState() => _CounterFormPageState();
@@ -71,6 +72,12 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
           _createdAt = c.createdAt;
         });
       }
+    } else if (widget.initialCategory != null) {
+      // Para novo contador, pré-selecionar a categoria vinda da listagem
+      setState(() {
+        _categoryCtrl.text = widget.initialCategory!;
+        _categoryFieldCtrl?.text = widget.initialCategory!;
+      });
     }
   }
 

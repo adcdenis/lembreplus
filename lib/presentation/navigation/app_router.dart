@@ -28,7 +28,10 @@ class AppRouter {
           GoRoute(
             path: '/counter/new',
             name: 'counter_new',
-            pageBuilder: (context, state) => const MaterialPage(child: CounterFormPage()),
+            pageBuilder: (context, state) {
+              final selectedCategory = state.extra as String?;
+              return MaterialPage(child: CounterFormPage(initialCategory: selectedCategory));
+            },
           ),
 
           GoRoute(
