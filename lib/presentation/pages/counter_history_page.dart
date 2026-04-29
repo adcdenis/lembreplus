@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lembreplus/state/providers.dart';
 
@@ -14,50 +15,57 @@ class CounterHistoryPage extends ConsumerWidget {
     final historyAsync = ref.watch(historyProvider(counterId));
     final countersRepo = ref.watch(counterRepositoryProvider);
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Histórico do contador', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          FutureBuilder(
-            future: countersRepo.byId(counterId),
-            builder: (context, snap) {
-              if (snap.connectionState != ConnectionState.done) {
-                return const LinearProgressIndicator();
-              }
-              final c = snap.data;
-              return Text(
-                c == null ? 'ID: $counterId' : 'ID: ${c.id} • ${c.name}',
-                style: TextStyle(color: scheme.onSurfaceVariant),
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          historyAsync.when(
-            loading: () => const Expanded(child: Center(child: CircularProgressIndicator())),
-            error: (e, _) => Expanded(child: Center(child: Text('Erro ao carregar histórico: $e'))),
-            data: (items) {
-              if (items.isEmpty) {
-                return const Expanded(child: Center(child: Text('Sem histórico para este contador.')));
-              }
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          context.go('/counters');
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Histórico do contador', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            FutureBuilder(
+              future: countersRepo.byId(counterId),
+              builder: (context, snap) {
+                if (snap.connectionState != ConnectionState.done) {
+                  return const LinearProgressIndicator();
+                }
+                final c = snap.data;
+                return Text(
+                  c == null ? 'ID: $counterId' : 'ID: ${c.id} • ${c.name}',
+                  style: TextStyle(color: scheme.onSurfaceVariant),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            historyAsync.when(
+              loading: () => const Expanded(child: Center(child: CircularProgressIndicator())),
+              error: (e, _) => Expanded(child: Center(child: Text('Erro ao carregar histórico: $e'))),
+              data: (items) {
+                if (items.isEmpty) {
+                  return const Expanded(child: Center(child: Text('Sem histórico para este contador.')));
+                }
 
-              return Expanded(
-                child: ListView.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final h = items[index];
-                    final ts = DateFormat('dd/MM/yyyy HH:mm').format(h.timestamp);
-                    final op = h.operation.toLowerCase();
-                    final icon = () {
-                      switch (op) {
-                        case 'create':
-                          return Icons.add_circle_outline;
-                        case 'update':
-                          // Evita o ícone de "editar" para não sugerir ação de edição
-                          return Icons.change_circle_outlined;
+                return Expanded(
+                  child: ListView.separated(
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final h = items[index];
+                      final ts = DateFormat('dd/MM/yyyy HH:mm').format(h.timestamp);
+                      final op = h.operation.toLowerCase();
+                      final icon = () {
+                        switch (op) {
+                          case 'create':
+                            return Icons.add_circle_outline;
+                          case 'update':
+                            // Evita o ícone de "editar" para não sugerir ação de edição
+                            return Icons.change_circle_outlined;
                         case 'delete':
                           return Icons.delete_outline;
                         default:
@@ -164,6 +172,7 @@ class CounterHistoryPage extends ConsumerWidget {
             },
           ),
         ],
+      ),
       ),
     );
   }

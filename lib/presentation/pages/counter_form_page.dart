@@ -22,21 +22,19 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
   final _nameCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _categoryCtrl = TextEditingController();
-  // Holds a reference to the Autocomplete text field controller to keep UI in sync
   TextEditingController? _categoryFieldCtrl;
   DateTime _date = DateTime.now();
   TimeOfDay _time = TimeOfDay.now();
   String _recurrence = Recurrence.none.name;
   int _customRecurrenceValue = 1;
   String _customRecurrenceUnit = 'hours';
-  List<int> _alertOffsets = []; // List of alert offsets in minutes
+  List<int> _alertOffsets = []; 
   DateTime? _createdAt;
 
   @override
   void initState() {
     super.initState();
     _loadForEditIfNeeded();
-    // Initialize notification service and request permissions
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final notifService = ref.read(notificationServiceProvider);
       notifService.init().then((_) => notifService.requestPermissions());
@@ -49,7 +47,6 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
       final repo = ref.read(counterRepositoryProvider);
       final c = await repo.byId(id);
       if (c != null) {
-        // Ajuste: para itens recorrentes vencidos, prefira próxima ocorrência
         final now = DateTime.now();
         final definition = RecurrenceDefinition.parse(c.recurrence);
         final effective = definition.isNone
@@ -73,7 +70,6 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
         });
       }
     } else if (widget.initialCategory != null) {
-      // Para novo contador, pré-selecionar a categoria vinda da listagem
       setState(() {
         _categoryCtrl.text = widget.initialCategory!;
         _categoryFieldCtrl?.text = widget.initialCategory!;
@@ -95,168 +91,118 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     final categoriesAsync = ref.watch(categoriesProvider);
     final countersAsync = ref.watch(countersProvider);
     final categoryRepo = ref.read(categoryRepositoryProvider);
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Form(
-        key: _formKey,
-        child: ListView(
-          children: [
-            Text(
-              isEdit ? 'Editar Contador' : 'Novo Contador',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          context.go('/counters');
+        }
+      },
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: ListView(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _date,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        setState(
-                          () => _date = DateTime(
-                            picked.year,
-                            picked.month,
-                            picked.day,
-                            _date.hour,
-                            _date.minute,
-                          ),
+                Text(
+                  isEdit ? 'Editar Contador' : 'Novo Contador',
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _date,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                          );
+                          if (picked != null) {
+                            setState(() => _date = DateTime(
+                              picked.year, picked.month, picked.day,
+                              _date.hour, _date.minute,
+                            ));
+                          }
+                        },
+                        icon: const Icon(Icons.date_range, size: 18),
+                        label: Text(
+                          '${_date.day.toString().padLeft(2, '0')}/${_date.month.toString().padLeft(2, '0')}/${_date.year.toString().substring(2)}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final picked = await showTimePicker(
+                            context: context,
+                            initialTime: _time,
+                          );
+                          if (picked != null) setState(() => _time = picked);
+                        },
+                        icon: const Icon(Icons.access_time, size: 18),
+                        label: Text(_time.format(context), style: const TextStyle(fontSize: 12)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          final now = DateTime.now();
+                          setState(() {
+                            _date = now;
+                            _time = TimeOfDay(hour: now.hour, minute: now.minute);
+                          });
+                        },
+                        icon: const Icon(Icons.schedule, size: 18),
+                        label: const Text('Agora', style: TextStyle(fontSize: 12)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Nome', border: OutlineInputBorder()),
+                  maxLength: 100,
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Informe um nome' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _descCtrl,
+                  decoration: const InputDecoration(labelText: 'Descrição', border: OutlineInputBorder()),
+                  maxLines: 2,
+                  maxLength: 300,
+                ),
+                const SizedBox(height: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Categoria', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Autocomplete<String>(
+                      optionsBuilder: (TextEditingValue tv) {
+                        final q = tv.text.trim().toLowerCase();
+                        return categoriesAsync.maybeWhen(
+                          data: (cats) {
+                            if (q.isEmpty) return cats.map((c) => c.name);
+                            final nq = normalizeCategory(q);
+                            return cats.where((c) =>
+                                c.name.toLowerCase().contains(q) ||
+                                c.normalized.contains(nq)).map((c) => c.name);
+                          },
+                          orElse: () => const [],
                         );
-                      }
-                    },
-                    icon: const Icon(Icons.date_range, size: 18),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 36),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 10,
-                      ),
-                    ),
-                    label: Text(
-                      '${_date.day.toString().padLeft(2, '0')}/${_date.month.toString().padLeft(2, '0')}/${_date.year.toString().substring(2)}',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final picked = await showTimePicker(
-                        context: context,
-                        initialTime: _time,
-                      );
-                      if (picked != null) {
-                        setState(() => _time = picked);
-                      }
-                    },
-                    icon: const Icon(Icons.access_time, size: 18),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 36),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 10,
-                      ),
-                    ),
-                    label: Text(
-                      _time.format(context),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      final now = DateTime.now();
-                      setState(() {
-                        _date = DateTime(
-                          now.year,
-                          now.month,
-                          now.day,
-                          now.hour,
-                          now.minute,
-                        );
-                        _time = TimeOfDay(hour: now.hour, minute: now.minute);
-                      });
-                    },
-                    icon: const Icon(Icons.schedule, size: 18),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 36),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 10,
-                      ),
-                    ),
-                    label: const Text(
-                      'Agora',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _nameCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Nome',
-                border: OutlineInputBorder(),
-              ),
-              maxLength: 100,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Informe um nome' : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _descCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Descrição',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-              maxLength: 300,
-            ),
-            const SizedBox(height: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Categoria',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                // Autocomplete para listar e buscar categorias existentes
-                Autocomplete<String>(
-                  optionsBuilder: (TextEditingValue tv) {
-                    final q = tv.text.trim().toLowerCase();
-                    return categoriesAsync.maybeWhen(
-                      data: (cats) {
-                        if (q.isEmpty) return cats.map((c) => c.name);
-                        final nq = normalizeCategory(q);
-                        return cats
-                            .where(
-                              (c) =>
-                                  c.name.toLowerCase().contains(q) ||
-                                  c.normalized.contains(nq),
-                            )
-                            .map((c) => c.name);
                       },
-                      orElse: () => const [],
-                    );
-                  },
-                  fieldViewBuilder:
-                      (context, textController, focusNode, onFieldSubmitted) {
-                        // Guarda referência para sincronizar quando chips/botões atualizam a categoria
+                      fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
                         _categoryFieldCtrl = textController;
-                        if (_categoryCtrl.text.isNotEmpty &&
-                            textController.text.isEmpty) {
+                        if (_categoryCtrl.text.isNotEmpty && textController.text.isEmpty) {
                           textController.text = _categoryCtrl.text;
                         }
                         return TextFormField(
@@ -264,10 +210,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                           focusNode: focusNode,
                           maxLength: 100,
                           onChanged: (v) {
-                            // Mantém _categoryCtrl como fonte de verdade para outros widgets
-                            _categoryCtrl
-                              ..text = v
-                              ..selection = textController.selection;
+                            _categoryCtrl.text = v;
                             setState(() {});
                           },
                           decoration: InputDecoration(
@@ -278,479 +221,219 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                               children: [
                                 if (_categoryCtrl.text.isNotEmpty)
                                   IconButton(
-                                    tooltip: 'Limpar',
                                     icon: const Icon(Icons.clear),
                                     onPressed: () {
                                       _categoryCtrl.clear();
-                                      _categoryFieldCtrl?.clear();
+                                      textController.clear();
                                       setState(() {});
                                     },
                                   ),
-                                // Lista rápida de categorias já existentes
-                                Builder(
-                                  builder: (ctx) {
-                                    final cats = categoriesAsync.maybeWhen(
-                                      data: (list) => list,
-                                      orElse: () => const <cat.Category>[],
-                                    );
-                                    if (cats.isEmpty) {
-                                      return const SizedBox.shrink();
-                                    }
-                                    return PopupMenuButton<String>(
-                                      tooltip: 'Selecionar categoria existente',
-                                      icon: const Icon(Icons.list),
-                                      itemBuilder: (ctx) => cats
-                                          .map(
-                                            (c) => PopupMenuItem<String>(
-                                              value: c.name,
-                                              child: Text(c.name),
-                                            ),
-                                          )
-                                          .toList(),
-                                      onSelected: (value) {
-                                        _categoryCtrl.text = value;
-                                        _categoryFieldCtrl?.text = value;
-                                        _categoryFieldCtrl?.selection =
-                                            TextSelection.collapsed(
-                                              offset: value.length,
-                                            );
-                                        setState(() {});
-                                      },
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  tooltip: 'Criar nova categoria',
-                                  icon: const Icon(Icons.add),
-                                  onPressed: () async {
-                                    final name =
-                                        (_categoryFieldCtrl?.text ??
-                                                _categoryCtrl.text)
-                                            .trim();
-                                    if (name.isEmpty) return;
-                                    final normalized = normalizeCategory(name);
-                                    // Evita duplicação no client-side
-                                    final exists = categoriesAsync.maybeWhen(
-                                      data: (cats) => cats.any(
-                                        (c) => c.normalized == normalized,
-                                      ),
-                                      orElse: () => false,
-                                    );
-                                    if (exists) {
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Categoria "$name" já existe',
-                                          ),
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                    await categoryRepo.create(
-                                      cat.Category(
-                                        name: name,
-                                        normalized: normalized,
-                                      ),
-                                    );
-                                    if (!context.mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Categoria "$name" criada',
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
+                                Builder(builder: (ctx) {
+                                  final cats = categoriesAsync.maybeWhen(
+                                      data: (list) => list, orElse: () => const <cat.Category>[]);
+                                  if (cats.isEmpty) return const SizedBox.shrink();
+                                  return PopupMenuButton<String>(
+                                    icon: const Icon(Icons.list),
+                                    onSelected: (value) {
+                                      _categoryCtrl.text = value;
+                                      textController.text = value;
+                                      setState(() {});
+                                    },
+                                    itemBuilder: (ctx) => cats.map((c) => 
+                                      PopupMenuItem(value: c.name, child: Text(c.name))).toList(),
+                                  );
+                                }),
                               ],
                             ),
                           ),
                         );
                       },
-                  onSelected: (value) {
-                    _categoryCtrl.text = value;
-                    _categoryFieldCtrl?.text = value;
-                    _categoryFieldCtrl?.selection = TextSelection.collapsed(
-                      offset: value.length,
-                    );
-                    setState(() {});
-                  },
+                      onSelected: (value) {
+                        _categoryCtrl.text = value;
+                        _categoryFieldCtrl?.text = value;
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    categoriesAsync.when(
+                      data: (cats) {
+                        if (cats.isEmpty) return const SizedBox.shrink();
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: cats.map((c) {
+                              final selected = _categoryCtrl.text.trim() == c.name;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: InputChip(
+                                  label: Text(c.name),
+                                  selected: selected,
+                                  onPressed: () {
+                                    _categoryCtrl.text = c.name;
+                                    _categoryFieldCtrl?.text = c.name;
+                                    setState(() {});
+                                  },
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        );
+                      },
+                      loading: () => const LinearProgressIndicator(),
+                      error: (_, __) => const SizedBox.shrink(),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                // Chips das categorias existentes para seleção rápida
-                categoriesAsync.when(
-                  data: (cats) {
-                    if (cats.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-                    final usedNames = countersAsync.maybeWhen(
-                      data: (ctrs) => ctrs
-                          .map((c) => c.category?.trim())
-                          .whereType<String>()
-                          .map((name) => normalizeCategory(name))
-                          .toSet(),
-                      orElse: () => <String>{},
-                    );
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: cats.map((c) {
-                          final selected = _categoryCtrl.text.trim() == c.name;
-                          final isUsed = usedNames.contains(c.normalized);
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: InputChip(
-                              label: Text(c.name),
-                              selected: selected,
-                              onPressed: () {
-                                _categoryCtrl.text = c.name;
-                                _categoryFieldCtrl?.text = c.name;
-                                _categoryFieldCtrl?.selection =
-                                    TextSelection.collapsed(
-                                      offset: c.name.length,
-                                    );
-                                setState(() {});
-                              },
-                              onDeleted: isUsed
-                                  ? null
-                                  : () async {
-                                      final confirm = await showDialog<bool>(
+                const SizedBox(height: 12),
+                InputDecorator(
+                  decoration: const InputDecoration(labelText: 'Recorrência', border: OutlineInputBorder()),
+                  child: Column(
+                    children: [
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _recurrence,
+                          isExpanded: true,
+                          items: [
+                            ...Recurrence.values.where((r) => r != Recurrence.every6Hours && r != Recurrence.every12Hours).map((r) => 
+                              DropdownMenuItem(value: r.name, child: Text(_labelForRecurrence(r)))),
+                            const DropdownMenuItem(value: 'custom', child: Text('Personalizado')),
+                          ],
+                          onChanged: (v) => setState(() => _recurrence = v ?? Recurrence.none.name),
+                        ),
+                      ),
+                      if (_recurrence == 'custom') ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: TextFormField(
+                                initialValue: _customRecurrenceValue.toString(),
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(labelText: 'Valor', border: OutlineInputBorder()),
+                                onChanged: (v) => setState(() => _customRecurrenceValue = int.tryParse(v) ?? 1),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: 3,
+                              child: DropdownButtonFormField<String>(
+                                value: _customRecurrenceUnit,
+                                decoration: const InputDecoration(labelText: 'Unidade', border: OutlineInputBorder()),
+                                items: const [
+                                  DropdownMenuItem(value: 'hours', child: Text('Horas')),
+                                  DropdownMenuItem(value: 'days', child: Text('Dias')),
+                                  DropdownMenuItem(value: 'years', child: Text('Anos')),
+                                ],
+                                onChanged: (v) => setState(() => _customRecurrenceUnit = v ?? 'hours'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Lembretes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        if (_alertOffsets.length < 5)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isEdit && widget.counterId != null) ...[
+                                IconButton(
+                                  onPressed: () async {
+                                    final notifService = ref.read(notificationServiceProvider);
+                                    final pending = await notifService.getPendingNotifications();
+                                    // Filtra notificações deste contador (id ~ 100 == counterId)
+                                    final myAlerts = pending
+                                        .where((n) => (n.id ~/ 100) == widget.counterId)
+                                        .toList();
+
+                                    if (context.mounted) {
+                                      showDialog(
                                         context: context,
                                         builder: (ctx) => AlertDialog(
-                                          title: const Text(
-                                            'Excluir categoria',
-                                          ),
-                                          content: Text(
-                                            'Excluir "${c.name}"? Esta ação não pode ser desfeita.',
+                                          title: const Text('Notificações Ativas'),
+                                          content: SizedBox(
+                                            width: double.maxFinite,
+                                            child: myAlerts.isEmpty
+                                                ? const Text('Nenhuma notificação agendada para este contador.')
+                                                : ListView.builder(
+                                                    shrinkWrap: true,
+                                                    itemCount: myAlerts.length,
+                                                    itemBuilder: (ctx, i) {
+                                                      final n = myAlerts[i];
+                                                      return ListTile(
+                                                        title: Text('ID: ${n.id}'),
+                                                        subtitle: Text('${n.title}\n${n.body}'),
+                                                        isThreeLine: true,
+                                                      );
+                                                    },
+                                                  ),
                                           ),
                                           actions: [
                                             TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(ctx).pop(false),
-                                              child: const Text('Cancelar'),
-                                            ),
-                                            FilledButton(
-                                              onPressed: () =>
-                                                  Navigator.of(ctx).pop(true),
-                                              child: const Text('Excluir'),
+                                              onPressed: () => Navigator.of(ctx).pop(),
+                                              child: const Text('Fechar'),
                                             ),
                                           ],
                                         ),
                                       );
-                                      if (confirm != true) return;
-                                      final ok = await categoryRepo
-                                          .deleteIfUnused(c);
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            ok
-                                                ? 'Categoria "${c.name}" excluída'
-                                                : 'Não é possível excluir: em uso',
-                                          ),
-                                        ),
-                                      );
-                                    },
-                              deleteIcon: isUsed
-                                  ? const Icon(Icons.block)
-                                  : const Icon(Icons.delete),
-                              tooltip: isUsed ? 'Em uso' : 'Excluir',
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    );
-                  },
-                  loading: () => const LinearProgressIndicator(minHeight: 2),
-                  error: (_, __) => const SizedBox.shrink(),
-                ),
-                const SizedBox(height: 4),
-                // Botão de criação rápida quando texto não pertence a nenhuma categoria
-                Builder(
-                  builder: (context) {
-                    final input = _categoryCtrl.text.trim();
-                    final exists = categoriesAsync.maybeWhen(
-                      data: (cats) => cats.any(
-                        (c) => c.name.toLowerCase() == input.toLowerCase(),
-                      ),
-                      orElse: () => false,
-                    );
-                    if (input.isNotEmpty && !exists) {
-                      return TextButton.icon(
-                        onPressed: () async {
-                          final normalized = normalizeCategory(input);
-                          final exists = categoriesAsync.maybeWhen(
-                            data: (cats) =>
-                                cats.any((c) => c.normalized == normalized),
-                            orElse: () => false,
-                          );
-                          if (exists) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Categoria "$input" já existe'),
-                              ),
-                            );
-                            return;
-                          }
-                          await categoryRepo.create(
-                            cat.Category(name: input, normalized: normalized),
-                          );
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Categoria "$input" criada'),
-                            ),
-                          );
-                        },
-                        icon: const Text('➕', style: TextStyle(fontSize: 20)),
-                        label: Text('Criar "$input"'),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            InputDecorator(
-              decoration: const InputDecoration(
-                labelText: 'Recorrência',
-                border: OutlineInputBorder(),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _recurrence,
-                      items: [
-                        ...Recurrence.values
-                            .where((r) =>
-                                r != Recurrence.every6Hours &&
-                                r != Recurrence.every12Hours)
-                            .map(
-                              (r) => DropdownMenuItem(
-                                value: r.name,
-                                child: Text(_labelForRecurrence(r)),
-                              ),
-                            ),
-                        const DropdownMenuItem(
-                          value: 'custom',
-                          child: Text('Personalizado'),
-                        ),
-                      ],
-                      onChanged: (v) => setState(() {
-                        _recurrence = v ?? Recurrence.none.name;
-                      }),
-                    ),
-                  ),
-                  if (_recurrence == 'custom') ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: TextFormField(
-                            initialValue: _customRecurrenceValue.toString(),
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Valor',
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (v) {
-                              final parsed = int.tryParse(v);
-                              if (parsed != null && parsed > 0) {
-                                setState(() {
-                                  _customRecurrenceValue = parsed;
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          flex: 3,
-                          child: DropdownButtonFormField<String>(
-                            initialValue: _customRecurrenceUnit,
-                            decoration: const InputDecoration(
-                              labelText: 'Unidade',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'hours',
-                                child: Text('Horas'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'days',
-                                child: Text('Dias'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'years',
-                                child: Text('Anos'),
+                                    }
+                                  },
+                                  icon: const Icon(Icons.notifications_active_outlined),
+                                  tooltip: 'Verificar Notificações',
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                              TextButton.icon(
+                                onPressed: _showAddAlertDialog,
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text('Adicionar'),
                               ),
                             ],
-                            onChanged: (v) {
-                              setState(() {
-                                _customRecurrenceUnit = v ?? 'hours';
-                              });
-                            },
                           ),
-                        ),
                       ],
                     ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Alert Management Section
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Lembretes',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (_alertOffsets.length < 5)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (isEdit) ...[
-                            IconButton(
-                              onPressed: () async {
-                                final notifService = ref.read(
-                                  notificationServiceProvider,
-                                );
-                                final pending = await notifService
-                                    .getPendingNotifications();
-                                // Filtra notificações deste contador (id ~ 100 == counterId)
-                                final myAlerts = pending
-                                    .where(
-                                      (n) => (n.id ~/ 100) == widget.counterId,
-                                    )
-                                    .toList();
-
-                                if (context.mounted) {
-                                  showDialog(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: const Text('Notificações Ativas'),
-                                      content: SizedBox(
-                                        width: double.maxFinite,
-                                        child: myAlerts.isEmpty
-                                            ? const Text(
-                                                'Nenhuma notificação agendada para este contador.',
-                                              )
-                                            : ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: myAlerts.length,
-                                                itemBuilder: (ctx, i) {
-                                                  final n = myAlerts[i];
-                                                  return ListTile(
-                                                    title: Text('ID: ${n.id}'),
-                                                    subtitle: Text(
-                                                      '${n.title}\n${n.body}',
-                                                    ),
-                                                    isThreeLine: true,
-                                                  );
-                                                },
-                                              ),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(ctx).pop(),
-                                          child: const Text('Fechar'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }
-                              },
-                              icon: const Icon(
-                                Icons.notifications_active_outlined,
-                              ),
-                              tooltip: 'Verificar Notificações',
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-                          TextButton.icon(
-                            onPressed: _showAddAlertDialog,
-                            icon: const Icon(Icons.add, size: 18),
-                            label: const Text('Adicionar'),
+                    if (_alertOffsets.isEmpty)
+                      const Center(child: Text('Nenhum lembrete configurado', style: TextStyle(color: Colors.grey)))
+                    else
+                      ..._alertOffsets.asMap().entries.map((entry) => Card(
+                        child: ListTile(
+                          leading: const Icon(Icons.notifications_active),
+                          title: Text(_formatAlertOffset(entry.value)),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => setState(() => _alertOffsets.removeAt(entry.key)),
                           ),
-                        ],
-                      ),
+                        ),
+                      )),
                   ],
                 ),
-                const SizedBox(height: 8),
-                if (_alertOffsets.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Nenhum lembrete configurado',
-                        style: TextStyle(color: Colors.grey),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _onSubmit,
+                        icon: const Icon(Icons.save),
+                        label: Text(isEdit ? 'Salvar' : 'Criar'),
                       ),
                     ),
-                  )
-                else
-                  ..._alertOffsets.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final offset = entry.value;
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: const Icon(Icons.notifications_active),
-                        title: Text(_formatAlertOffset(offset)),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            setState(() {
-                              _alertOffsets.removeAt(index);
-                            });
-                          },
-                        ),
-                      ),
-                    );
-                  }),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: _onSubmit,
-                    icon: const Text('💾', style: TextStyle(fontSize: 20)),
-                    label: Text(isEdit ? 'Salvar' : 'Criar'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                TextButton(
-                  onPressed: () => context.go('/counters'),
-                  child: const Text('Cancelar'),
+                    const SizedBox(width: 12),
+                    TextButton(onPressed: () => context.go('/counters'), child: const Text('Cancelar')),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -764,40 +447,18 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
       _customRecurrenceUnit = definition.unit!.name;
       return;
     }
-
-    if (definition.recurrence == Recurrence.every6Hours) {
-      _recurrence = 'custom';
-      _customRecurrenceValue = 6;
-      _customRecurrenceUnit = 'hours';
-      return;
-    }
-
-    if (definition.recurrence == Recurrence.every12Hours) {
-      _recurrence = 'custom';
-      _customRecurrenceValue = 12;
-      _customRecurrenceUnit = 'hours';
-      return;
-    }
-
     _recurrence = definition.recurrence.name;
   }
 
   String _labelForRecurrence(Recurrence r) {
     switch (r) {
-      case Recurrence.none:
-        return 'Nenhuma';
-      case Recurrence.every6Hours:
-        return '6 horas';
-      case Recurrence.every12Hours:
-        return '12 horas';
-      case Recurrence.daily:
-        return 'Diário';
-      case Recurrence.weekly:
-        return 'Semanal';
-      case Recurrence.monthly:
-        return 'Mensal';
-      case Recurrence.yearly:
-        return 'Anual';
+      case Recurrence.none: return 'Nenhuma';
+      case Recurrence.every6Hours: return '6 horas';
+      case Recurrence.every12Hours: return '12 horas';
+      case Recurrence.daily: return 'Diário';
+      case Recurrence.weekly: return 'Semanal';
+      case Recurrence.monthly: return 'Mensal';
+      case Recurrence.yearly: return 'Anual';
     }
   }
 
@@ -807,194 +468,79 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     final categoryRepo = ref.read(categoryRepositoryProvider);
     final notifService = ref.read(notificationServiceProvider);
 
-    final dt = DateTime(
-      _date.year,
-      _date.month,
-      _date.day,
-      _time.hour,
-      _time.minute,
-    );
-
-    // Garante que a categoria digitada exista na tabela de categorias
+    final dt = DateTime(_date.year, _date.month, _date.day, _time.hour, _time.minute);
     final catName = _categoryCtrl.text.trim();
     if (catName.isNotEmpty) {
-      final normalized = normalizeCategory(catName);
-      await categoryRepo.create(
-        cat.Category(name: catName, normalized: normalized),
-      );
+      await categoryRepo.create(cat.Category(name: catName, normalized: normalizeCategory(catName)));
     }
+
+    final c = model.Counter(
+      id: widget.counterId,
+      name: _nameCtrl.text.trim(),
+      description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+      eventDate: dt,
+      category: catName.isEmpty ? null : catName,
+      recurrence: _recurrence == 'custom' ? '$_customRecurrenceValue $_customRecurrenceUnit' : _recurrence,
+      alertOffsets: _alertOffsets,
+      createdAt: _createdAt ?? DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
 
     int? savedId;
     if (widget.counterId == null) {
-      final now = DateTime.now();
-      final c = model.Counter(
-        name: _nameCtrl.text.trim(),
-        description: _descCtrl.text.trim().isEmpty
-            ? null
-            : _descCtrl.text.trim(),
-        eventDate: dt,
-        category: _categoryCtrl.text.trim().isEmpty
-            ? null
-            : _categoryCtrl.text.trim(),
-        recurrence: _recurrence == 'custom'
-            ? '$_customRecurrenceValue $_customRecurrenceUnit'
-            : _recurrence,
-        alertOffsets: _alertOffsets,
-        createdAt: now,
-        updatedAt: now,
-      );
       savedId = await repo.createWithHistory(c);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Contador criado com sucesso')),
-      );
     } else {
-      final now = DateTime.now();
-      final c = model.Counter(
-        id: widget.counterId,
-        name: _nameCtrl.text.trim(),
-        description: _descCtrl.text.trim().isEmpty
-            ? null
-            : _descCtrl.text.trim(),
-        eventDate: dt,
-        category: _categoryCtrl.text.trim().isEmpty
-            ? null
-            : _categoryCtrl.text.trim(),
-        recurrence: _recurrence == 'custom'
-            ? '$_customRecurrenceValue $_customRecurrenceUnit'
-            : _recurrence,
-        alertOffsets: _alertOffsets,
-        createdAt: _createdAt ?? now,
-        updatedAt: now,
-      );
-      final ok = await repo.updateWithHistory(c);
+      await repo.updateWithHistory(c);
       savedId = widget.counterId;
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(ok ? 'Contador atualizado' : 'Falha ao atualizar'),
-        ),
-      );
     }
 
-    // Agendamento de notificação
     if (savedId != null) {
-      try {
-        await notifService.syncAllCounterNotifications(
-          ref.read(databaseProvider),
-        );
-      } catch (e) {
-        debugPrint('Erro ao agendar notificação: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Contador salvo, mas erro ao agendar notificação: $e',
-              ),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-      }
+      await notifService.syncAllCounterNotifications(ref.read(databaseProvider));
     }
-
-    if (mounted) {
-      context.go('/counters');
-    }
+    if (mounted) context.go('/counters');
   }
 
   String _formatAlertOffset(int minutes) {
-    if (minutes < 60) {
-      return '$minutes ${minutes == 1 ? 'minuto' : 'minutos'} antes';
-    } else if (minutes < 1440) {
-      final hours = minutes ~/ 60;
-      return '$hours ${hours == 1 ? 'hora' : 'horas'} antes';
-    } else {
-      final days = minutes ~/ 1440;
-      return '$days ${days == 1 ? 'dia' : 'dias'} antes';
-    }
+    if (minutes < 60) return '$minutes min antes';
+    if (minutes < 1440) return '${minutes ~/ 60} h antes';
+    return '${minutes ~/ 1440} d antes';
   }
 
   void _showAddAlertDialog() {
-    int value = 1;
-    String unit = 'minutes'; // minutes, hours, days
-
+    int val = 1;
+    String unit = 'minutes';
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
           title: const Text('Adicionar Lembrete'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+          content: Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: TextField(
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Valor',
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (v) {
-                        final parsed = int.tryParse(v);
-                        if (parsed != null && parsed > 0) {
-                          value = parsed;
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 3,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: unit,
-                      decoration: const InputDecoration(
-                        labelText: 'Unidade',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'minutes',
-                          child: Text('Minutos'),
-                        ),
-                        DropdownMenuItem(value: 'hours', child: Text('Horas')),
-                        DropdownMenuItem(value: 'days', child: Text('Dias')),
-                      ],
-                      onChanged: (v) {
-                        setDialogState(() {
-                          unit = v!;
-                        });
-                      },
-                    ),
-                  ),
+              Expanded(child: TextField(
+                keyboardType: TextInputType.number,
+                onChanged: (v) => val = int.tryParse(v) ?? 1,
+              )),
+              const SizedBox(width: 8),
+              Expanded(child: DropdownButton<String>(
+                value: unit,
+                items: const [
+                  DropdownMenuItem(value: 'minutes', child: Text('Minutos')),
+                  DropdownMenuItem(value: 'hours', child: Text('Horas')),
+                  DropdownMenuItem(value: 'days', child: Text('Dias')),
                 ],
-              ),
+                onChanged: (v) => setDialogState(() => unit = v!),
+              )),
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () {
-                int offsetMinutes = value;
-                if (unit == 'hours') {
-                  offsetMinutes = value * 60;
-                } else if (unit == 'days') {
-                  offsetMinutes = value * 1440;
-                }
-
-                setState(() {
-                  _alertOffsets.add(offsetMinutes);
-                  _alertOffsets.sort(); // Sort to show in chronological order
-                });
-                Navigator.pop(context);
-              },
-              child: const Text('Adicionar'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+            FilledButton(onPressed: () {
+              int mins = val;
+              if (unit == 'hours') mins *= 60;
+              if (unit == 'days') mins *= 1440;
+              setState(() { _alertOffsets.add(mins); _alertOffsets.sort(); });
+              Navigator.pop(ctx);
+            }, child: const Text('Adicionar')),
           ],
         ),
       ),
