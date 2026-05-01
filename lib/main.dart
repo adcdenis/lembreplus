@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lembreplus/data/database/app_database.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:dynamic_color/dynamic_color.dart';
 import 'presentation/navigation/app_router.dart';
 import 'presentation/widgets/app_lifecycle_sync.dart';
 
@@ -173,19 +174,23 @@ class LembrePlusApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppLifecycleSync(
-      child: MaterialApp.router(
-        title: 'Lembre+',
-        theme: AppTheme.light(),
-        // darkTheme: AppTheme.dark(),
-        themeMode: ThemeMode.light,
-        locale: const Locale('pt', 'BR'),
-        supportedLocales: const [Locale('pt', 'BR')],
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        routerConfig: AppRouter.router,
+      child: DynamicColorBuilder(
+        builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+          return MaterialApp.router(
+            title: 'Lembre+',
+            theme: AppTheme.light(lightDynamic),
+            darkTheme: AppTheme.dark(darkDynamic),
+            themeMode: ThemeMode.system,
+            locale: const Locale('pt', 'BR'),
+            supportedLocales: const [Locale('pt', 'BR')],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            routerConfig: AppRouter.router,
+          );
+        },
       ),
     );
   }

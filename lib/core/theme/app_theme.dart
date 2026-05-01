@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 class AppTheme {
   static const Color primaryColor = Color(0xFF1976D2);
 
-  static ThemeData light() {
-    final colorScheme = ColorScheme.fromSeed(seedColor: primaryColor, brightness: Brightness.light);
+  static ThemeData light([ColorScheme? dynamicColorScheme]) {
+    final colorScheme = dynamicColorScheme ?? ColorScheme.fromSeed(seedColor: primaryColor, brightness: Brightness.light);
     return ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
@@ -26,8 +26,8 @@ class AppTheme {
     );
   }
 
-  static ThemeData dark() {
-    final colorScheme = ColorScheme.fromSeed(seedColor: primaryColor, brightness: Brightness.dark);
+  static ThemeData dark([ColorScheme? dynamicColorScheme]) {
+    final colorScheme = dynamicColorScheme ?? ColorScheme.fromSeed(seedColor: primaryColor, brightness: Brightness.dark);
     return ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
