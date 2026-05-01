@@ -7,6 +7,8 @@ import 'package:lembreplus/domain/time_utils.dart';
 import 'package:lembreplus/state/providers.dart';
 import 'package:lembreplus/core/text_sanitizer.dart';
 import 'package:lembreplus/data/models/counter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lembreplus/presentation/widgets/animated_button.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -264,7 +266,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                           emoji: '⚠️',
                           width: double.infinity,
                         ),
-                      ],
+                      ].animate(interval: 40.ms).fadeIn(duration: 300.ms).scaleXY(begin: 0.9, end: 1.0, curve: Curves.easeOut),
                     );
                   },
                 ),
@@ -432,50 +434,52 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
           ThemeData.estimateBrightnessForColor(color) == Brightness.light;
       onColor = isLightBg ? Colors.black.withValues(alpha: 0.87) : Colors.white;
     }
-    return Card(
-      elevation: 0,
-      color: color,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: cs.outline.withValues(alpha: 0.12)),
-      ),
-      child: SizedBox(
-        width: width,
-        height: 90,
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 18)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 2),
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: onColor,
+    return AnimatedInteractiveItem(
+      child: Card(
+        elevation: 0,
+        color: color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: cs.outline.withValues(alpha: 0.12)),
+        ),
+        child: SizedBox(
+          width: width,
+          height: 90,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 18)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 2),
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: onColor,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$value',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: onColor,
+                      const SizedBox(height: 4),
+                      Text(
+                        '$value',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: onColor,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -532,126 +536,128 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
     final cs = Theme.of(context).colorScheme;
     final df = DateFormat('dd/MM/yyyy');
     final cal = calendarDiff(now, date);
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: cs.shadow.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        counter.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.share, size: 20),
-                      color: cs.onSurfaceVariant,
-                      onPressed: () =>
-                          _shareCounter(context, counter, date, true),
-                      tooltip: 'Compartilhar',
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      df.format(date),
-                      style: TextStyle(color: cs.onSurfaceVariant),
-                    ),
-                    if (counter.category != null)
-                      Chip(
-                        avatar: const Text('🏷️'),
-                        label: Text(counter.category!),
-                        visualDensity: VisualDensity.compact,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+    return AnimatedInteractiveItem(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: cs.shadow.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      if (cal.years > 0) ...[
-                        _dashCounterBox(
-                          context: context,
-                          value: cal.years,
-                          label: _pluralize(cal.years, 'Ano', 'Anos'),
-                          tint: cs.primaryContainer,
+                      Expanded(
+                        child: Text(
+                          counter.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        const SizedBox(width: 4),
-                      ],
-                      if (cal.months > 0) ...[
-                        _dashCounterBox(
-                          context: context,
-                          value: cal.months,
-                          label: _pluralize(cal.months, 'Mês', 'Meses'),
-                          tint: cs.primaryContainer,
-                        ),
-                        const SizedBox(width: 4),
-                      ],
-                      _dashCounterBox(
-                        context: context,
-                        value: cal.days,
-                        label: _pluralize(cal.days, 'Dia', 'Dias'),
-                        tint: cs.primaryContainer,
                       ),
-                      const SizedBox(width: 4),
-                      _dashCounterBox(
-                        context: context,
-                        value: cal.hours,
-                        label: _pluralize(cal.hours, 'Hora', 'Horas'),
-                        tint: cs.primaryContainer,
-                      ),
-                      const SizedBox(width: 4),
-                      _dashCounterBox(
-                        context: context,
-                        value: cal.minutes,
-                        label: _pluralize(cal.minutes, 'Minuto', 'Minutos'),
-                        tint: cs.primaryContainer,
-                      ),
-                      const SizedBox(width: 4),
-                      _dashCounterBox(
-                        context: context,
-                        value: cal.seconds,
-                        label: _pluralize(cal.seconds, 'Segundo', 'Segundos'),
-                        tint: cs.primaryContainer,
+                      IconButton(
+                        icon: const Icon(Icons.share, size: 20),
+                        color: cs.onSurfaceVariant,
+                        onPressed: () =>
+                            _shareCounter(context, counter, date, true),
+                        tooltip: 'Compartilhar',
+                        visualDensity: VisualDensity.compact,
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        df.format(date),
+                        style: TextStyle(color: cs.onSurfaceVariant),
+                      ),
+                      if (counter.category != null)
+                        Chip(
+                          avatar: const Text('🏷️'),
+                          label: Text(counter.category!),
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (cal.years > 0) ...[
+                          _dashCounterBox(
+                            context: context,
+                            value: cal.years,
+                            label: _pluralize(cal.years, 'Ano', 'Anos'),
+                            tint: cs.primaryContainer,
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        if (cal.months > 0) ...[
+                          _dashCounterBox(
+                            context: context,
+                            value: cal.months,
+                            label: _pluralize(cal.months, 'Mês', 'Meses'),
+                            tint: cs.primaryContainer,
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        _dashCounterBox(
+                          context: context,
+                          value: cal.days,
+                          label: _pluralize(cal.days, 'Dia', 'Dias'),
+                          tint: cs.primaryContainer,
+                        ),
+                        const SizedBox(width: 4),
+                        _dashCounterBox(
+                          context: context,
+                          value: cal.hours,
+                          label: _pluralize(cal.hours, 'Hora', 'Horas'),
+                          tint: cs.primaryContainer,
+                        ),
+                        const SizedBox(width: 4),
+                        _dashCounterBox(
+                          context: context,
+                          value: cal.minutes,
+                          label: _pluralize(cal.minutes, 'Minuto', 'Minutos'),
+                          tint: cs.primaryContainer,
+                        ),
+                        const SizedBox(width: 4),
+                        _dashCounterBox(
+                          context: context,
+                          value: cal.seconds,
+                          label: _pluralize(cal.seconds, 'Segundo', 'Segundos'),
+                          tint: cs.primaryContainer,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox.shrink(),
-        ],
+            const SizedBox.shrink(),
+          ],
+        ),
       ),
     );
   }

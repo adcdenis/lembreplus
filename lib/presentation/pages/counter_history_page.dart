@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lembreplus/state/providers.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lembreplus/presentation/widgets/animated_button.dart';
 
 class CounterHistoryPage extends ConsumerWidget {
   final int counterId;
@@ -134,38 +136,40 @@ class CounterHistoryPage extends ConsumerWidget {
 
                     final historyRepo = ref.watch(historyRepositoryProvider);
 
-                    return ListTile(
-                      leading: Icon(icon, color: scheme.primary),
-                      title: Text(op == 'create' ? 'Criação em $ts' : op == 'update' ? 'Atualização em $ts' : '$op em $ts'),
-                      subtitle: subtitleWidget,
-                      dense: true,
-                      trailing: IconButton.filledTonal(
-                        tooltip: 'Excluir item do histórico',
-                        icon: const Text('🗑️', style: TextStyle(fontSize: 20)),
-                        onPressed: () async {
-                          if (h.id == null) return;
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text('Excluir histórico'),
-                              content: const Text('Deseja excluir este item do histórico?'),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-                                FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Excluir')),
-                              ],
-                            ),
-                          );
-                          if (confirm == true) {
-                            await historyRepo.delete(h.id!);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Item do histórico excluído')),
-                              );
+                    return AnimatedInteractiveItem(
+                      child: ListTile(
+                        leading: Icon(icon, color: scheme.primary),
+                        title: Text(op == 'create' ? 'Criação em $ts' : op == 'update' ? 'Atualização em $ts' : '$op em $ts'),
+                        subtitle: subtitleWidget,
+                        dense: true,
+                        trailing: IconButton.filledTonal(
+                          tooltip: 'Excluir item do histórico',
+                          icon: const Text('🗑️', style: TextStyle(fontSize: 20)),
+                          onPressed: () async {
+                            if (h.id == null) return;
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Excluir histórico'),
+                                content: const Text('Deseja excluir este item do histórico?'),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                                  FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Excluir')),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              await historyRepo.delete(h.id!);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Item do histórico excluído')),
+                                );
+                              }
                             }
-                          }
-                        },
+                          },
+                        ),
                       ),
-                    );
+                    ).animate().fadeIn(duration: 400.ms, delay: (15 * index).ms).slideX(begin: 0.1, end: 0);
                   },
                 ),
               );

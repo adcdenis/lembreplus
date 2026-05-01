@@ -7,6 +7,8 @@ import 'package:lembreplus/state/providers.dart';
 import 'package:lembreplus/data/models/counter.dart';
 import 'package:lembreplus/domain/recurrence.dart';
 import 'package:lembreplus/domain/time_utils.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lembreplus/presentation/widgets/animated_button.dart';
 
 class ScheduledNotificationsPage extends ConsumerStatefulWidget {
   const ScheduledNotificationsPage({super.key});
@@ -147,12 +149,15 @@ class _ScheduledNotificationsPageState extends ConsumerState<ScheduledNotificati
                           itemBuilder: (context, index) {
                             final item = notificationItems[index];
                             final comps = _calendarComponents(currentNow, item.scheduledDate);
+                            final isDark = Theme.of(context).brightness == Brightness.dark;
                             final isFuture = item.scheduledDate.isAfter(currentNow);
+                            final pastColor = Colors.amber.shade100;
                             final tint = isFuture
                                 ? scheme.primaryContainer
-                                : scheme.errorContainer;
+                                : pastColor;
 
-                            return Card(
+                            return AnimatedInteractiveItem(
+                              child: Card(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -173,12 +178,12 @@ class _ScheduledNotificationsPageState extends ConsumerState<ScheduledNotificati
                                       end: Alignment.bottomRight,
                                       colors: isFuture
                                           ? [
-                                              scheme.primaryContainer.withValues(alpha: 0.6),
-                                              scheme.primaryContainer.withValues(alpha: 0.3),
+                                              scheme.primaryContainer.withValues(alpha: isDark ? 0.3 : 0.6),
+                                              scheme.primaryContainer.withValues(alpha: isDark ? 0.1 : 0.3),
                                             ]
                                           : [
-                                              scheme.errorContainer.withValues(alpha: 0.6),
-                                              scheme.errorContainer.withValues(alpha: 0.3),
+                                              pastColor.withValues(alpha: isDark ? 0.3 : 0.6),
+                                              pastColor.withValues(alpha: isDark ? 0.1 : 0.3),
                                             ],
                                     ),
                                   ),
@@ -190,12 +195,12 @@ class _ScheduledNotificationsPageState extends ConsumerState<ScheduledNotificati
                                         decoration: BoxDecoration(
                                           color: isFuture
                                               ? scheme.primary.withValues(alpha: 0.1)
-                                              : scheme.error.withValues(alpha: 0.1),
+                                              : pastColor.withValues(alpha: isDark ? 0.1 : 0.15),
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Icon(
                                           isFuture ? Icons.notifications_active : Icons.notifications_paused,
-                                          color: isFuture ? scheme.primary : scheme.error,
+                                          color: isFuture ? scheme.primary : (isDark ? Colors.amber.shade300 : Colors.amber.shade800),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -250,7 +255,7 @@ class _ScheduledNotificationsPageState extends ConsumerState<ScheduledNotificati
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w500,
-                                                    color: isFuture ? scheme.primary : scheme.error,
+                                                    color: isFuture ? scheme.primary : (isDark ? Colors.amber.shade300 : Colors.amber.shade800),
                                                   ),
                                                 ),
                                               ],
@@ -321,7 +326,7 @@ class _ScheduledNotificationsPageState extends ConsumerState<ScheduledNotificati
                                   ),
                                 ),
                               ),
-                            );
+                            )).animate().fadeIn(duration: 400.ms, delay: (15 * index).ms).slideY(begin: 0.1, end: 0);
                           },
                         );
                       },
@@ -366,6 +371,7 @@ class _TimeBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
@@ -373,7 +379,10 @@ class _TimeBox extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [tint.withValues(alpha: 0.85), tint.withValues(alpha: 0.5)],
+          colors: [
+            tint.withValues(alpha: isDark ? 0.4 : 0.85), 
+            tint.withValues(alpha: isDark ? 0.2 : 0.5)
+          ],
         ),
         boxShadow: [
           BoxShadow(

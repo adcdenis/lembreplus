@@ -8,6 +8,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:dynamic_color/dynamic_color.dart';
 import 'presentation/navigation/app_router.dart';
 import 'presentation/widgets/app_lifecycle_sync.dart';
+import 'state/providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -168,11 +169,12 @@ Future<void> _seedFirstRunSamples() async {
   await prefs.setBool('first_run_seed_done', true);
 }
 
-class LembrePlusApp extends StatelessWidget {
+class LembrePlusApp extends ConsumerWidget {
   const LembrePlusApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
     return AppLifecycleSync(
       child: DynamicColorBuilder(
         builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
@@ -180,7 +182,7 @@ class LembrePlusApp extends StatelessWidget {
             title: 'Lembre+',
             theme: AppTheme.light(lightDynamic),
             darkTheme: AppTheme.dark(darkDynamic),
-            themeMode: ThemeMode.system,
+            themeMode: themeMode,
             locale: const Locale('pt', 'BR'),
             supportedLocales: const [Locale('pt', 'BR')],
             localizationsDelegates: const [

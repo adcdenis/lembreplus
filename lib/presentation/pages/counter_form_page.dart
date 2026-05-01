@@ -7,6 +7,8 @@ import 'package:lembreplus/domain/recurrence.dart';
 import 'package:lembreplus/data/models/category.dart' as cat;
 import 'package:lembreplus/domain/category_utils.dart';
 import 'package:lembreplus/domain/time_utils.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lembreplus/presentation/widgets/animated_button.dart';
 
 class CounterFormPage extends ConsumerStatefulWidget {
   final int? counterId;
@@ -419,10 +421,12 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: FilledButton.icon(
-                        onPressed: _onSubmit,
-                        icon: const Icon(Icons.save),
-                        label: Text(isEdit ? 'Salvar' : 'Criar'),
+                      child: AnimatedInteractiveItem(
+                        child: FilledButton.icon(
+                          onPressed: _onSubmit,
+                          icon: const Icon(Icons.save),
+                          label: Text(isEdit ? 'Salvar' : 'Criar'),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -438,7 +442,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                     ),
                   ],
                 ),
-              ],
+              ].animate(interval: 50.ms).fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0),
             ),
           ),
         ),

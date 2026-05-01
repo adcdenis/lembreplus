@@ -9,6 +9,8 @@ import 'package:lembreplus/domain/recurrence.dart';
 import 'package:lembreplus/domain/time_utils.dart';
 import 'package:lembreplus/data/models/counter.dart';
 import 'package:lembreplus/core/text_sanitizer.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lembreplus/presentation/widgets/animated_button.dart';
 
 class CounterListPage extends ConsumerStatefulWidget {
   const CounterListPage({super.key});
@@ -130,14 +132,16 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
     final repo = ref.watch(counterRepositoryProvider);
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          final selectedCat = _selectedCategories.isNotEmpty
-              ? _selectedCategories.first
-              : null;
-          context.push('/counter/new', extra: selectedCat);
-        },
-        child: const Text('➕', style: TextStyle(fontSize: 24)),
+      floatingActionButton: AnimatedInteractiveItem(
+        child: FloatingActionButton(
+          onPressed: () {
+            final selectedCat = _selectedCategories.isNotEmpty
+                ? _selectedCategories.first
+                : null;
+            context.push('/counter/new', extra: selectedCat);
+          },
+          child: const Text('➕', style: TextStyle(fontSize: 24)),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -442,16 +446,19 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                             final hours = comps.hours;
                             final mins = comps.minutes;
                             final secs = comps.seconds;
+                            final isDark = Theme.of(context).brightness == Brightness.dark;
+                            final pastColor = Colors.amber.shade100;
                             final tint = isFuture
                                 ? scheme.primaryContainer
-                                : scheme.errorContainer;
+                                : pastColor;
 
-                            return Card(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
-                              child: InkWell(
+                            return AnimatedInteractiveItem(
+                              child: Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                                child: InkWell(
                                 borderRadius: BorderRadius.circular(12),
                                 onTap: () =>
                                     context.push('/counter/${c.id}/edit'),
@@ -474,11 +481,11 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                                   .withValues(alpha: 0.3),
                                             ]
                                           : [
-                                              scheme.errorContainer.withValues(
-                                                alpha: 0.6,
+                                              pastColor.withValues(
+                                                alpha: isDark ? 0.3 : 0.6,
                                               ),
-                                              scheme.errorContainer.withValues(
-                                                alpha: 0.3,
+                                              pastColor.withValues(
+                                                alpha: isDark ? 0.1 : 0.3,
                                               ),
                                             ],
                                     ),
@@ -508,9 +515,9 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                                               .withValues(
                                                                 alpha: 0.1,
                                                               )
-                                                        : scheme.error
+                                                        : pastColor
                                                               .withValues(
-                                                                alpha: 0.1,
+                                                                alpha: isDark ? 0.1 : 0.15,
                                                               ),
                                                     borderRadius:
                                                         BorderRadius.circular(
@@ -523,7 +530,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                                       fontSize: 16,
                                                       color: isFuture
                                                           ? scheme.primary
-                                                          : scheme.error,
+                                                          : (isDark ? Colors.amber.shade300 : Colors.amber.shade800),
                                                     ),
                                                   ),
                                                 ),
@@ -786,7 +793,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                   ),
                                 ),
                               ),
-                            );
+                            )).animate().fadeIn(duration: 400.ms, delay: (15 * index).ms).slideY(begin: 0.1, end: 0);
                           }
 
                           if (crossAxisCount == 1) {
@@ -845,6 +852,7 @@ class _CounterBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
@@ -852,7 +860,10 @@ class _CounterBox extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [tint.withValues(alpha: 0.85), tint.withValues(alpha: 0.5)],
+          colors: [
+            tint.withValues(alpha: isDark ? 0.4 : 0.85), 
+            tint.withValues(alpha: isDark ? 0.2 : 0.5)
+          ],
         ),
         boxShadow: [
           BoxShadow(

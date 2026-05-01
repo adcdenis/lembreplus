@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lembreplus/state/providers.dart';
 import 'package:intl/intl.dart';
@@ -20,42 +19,7 @@ class AppShell extends ConsumerWidget {
         );
       });
     });
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        final scaffoldState = Scaffold.maybeOf(context);
-        if (scaffoldState?.isDrawerOpen == true) {
-          scaffoldState!.closeDrawer();
-          return;
-        }
-        final router = GoRouter.of(context);
-        final location = GoRouterState.of(context).uri.toString();
-        if (location == '/counters') {
-          final confirm = await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Sair do aplicativo'),
-              content: const Text('Deseja realmente fechar o app?'),
-              actions: [
-                TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
-                FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Sair')),
-              ],
-            ),
-          );
-          if (confirm == true) {
-            SystemNavigator.pop();
-          }
-        } else if (location.startsWith('/counter/')) {
-          if (router.canPop()) {
-            router.pop();
-          } else {
-            router.go('/counters');
-          }
-        } else {
-          router.go('/counters');
-        }
-      },
-      child: LayoutBuilder(builder: (context, constraints) {
+    return LayoutBuilder(builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 900;
         final title = Row(
           children: const [
@@ -69,6 +33,7 @@ class AppShell extends ConsumerWidget {
         final selectedIndex = _selectedIndexForLocation(GoRouterState.of(context).uri.toString());
         return Scaffold(
           appBar: AppBar(title: title, actions: const [
+            _ThemeToggleButton(),
             Padding(
               padding: EdgeInsets.only(right: 8.0),
               child: _ProfileAvatar(),
@@ -108,6 +73,7 @@ class AppShell extends ConsumerWidget {
 
       return Scaffold(
         appBar: AppBar(title: title, centerTitle: false, actions: const [
+          _ThemeToggleButton(),
           Padding(
             padding: EdgeInsets.only(right: 8.0),
             child: _ProfileAvatar(),
@@ -116,8 +82,7 @@ class AppShell extends ConsumerWidget {
         drawer: _AppDrawer(onNavigateIndex: (index) => _goToIndex(context, index)),
         body: child,
       );
-    }),
-    );
+        });
   }
 
   int _selectedIndexForLocation(String location) {
@@ -270,6 +235,36 @@ class _VersionFooter extends ConsumerWidget {
   }
 }
 
+// Botão para alternar entre tema claro e escuro
+class _ThemeToggleButton extends ConsumerWidget {
+  const _ThemeToggleButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    final isDark = themeMode == ThemeMode.dark || 
+                  (themeMode == ThemeMode.system && MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    
+    return Tooltip(
+      message: isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro',
+      child: IconButton(
+        icon: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (child, anim) => RotationTransition(
+            turns: anim,
+            child: FadeTransition(opacity: anim, child: child),
+          ),
+          child: Icon(
+            isDark ? Icons.light_mode : Icons.dark_mode,
+            key: ValueKey(isDark),
+          ),
+        ),
+        onPressed: () => ref.read(themeModeProvider.notifier).toggleTheme(),
+      ),
+    );
+  }
+}
+
 // Avatar do usuário (topo direito): mostra foto do Google quando logado,
 // e avatar padrão quando deslogado.
 class _ProfileAvatar extends ConsumerWidget {
@@ -280,9 +275,9 @@ class _ProfileAvatar extends ConsumerWidget {
     final userAsync = ref.watch(cloudUserProvider);
     final cs = Theme.of(context).colorScheme;
     Widget defaultAvatar() => CircleAvatar(
-          radius: 16,
+          radius: 20,
           backgroundColor: cs.surface,
-          child: Icon(Icons.account_circle, size: 20, color: cs.onSurfaceVariant),
+          child: Icon(Icons.account_circle, size: 24, color: cs.onSurfaceVariant),
         );
 
     return userAsync.maybeWhen(
@@ -291,7 +286,7 @@ class _ProfileAvatar extends ConsumerWidget {
           return defaultAvatar();
         }
         return CircleAvatar(
-          radius: 16,
+          radius: 20,
           backgroundImage: NetworkImage(user.photoUrl!),
           backgroundColor: cs.surface,
         );
