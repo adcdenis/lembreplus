@@ -6,6 +6,7 @@ import '../pages/counter_list_page.dart';
 import '../pages/counter_history_page.dart';
 import '../pages/reports_page.dart';
 import '../pages/backup_tabs_page.dart';
+import '../pages/scheduled_notifications_page.dart';
 import '../widgets/app_shell.dart';
 
 class AppRouter {
@@ -64,6 +65,11 @@ class AppRouter {
             path: '/cloud-backup',
             name: 'cloud_backup',
             pageBuilder: (context, state) => MaterialPage(child: const BackupTabsPage(initialIndex: 0)),
+          ),
+          GoRoute(
+            path: '/notifications',
+            name: 'notifications',
+            pageBuilder: (context, state) => const MaterialPage(child: ScheduledNotificationsPage()),
           ),
         ],
       ),

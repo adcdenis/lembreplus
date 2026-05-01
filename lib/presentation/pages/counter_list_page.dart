@@ -135,7 +135,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
           final selectedCat = _selectedCategories.isNotEmpty
               ? _selectedCategories.first
               : null;
-          context.go('/counter/new', extra: selectedCat);
+          context.push('/counter/new', extra: selectedCat);
         },
         child: const Text('➕', style: TextStyle(fontSize: 24)),
       ),
@@ -454,7 +454,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(12),
                                 onTap: () =>
-                                    context.go('/counter/${c.id}/edit'),
+                                    context.push('/counter/${c.id}/edit'),
                                 child: Container(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),

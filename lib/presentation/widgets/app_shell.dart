@@ -21,11 +21,8 @@ class AppShell extends ConsumerWidget {
       });
     });
     return PopScope(
-      // Intercepta sempre o botão voltar para aplicar regra:
-      // voltar leva à listagem de contadores; somente nela perguntar para sair.
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
-        // Se o Drawer estiver aberto, feche-o e não trate como "voltar" da página
         final scaffoldState = Scaffold.maybeOf(context);
         if (scaffoldState?.isDrawerOpen == true) {
           scaffoldState!.closeDrawer();
@@ -48,8 +45,13 @@ class AppShell extends ConsumerWidget {
           if (confirm == true) {
             SystemNavigator.pop();
           }
+        } else if (location.startsWith('/counter/')) {
+          if (router.canPop()) {
+            router.pop();
+          } else {
+            router.go('/counters');
+          }
         } else {
-          // Qualquer outra página: voltar navega para a listagem de contadores
           router.go('/counters');
         }
       },
@@ -94,6 +96,7 @@ class AppShell extends ConsumerWidget {
                   NavigationRailDestination(icon: Text('🧮', style: TextStyle(fontSize: 20)), selectedIcon: Text('🧮', style: TextStyle(fontSize: 20)), label: Text('Contadores')),
                   NavigationRailDestination(icon: Text('📈', style: TextStyle(fontSize: 20)), selectedIcon: Text('📈', style: TextStyle(fontSize: 20)), label: Text('Relatórios')),
                   NavigationRailDestination(icon: Text('🔄', style: TextStyle(fontSize: 20)), selectedIcon: Text('🔄', style: TextStyle(fontSize: 20)), label: Text('Backup')),
+                  NavigationRailDestination(icon: Text('🔔', style: TextStyle(fontSize: 20)), selectedIcon: Text('🔔', style: TextStyle(fontSize: 20)), label: Text('Notificações')),
                 ],
               ),
               const VerticalDivider(width: 1),
@@ -122,6 +125,7 @@ class AppShell extends ConsumerWidget {
     if (location.startsWith('/reports')) return 2;
     if (location.startsWith('/backup')) return 3;
     if (location.startsWith('/cloud-backup')) return 3;
+    if (location.startsWith('/notifications')) return 4;
     return 0; // dashboard default
   }
 
@@ -138,6 +142,9 @@ class AppShell extends ConsumerWidget {
         break;
       case 3:
         context.go('/cloud-backup');
+        break;
+      case 4:
+        context.go('/notifications');
         break;
     }
   }
@@ -156,6 +163,8 @@ class _AppDrawer extends StatelessWidget {
     if (location.startsWith('/reports')) selectedIndex = 2;
     if (location.startsWith('/backup')) selectedIndex = 3;
     if (location.startsWith('/cloud-backup')) selectedIndex = 3;
+    if (location.startsWith('/notifications')) selectedIndex = 4;
+    if (location.startsWith('/notifications')) selectedIndex = 4;
 
     Widget tile({required int index, required String label, required Widget leading}) {
       final selected = selectedIndex == index;
@@ -223,6 +232,7 @@ class _AppDrawer extends StatelessWidget {
                   tile(index: 1, label: 'Contadores', leading: const Text('🧮', style: TextStyle(fontSize: 20))),
                   tile(index: 2, label: 'Relatórios', leading: const Text('📈', style: TextStyle(fontSize: 20))),
                   tile(index: 3, label: 'Backup', leading: const Text('🔄', style: TextStyle(fontSize: 20))),
+                  tile(index: 4, label: 'Notificações', leading: const Text('🔔', style: TextStyle(fontSize: 20))),
                 ],
               ),
             ),

@@ -89,11 +89,9 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
   Widget build(BuildContext context) {
     final isEdit = widget.counterId != null;
     final categoriesAsync = ref.watch(categoriesProvider);
-    final countersAsync = ref.watch(countersProvider);
-    final categoryRepo = ref.read(categoryRepositoryProvider);
 
     return PopScope(
-      canPop: false,
+      canPop: context.canPop(),
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
           context.go('/counters');
@@ -318,7 +316,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                             Expanded(
                               flex: 3,
                               child: DropdownButtonFormField<String>(
-                                value: _customRecurrenceUnit,
+                                initialValue: _customRecurrenceUnit,
                                 decoration: const InputDecoration(labelText: 'Unidade', border: OutlineInputBorder()),
                                 items: const [
                                   DropdownMenuItem(value: 'hours', child: Text('Horas')),
@@ -428,7 +426,16 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    TextButton(onPressed: () => context.go('/counters'), child: const Text('Cancelar')),
+                    TextButton(
+                      onPressed: () {
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go('/counters');
+                        }
+                      },
+                      child: const Text('Cancelar'),
+                    ),
                   ],
                 ),
               ],
@@ -497,7 +504,13 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     if (savedId != null) {
       await notifService.syncAllCounterNotifications(ref.read(databaseProvider));
     }
-    if (mounted) context.go('/counters');
+    if (mounted) {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/counters');
+      }
+    }
   }
 
   String _formatAlertOffset(int minutes) {
