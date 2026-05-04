@@ -512,9 +512,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                           final past = isPast(eff, now: _now);
                           final diff = calendarDiff(_now, eff);
 
+                          final isDark = Theme.of(context).brightness == Brightness.dark;
+                          final pastColor = Colors.amber.shade100;
+
                           final tint = !past
                               ? cs.primaryContainer
-                              : cs.errorContainer;
+                              : pastColor;
                           final definition = RecurrenceDefinition.parse(
                             c.recurrence,
                           );
@@ -536,11 +539,11 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                         ),
                                       ]
                                     : [
-                                        cs.errorContainer.withValues(
-                                          alpha: 0.6,
+                                        pastColor.withValues(
+                                          alpha: isDark ? 0.3 : 0.6,
                                         ),
-                                        cs.errorContainer.withValues(
-                                          alpha: 0.3,
+                                        pastColor.withValues(
+                                          alpha: isDark ? 0.1 : 0.3,
                                         ),
                                       ],
                               ),
@@ -556,14 +559,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                       decoration: BoxDecoration(
                                         color: !past
                                             ? cs.primary.withValues(alpha: 0.1)
-                                            : cs.error.withValues(alpha: 0.1),
+                                            : pastColor.withValues(alpha: isDark ? 0.1 : 0.15),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
                                         !past ? '🗓️' : '🕰️',
                                         style: TextStyle(
                                           fontSize: 16,
-                                          color: !past ? cs.primary : cs.error,
+                                          color: !past ? cs.primary : (isDark ? Colors.amber.shade300 : Colors.amber.shade800),
                                         ),
                                       ),
                                     ),

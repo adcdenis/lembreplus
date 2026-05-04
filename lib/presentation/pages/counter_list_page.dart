@@ -545,7 +545,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                                                           FontWeight.w700,
                                                       height: 1.2,
                                                     ),
-                                                    maxLines: 2,
+                                                    maxLines: 1,
                                                     overflow: TextOverflow
                                                         .ellipsis,
                                                   ),

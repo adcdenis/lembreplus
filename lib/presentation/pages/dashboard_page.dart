@@ -9,6 +9,7 @@ import 'package:lembreplus/core/text_sanitizer.dart';
 import 'package:lembreplus/data/models/counter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lembreplus/presentation/widgets/animated_button.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -76,6 +77,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final countersAsync = ref.watch(countersProvider);
+    final notifService = ref.read(notificationServiceProvider);
     final cs = Theme.of(context).colorScheme;
 
     return Padding(
@@ -258,13 +260,18 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                           emoji: '⏭️',
                           width: double.infinity,
                         ),
-                        _statCard(
-                          context,
-                          title: 'Vencidos',
-                          value: past,
-                          color: cs.errorContainer,
-                          emoji: '⚠️',
-                          width: double.infinity,
+                        FutureBuilder<List<PendingNotificationRequest>>(
+                          future: notifService.getPendingNotifications(),
+                          builder: (context, snapshot) {
+                            return _statCard(
+                              context,
+                              title: 'Notificações',
+                              value: snapshot.data?.length ?? 0,
+                              color: Colors.blue.shade100,
+                              emoji: '🔔',
+                              width: double.infinity,
+                            );
+                          },
                         ),
                       ].animate(interval: 40.ms).fadeIn(duration: 300.ms).scaleXY(begin: 0.9, end: 1.0, curve: Curves.easeOut),
                     );
