@@ -114,7 +114,12 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                 Row(
                   children: [
                     Expanded(
+                      flex: 5,
                       child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          minimumSize: const Size.fromHeight(48),
+                        ),
                         onPressed: () async {
                           final picked = await showDatePicker(
                             context: context,
@@ -129,16 +134,24 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                             ));
                           }
                         },
-                        icon: const Icon(Icons.date_range, size: 18),
-                        label: Text(
-                          '${_date.day.toString().padLeft(2, '0')}/${_date.month.toString().padLeft(2, '0')}/${_date.year.toString().substring(2)}',
-                          style: const TextStyle(fontSize: 12),
+                        icon: const Icon(Icons.date_range, size: 16),
+                        label: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '${_date.day.toString().padLeft(2, '0')}/${_date.month.toString().padLeft(2, '0')}/${_date.year.toString().substring(2)}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4),
                     Expanded(
+                      flex: 4,
                       child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          minimumSize: const Size.fromHeight(48),
+                        ),
                         onPressed: () async {
                           final picked = await showTimePicker(
                             context: context,
@@ -146,13 +159,21 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                           );
                           if (picked != null) setState(() => _time = picked);
                         },
-                        icon: const Icon(Icons.access_time, size: 18),
-                        label: Text(_time.format(context), style: const TextStyle(fontSize: 12)),
+                        icon: const Icon(Icons.access_time, size: 16),
+                        label: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(_time.format(context), style: const TextStyle(fontSize: 12)),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4),
                     Expanded(
+                      flex: 4,
                       child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          minimumSize: const Size.fromHeight(48),
+                        ),
                         onPressed: () {
                           final now = DateTime.now();
                           setState(() {
@@ -160,8 +181,11 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                             _time = TimeOfDay(hour: now.hour, minute: now.minute);
                           });
                         },
-                        icon: const Icon(Icons.schedule, size: 18),
-                        label: const Text('Agora', style: TextStyle(fontSize: 12)),
+                        icon: const Icon(Icons.schedule, size: 16),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Agora', style: TextStyle(fontSize: 12)),
+                        ),
                       ),
                     ),
                   ],
