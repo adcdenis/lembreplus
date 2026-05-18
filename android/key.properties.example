@@ -1,0 +1,10 @@
+# Credenciais da keystore de produção para assinatura do app
+# IMPORTANTE: NÃO comite este arquivo no Git!
+#
+# Para gerar a keystore:
+# keytool -genkey -v -keystore upload-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+storePassword=SUBSTITUA_PELA_SUA_SENHA
+keyPassword=SUBSTITUA_PELA_SUA_SENHA
+keyAlias=upload
+storeFile=upload-keystore.jks

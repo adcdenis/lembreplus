@@ -1,0 +1,1 @@
+https://termosuso.vercel.app/privacy-policy.html

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidade — Lembre+</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2d3a;
+            --text: #e4e6ed;
+            --text-muted: #9499ad;
+            --accent: #7c5cfc;
+            --accent-light: #a78bfa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+            padding: 3rem 1.5rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 0.95rem;
+            opacity: 0.85;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 2.5rem;
+            margin-bottom: 0.8rem;
+            color: var(--accent-light);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        p, li {
+            color: var(--text-muted);
+            margin-bottom: 0.8rem;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.4rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(124, 92, 252, 0.15);
+            color: var(--accent-light);
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem 1.5rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        a {
+            color: var(--accent-light);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        strong {
+            color: var(--text);
+        }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.5rem; }
+            .container { padding: 1.5rem 1rem 3rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🔔 Política de Privacidade</h1>
+    <p>Aplicativo Lembre+ — Gerenciamento de Lembretes</p>
+</div>
+
+<div class="container">
+
+    <p style="margin-top: 1.5rem;">
+        Esta Política de Privacidade descreve como o aplicativo <strong>Lembre+</strong> ("nós", "nosso" ou "aplicativo")
+        coleta, utiliza e protege as informações dos seus usuários ("você" ou "usuário"). Ao utilizar o Lembre+, você
+        concorda com as práticas descritas neste documento.
+    </p>
+
+    <p><strong>Última atualização:</strong> 15 de maio de 2026</p>
+
+    <!-- ============================== -->
+    <h2>1. Informações que coletamos</h2>
+
+    <div class="card">
+        <div class="card-title">📱 Dados armazenados localmente <span class="badge">Offline</span></div>
+        <p>O Lembre+ armazena os seguintes dados <strong>exclusivamente no seu dispositivo</strong>, utilizando um banco de dados local (SQLite):</p>
+        <ul>
+            <li>Lembretes criados (nome, descrição, data, categoria, recorrência)</li>
+            <li>Alertas e configurações de notificação</li>
+            <li>Categorias personalizadas</li>
+            <li>Preferências do aplicativo (tema, idioma)</li>
+        </ul>
+        <p>Esses dados <strong>não são enviados</strong> para nenhum servidor externo, a menos que você opte
+        voluntariamente pela funcionalidade de backup na nuvem.</p>
+    </div>
+
+    <div class="card">
+        <div class="card-title">☁️ Dados de backup na nuvem <span class="badge">Opcional</span></div>
+        <p>Se você optar por usar a funcionalidade de <strong>sincronização com Google Drive</strong>, o aplicativo irá:</p>
+        <ul>
+            <li>Solicitar autenticação via <strong>Google Sign-In</strong></li>
+            <li>Acessar seu Google Drive para criar, ler e atualizar arquivos de backup do Lembre+</li>
+            <li>Armazenar os backups na pasta "LembrePlus Backups" no seu Google Drive (ou no espaço de dados do aplicativo)</li>
+        </ul>
+        <p>O escopo de acesso utilizado é <code>drive.file</code>, que limita o acesso apenas aos arquivos criados pelo
+        próprio aplicativo. <strong>Não acessamos</strong> outros arquivos do seu Google Drive.</p>
+    </div>
+
+    <!-- ============================== -->
+    <h2>2. Informações que NÃO coletamos</h2>
+
+    <p>O Lembre+ <strong>não coleta, armazena nem compartilha</strong>:</p>
+    <ul>
+        <li>Dados pessoais identificáveis (nome, e-mail, telefone) — exceto a conta Google usada para login voluntário</li>
+        <li>Dados de localização (GPS)</li>
+        <li>Dados de uso, analytics ou telemetria</li>
+        <li>Informações financeiras ou de pagamento</li>
+        <li>Dados de contatos, fotos, câmera ou microfone</li>
+        <li>Identificadores de publicidade</li>
+    </ul>
+
+    <!-- ============================== -->
+    <h2>3. Permissões do aplicativo</h2>
+
+    <p>O Lembre+ solicita as seguintes permissões do Android:</p>
+
+    <div class="card">
+        <ul>
+            <li><strong>INTERNET</strong> — Necessária para autenticação com Google e backup na nuvem</li>
+            <li><strong>POST_NOTIFICATIONS</strong> — Para enviar notificações de lembretes</li>
+            <li><strong>SCHEDULE_EXACT_ALARM</strong> — Para agendar alertas precisos</li>
+            <li><strong>RECEIVE_BOOT_COMPLETED</strong> — Para reagendar notificações após reiniciar o dispositivo</li>
+            <li><strong>VIBRATE</strong> — Para vibrar o dispositivo ao receber notificações</li>
+        </ul>
+    </div>
+
+    <p>Todas as permissões são utilizadas exclusivamente para as funcionalidades descritas e <strong>nenhum dado
+    é transmitido a terceiros</strong>.</p>
+
+    <!-- ============================== -->
+    <h2>4. Google Sign-In e Google Drive</h2>
+
+    <p>Quando você utiliza a funcionalidade de backup na nuvem:</p>
+    <ul>
+        <li>A autenticação é realizada diretamente com o Google, seguindo as políticas de privacidade do Google</li>
+        <li>O Lembre+ recebe apenas o token de autenticação para acessar o Google Drive</li>
+        <li>Não armazenamos sua senha do Google</li>
+        <li>Você pode revogar o acesso a qualquer momento nas <a href="https://myaccount.google.com/permissions" target="_blank">configurações da sua conta Google</a></li>
+    </ul>
+
+    <!-- ============================== -->
+    <h2>5. Compartilhamento de dados</h2>
+
+    <p>O Lembre+ <strong>não compartilha seus dados com terceiros</strong>. Especificamente:</p>
+    <ul>
+        <li>Não vendemos dados pessoais</li>
+        <li>Não utilizamos serviços de analytics</li>
+        <li>Não exibimos anúncios</li>
+        <li>Não integramos SDKs de rastreamento</li>
+    </ul>
+
+    <!-- ============================== -->
+    <h2>6. Segurança dos dados</h2>
+
+    <p>Implementamos as seguintes medidas de segurança:</p>
+    <ul>
+        <li>Os dados são armazenados localmente no dispositivo, protegidos pelo sistema operacional Android</li>
+        <li>A comunicação com o Google Drive utiliza conexões seguras (HTTPS/TLS)</li>
+        <li>O acesso ao Google Drive é limitado pelo escopo <code>drive.file</code></li>
+        <li>O aplicativo utiliza ofuscação de código (ProGuard) na versão de produção</li>
+    </ul>
+
+    <!-- ============================== -->
+    <h2>7. Retenção e exclusão de dados</h2>
+
+    <ul>
+        <li><strong>Dados locais:</strong> Permanecem no dispositivo até que você os exclua manualmente ou desinstale o aplicativo</li>
+        <li><strong>Backups na nuvem:</strong> Permanecem no seu Google Drive até que você os exclua manualmente</li>
+        <li><strong>Desinstalação:</strong> Ao desinstalar o Lembre+, todos os dados locais são removidos automaticamente pelo Android</li>
+    </ul>
+
+    <!-- ============================== -->
+    <h2>8. Crianças</h2>
+
+    <p>O Lembre+ não é direcionado a crianças menores de 13 anos e não coleta intencionalmente dados de menores.
+    Se você acredita que uma criança nos forneceu dados pessoais, entre em contato conosco.</p>
+
+    <!-- ============================== -->
+    <h2>9. Alterações nesta política</h2>
+
+    <p>Podemos atualizar esta Política de Privacidade periodicamente. Alterações significativas serão
+    comunicadas através de atualizações do aplicativo. Recomendamos revisar esta página regularmente.</p>
+
+    <!-- ============================== -->
+    <h2>10. Contato</h2>
+
+    <p>Se você tiver dúvidas ou preocupações sobre esta Política de Privacidade, entre em contato:</p>
+
+    <div class="card">
+        <p>📧 <strong>E-mail:</strong> <a href="mailto:canutobr@gmail.com">canutobr@gmail.com</a></p>
+        <p style="margin-bottom: 0;">👤 <strong>Desenvolvedor:</strong> Canuto</p>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>© 2026 Lembre+ — Todos os direitos reservados</p>
+    <p style="margin-top: 0.3rem;">Desenvolvido por Canuto</p>
+</div>
+
+</body>
+</html>
