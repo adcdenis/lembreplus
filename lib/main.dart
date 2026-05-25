@@ -180,6 +180,7 @@ class LembrePlusApp extends ConsumerWidget {
         builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
           return MaterialApp.router(
             title: 'Lembre+',
+            debugShowCheckedModeBanner: false,
             theme: AppTheme.light(lightDynamic),
             darkTheme: AppTheme.dark(darkDynamic),
             themeMode: themeMode,

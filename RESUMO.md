@@ -59,5 +59,10 @@ lib/
 ```bash
 flutter pub get
 flutter build apk --release
+
+Limpar memória no emulador Android
+C:\android-sdk\emulator\emulator.exe -avd s24 -wipe-data
+
+
 # Saída: build/app/outputs/flutter-apk/app-release.apk
 ```

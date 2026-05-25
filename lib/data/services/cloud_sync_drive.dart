@@ -91,10 +91,11 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       },
     );
     _backupCtrl = StreamController<DateTime>.broadcast();
-    // Emite usuário atual ao iniciar
+    // Emite usuário atual ao iniciar e desativa sync no logout
     _signIn.onCurrentUserChanged.listen((account) {
       if (account == null) {
         _authCtrl.add(null);
+        stopRealtimeSync();
       } else {
         _authCtrl.add(
           CloudUser(
@@ -561,7 +562,9 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
   @override
   Future<void> startRealtimeSync() async {
     if (!_auto) return;
-    _countersSub ??= db
+    // Cancela subscrição antiga se houver para evitar duplicidade ou estados inconsistentes
+    await _countersSub?.cancel();
+    _countersSub = db
         .watchAllCounters()
         .skip(1)
         .listen((_) => _onLocalChange());
@@ -583,10 +586,15 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
       _suppressedChange = true;
       return;
     }
-    Future.microtask(() async {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(seconds: 3), () async {
       try {
+        debugPrint('[CloudDrive] Iniciando backup automático por mudança local...');
         await backupNow();
-      } catch (_) {}
+        debugPrint('[CloudDrive] Backup automático concluído com sucesso');
+      } catch (e) {
+        debugPrint('[CloudDrive] Erro no backup automático: $e');
+      }
     });
   }
 
