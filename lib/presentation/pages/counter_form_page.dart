@@ -512,7 +512,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     final notifService = ref.read(notificationServiceProvider);
     final isPro = ref.read(premiumProvider);
 
-    // 1. Limite de lembretes ativos (máximo 15 na versão gratuita)
+    // 1. Limite de lembretes ativos (máximo 10 na versão gratuita)
     if (!isPro) {
       final now = DateTime.now();
       final dt = DateTime(_date.year, _date.month, _date.day, _time.hour, _time.minute);
@@ -552,10 +552,10 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
 
       final totalActiveAlerts = activeAlertsForOtherCounters + activeAlertsForThisCounter;
       if (!mounted) return;
-      if (totalActiveAlerts > 15) {
+      if (totalActiveAlerts > 10) {
         _showProLimitDialog(
           context,
-          'Você atingiu o limite máximo de 15 lembretes ativos na versão gratuita. '
+          'Você atingiu o limite máximo de 10 lembretes ativos na versão gratuita. '
           'Atualmente você tem $activeAlertsForOtherCounters lembretes ativos em outros contadores '
           'e está configurando mais $activeAlertsForThisCounter neste contador. '
           'Faça upgrade para a versão Pro para ter lembretes ilimitados!',

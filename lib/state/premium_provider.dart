@@ -1,12 +1,16 @@
+// ignore_for_file: unused_element, unused_field
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+/// Se [isProVersion] for true, o aplicativo será compilado diretamente como a versão PRO vitalícia.
+/// Se for false, o aplicativo rodará no modo gratuito/normal (com faturamento real ou simulação em debug).
+const bool isProVersion = true;
+
 /// Se [useSimulatedBilling] for true, o aplicativo exibirá atalhos de simulação
-/// de pagamento para facilitar os testes de desenvolvimento. Mude para false
-/// na versão final de produção para integrar com faturamento real.
-const bool useSimulatedBilling = true;
+/// de pagamento para facilitar os testes de desenvolvimento.
+const bool useSimulatedBilling = false;
 
 final premiumProvider = StateNotifierProvider<PremiumNotifier, bool>((ref) {
   return PremiumNotifier();
@@ -18,12 +22,7 @@ class PremiumNotifier extends StateNotifier<bool> {
   // ID canônico do produto cadastrado na Play Console para a versão Pro vitalícia
   static const String proProductId = 'lembreplus_pro_lifetime';
 
-  PremiumNotifier() : super(false) {
-    _load();
-    if (!useSimulatedBilling) {
-      _initializeIAP();
-    }
-  }
+  PremiumNotifier() : super(isProVersion);
 
   static const _key = 'is_premium_pro';
 
@@ -100,6 +99,7 @@ class PremiumNotifier extends StateNotifier<bool> {
   }
 
   Future<void> togglePremium() async {
+    if (isProVersion) return;
     state = !state;
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -108,6 +108,7 @@ class PremiumNotifier extends StateNotifier<bool> {
   }
 
   Future<void> setPremium(bool value) async {
+    if (isProVersion) return;
     if (state == value) return;
     state = value;
     try {

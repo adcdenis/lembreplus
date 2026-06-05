@@ -306,7 +306,7 @@ class _PremiumCrownButton extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(
               'Recursos da versão Pro:\n'
-              '• Lembretes ativos ilimitados (grátis até 15)\n'
+              '• Lembretes ativos ilimitados (grátis até 10)\n'
               '• Categorias personalizadas ilimitadas\n'
               '• Backup automático em tempo real no Google Drive',
               style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
