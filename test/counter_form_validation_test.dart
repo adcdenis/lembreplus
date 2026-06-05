@@ -17,7 +17,6 @@ class _FakeNotificationService extends NotificationService {
 void main() {
   testWidgets('Formulário exige nome do contador', (WidgetTester tester) async {
     final db = AppDatabase.test();
-    addTearDown(() async => db.close());
 
     await tester.pumpWidget(
       ProviderScope(
@@ -35,5 +34,17 @@ void main() {
     await tester.pump();
 
     expect(find.text('Informe um nome'), findsOneWidget);
+
+    // Aguarda as animações de entrada terminarem antes de desinflar o widget
+    await tester.pump(const Duration(seconds: 2));
+
+    // Limpa a árvore de widgets primeiro para disparar o dispose dos providers
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Fecha o banco de dados e aguarda a conclusão dos timers internos do Drift
+    await db.close();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.idle();
   });
 }

@@ -11,6 +11,7 @@ import 'package:lembreplus/data/repositories/category_repository.dart';
 import 'package:lembreplus/data/repositories/history_repository.dart';
 import 'package:lembreplus/data/services/backup_service.dart';
 export 'cloud_providers.dart';
+export 'premium_provider.dart';
 export 'package:lembreplus/services/notification_service.dart' show notificationServiceProvider;
 
 // Database

@@ -20,6 +20,14 @@ class CounterFormPage extends ConsumerStatefulWidget {
 }
 
 class _CounterFormPageState extends ConsumerState<CounterFormPage> {
+  bool _canPopSafely(BuildContext context) {
+    try {
+      return GoRouter.of(context).canPop();
+    } catch (_) {
+      return true;
+    }
+  }
+
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
@@ -93,7 +101,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     final categoriesAsync = ref.watch(categoriesProvider);
 
     return PopScope(
-      canPop: context.canPop(),
+      canPop: _canPopSafely(context),
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
           context.go('/counters');
@@ -456,7 +464,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
                     const SizedBox(width: 12),
                     TextButton(
                       onPressed: () {
-                        if (context.canPop()) {
+                        if (_canPopSafely(context)) {
                           context.pop();
                         } else {
                           context.go('/counters');
@@ -502,9 +510,78 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
     final repo = ref.read(counterRepositoryProvider);
     final categoryRepo = ref.read(categoryRepositoryProvider);
     final notifService = ref.read(notificationServiceProvider);
+    final isPro = ref.read(premiumProvider);
+
+    // 1. Limite de lembretes ativos (máximo 15 na versão gratuita)
+    if (!isPro) {
+      final now = DateTime.now();
+      final dt = DateTime(_date.year, _date.month, _date.day, _time.hour, _time.minute);
+      final recurrenceStr = _recurrence == 'custom' ? '$_customRecurrenceValue $_customRecurrenceUnit' : _recurrence;
+      
+      // Calcula lembretes ativos do contador que está sendo salvo
+      final effectiveEventDate = RecurrenceDefinition.parse(recurrenceStr).isNone
+          ? dt
+          : nextRecurringDateFromString(dt, recurrenceStr, now);
+      
+      int activeAlertsForThisCounter = 0;
+      for (final offset in _alertOffsets) {
+        final scheduledDate = effectiveEventDate.subtract(Duration(minutes: offset));
+        if (scheduledDate.isAfter(now)) {
+          activeAlertsForThisCounter++;
+        }
+      }
+
+      // Calcula lembretes ativos dos outros contadores
+      final counters = await repo.all();
+      int activeAlertsForOtherCounters = 0;
+      for (final c in counters) {
+        if (widget.counterId != null && c.id == widget.counterId) {
+          continue;
+        }
+        final cEffectiveEventDate = RecurrenceDefinition.parse(c.recurrence).isNone
+            ? c.eventDate
+            : nextRecurringDateFromString(c.eventDate, c.recurrence, now);
+        
+        for (final offset in c.alertOffsets) {
+          final scheduledDate = cEffectiveEventDate.subtract(Duration(minutes: offset));
+          if (scheduledDate.isAfter(now)) {
+            activeAlertsForOtherCounters++;
+          }
+        }
+      }
+
+      final totalActiveAlerts = activeAlertsForOtherCounters + activeAlertsForThisCounter;
+      if (!mounted) return;
+      if (totalActiveAlerts > 15) {
+        _showProLimitDialog(
+          context,
+          'Você atingiu o limite máximo de 15 lembretes ativos na versão gratuita. '
+          'Atualmente você tem $activeAlertsForOtherCounters lembretes ativos em outros contadores '
+          'e está configurando mais $activeAlertsForThisCounter neste contador. '
+          'Faça upgrade para a versão Pro para ter lembretes ilimitados!',
+        );
+        return;
+      }
+    }
+
+    final catName = _categoryCtrl.text.trim();
+
+    // 2. Limite de categorias personalizadas (exclusivo Pro)
+    if (catName.isNotEmpty) {
+      final normCat = normalizeCategory(catName);
+      final isDefault = ['pessoal', 'saude', 'financeiro', 'documentos', 'veiculo'].contains(normCat);
+      if (!isPro && !isDefault) {
+        if (!mounted) return;
+        _showProLimitDialog(
+          context,
+          'A criação de categorias personalizadas ("$catName") é exclusiva da versão Pro. '
+          'Use as categorias padrão (Pessoal, Saúde, Financeiro, Documentos, Veículo) ou faça upgrade!',
+        );
+        return;
+      }
+    }
 
     final dt = DateTime(_date.year, _date.month, _date.day, _time.hour, _time.minute);
-    final catName = _categoryCtrl.text.trim();
     if (catName.isNotEmpty) {
       await categoryRepo.create(cat.Category(name: catName, normalized: normalizeCategory(catName)));
     }
@@ -533,7 +610,7 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
       await notifService.syncAllCounterNotifications(ref.read(databaseProvider));
     }
     if (mounted) {
-      if (context.canPop()) {
+      if (_canPopSafely(context)) {
         context.pop();
       } else {
         context.go('/counters');
@@ -584,6 +661,79 @@ class _CounterFormPageState extends ConsumerState<CounterFormPage> {
             }, child: const Text('Adicionar')),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showProLimitDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: const [
+            Icon(Icons.workspace_premium, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Recurso Premium'),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Voltar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.amber,
+              foregroundColor: Colors.black,
+            ),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _showQuickUpgradeDialog(context);
+            },
+            child: const Text('Ver Versão Pro'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showQuickUpgradeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Ativar Modo Pro (Simulação)'),
+        content: const Text(
+          'Deseja simular a compra da versão Pro do Lembre+ para desbloquear este e outros recursos?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Agora não'),
+          ),
+          Consumer(
+            builder: (context, ref, child) {
+              return FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  foregroundColor: Colors.black,
+                ),
+                onPressed: () async {
+                  await ref.read(premiumProvider.notifier).setPremium(true);
+                  if (ctx.mounted) {
+                    Navigator.of(ctx).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Modo Pro ativado com sucesso! Salve seu lembrete novamente.'),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Ativar Pro'),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

@@ -5,6 +5,7 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,5 +16,10 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: LembrePlusApp()));
     await tester.pump();
     expect(find.text('Lembre+'), findsWidgets);
+
+    // Limpa a árvore de widgets e processa timers pendentes de animações/shimmer/drift
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.idle();
   });
 }

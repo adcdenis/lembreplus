@@ -115,7 +115,8 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
   Future<void> _bootstrap() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _auto = prefs.getBool(_prefsKeyAutoSync) ?? false;
+      final isPro = prefs.getBool('is_premium_pro') ?? false;
+      _auto = isPro ? (prefs.getBool(_prefsKeyAutoSync) ?? false) : false;
       // Notificar assinantes do estado carregado
       _autoSyncCtrl.add(_auto);
     } catch (_) {
@@ -135,7 +136,9 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
         // Se auto-sync habilitado, primeiro tenta sincronizar/restaurar do remoto
         // e só então inicia a observação contínua para evitar que mudanças
         // locais geradas na inicialização disparem um backup automático.
-        if (_auto) {
+        final prefs = await SharedPreferences.getInstance();
+        final isPro = prefs.getBool('is_premium_pro') ?? false;
+        if (_auto && isPro) {
           // Executa sincronização automática de restauração ao iniciar, se necessário
           await _runStartupAutoSync();
           await startRealtimeSync();
@@ -342,6 +345,10 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
 
   @override
   Future<void> signInWithGoogle() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isPro = prefs.getBool('is_premium_pro') ?? false;
+    if (!isPro) throw 'O login e sincronização são exclusivos da versão Pro';
+
     final account = await _signIn.signIn();
     if (account == null) throw 'Login cancelado';
     _authCtrl.add(
@@ -378,10 +385,17 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
 
   @override
   Future<void> setAutoSyncEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    final isPro = prefs.getBool('is_premium_pro') ?? false;
+    if (!isPro) {
+      _auto = false;
+      _autoSyncCtrl.add(false);
+      await stopRealtimeSync();
+      return;
+    }
     _auto = enabled;
     _autoSyncCtrl.add(_auto);
     try {
-      final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_prefsKeyAutoSync, _auto);
     } catch (_) {
       // Ignora erros de persistência
@@ -561,7 +575,9 @@ class GoogleDriveCloudSyncService implements CloudSyncService {
 
   @override
   Future<void> startRealtimeSync() async {
-    if (!_auto) return;
+    final prefs = await SharedPreferences.getInstance();
+    final isPro = prefs.getBool('is_premium_pro') ?? false;
+    if (!isPro || !_auto) return;
     // Cancela subscrição antiga se houver para evitar duplicidade ou estados inconsistentes
     await _countersSub?.cancel();
     _countersSub = db

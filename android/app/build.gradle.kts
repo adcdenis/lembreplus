@@ -3,7 +3,7 @@ import java.util.Date
 import java.util.Properties
 
 // Carrega as credenciais da keystore de produção (se existirem)
-val keystorePropertiesFile = rootProject.file("key.properties")
+val keystorePropertiesFile = rootProject.file("app/key.properties")
 val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(keystorePropertiesFile.inputStream())

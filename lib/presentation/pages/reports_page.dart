@@ -6,6 +6,7 @@ import 'package:lembreplus/domain/recurrence.dart';
 import 'package:lembreplus/domain/time_utils.dart';
 import 'package:lembreplus/state/providers.dart';
 import 'package:lembreplus/domain/report_export.dart';
+import 'package:lembreplus/presentation/widgets/premium_paywall_widget.dart';
 
 class ReportsPage extends ConsumerStatefulWidget {
   const ReportsPage({super.key});
@@ -205,6 +206,13 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isPro = ref.watch(premiumProvider);
+    if (!isPro) {
+      return const PremiumPaywallWidget(
+        customMessage: 'Os relatórios analíticos e exportações em PDF/Excel são recursos exclusivos do Lembre+ Pro.',
+      );
+    }
+
     final countersAsync = ref.watch(countersProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final cs = Theme.of(context).colorScheme;

@@ -33,6 +33,7 @@ class AppShell extends ConsumerWidget {
         final selectedIndex = _selectedIndexForLocation(GoRouterState.of(context).uri.toString());
         return Scaffold(
           appBar: AppBar(title: title, actions: const [
+            _PremiumCrownButton(),
             _ThemeToggleButton(),
             Padding(
               padding: EdgeInsets.only(right: 8.0),
@@ -59,7 +60,7 @@ class AppShell extends ConsumerWidget {
                 destinations: const [
                   NavigationRailDestination(icon: Text('📋', style: TextStyle(fontSize: 20)), selectedIcon: Text('📋', style: TextStyle(fontSize: 20)), label: Text('Dashboard')),
                   NavigationRailDestination(icon: Text('🧮', style: TextStyle(fontSize: 20)), selectedIcon: Text('🧮', style: TextStyle(fontSize: 20)), label: Text('Contadores')),
-                  // NavigationRailDestination(icon: Text('📈', style: TextStyle(fontSize: 20)), selectedIcon: Text('📈', style: TextStyle(fontSize: 20)), label: Text('Relatórios')),
+                  NavigationRailDestination(icon: Text('📈', style: TextStyle(fontSize: 20)), selectedIcon: Text('📈', style: TextStyle(fontSize: 20)), label: Text('Relatórios')),
                   NavigationRailDestination(icon: Text('🔔', style: TextStyle(fontSize: 20)), selectedIcon: Text('🔔', style: TextStyle(fontSize: 20)), label: Text('Notificações')),
                   NavigationRailDestination(icon: Text('🔄', style: TextStyle(fontSize: 20)), selectedIcon: Text('🔄', style: TextStyle(fontSize: 20)), label: Text('Backup')),
                 ],
@@ -73,6 +74,7 @@ class AppShell extends ConsumerWidget {
 
       return Scaffold(
         appBar: AppBar(title: title, centerTitle: false, actions: const [
+          _PremiumCrownButton(),
           _ThemeToggleButton(),
           Padding(
             padding: EdgeInsets.only(right: 8.0),
@@ -87,10 +89,10 @@ class AppShell extends ConsumerWidget {
 
   int _selectedIndexForLocation(String location) {
     if (location.startsWith('/counters')) return 1;
-    if (location.startsWith('/reports')) return -1;
-    if (location.startsWith('/notifications')) return 2;
-    if (location.startsWith('/backup')) return 3;
-    if (location.startsWith('/cloud-backup')) return 3;
+    if (location.startsWith('/reports')) return 2;
+    if (location.startsWith('/notifications')) return 3;
+    if (location.startsWith('/backup')) return 4;
+    if (location.startsWith('/cloud-backup')) return 4;
     return 0; // dashboard default
   }
 
@@ -103,29 +105,33 @@ class AppShell extends ConsumerWidget {
         context.go('/counters');
         break;
       case 2:
-        context.go('/notifications');
+        context.go('/reports');
         break;
       case 3:
+        context.go('/notifications');
+        break;
+      case 4:
         context.go('/cloud-backup');
         break;
     }
   }
 }
 
-class _AppDrawer extends StatelessWidget {
+class _AppDrawer extends ConsumerWidget {
   final ValueChanged<int> onNavigateIndex;
   const _AppDrawer({required this.onNavigateIndex});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPro = ref.watch(premiumProvider);
     final cs = Theme.of(context).colorScheme;
     final location = GoRouterState.of(context).uri.toString();
     int selectedIndex = 0;
     if (location.startsWith('/counters')) selectedIndex = 1;
-    if (location.startsWith('/reports')) selectedIndex = -1;
-    if (location.startsWith('/notifications')) selectedIndex = 2;
-    if (location.startsWith('/backup')) selectedIndex = 3;
-    if (location.startsWith('/cloud-backup')) selectedIndex = 3;
+    if (location.startsWith('/reports')) selectedIndex = 2;
+    if (location.startsWith('/notifications')) selectedIndex = 3;
+    if (location.startsWith('/backup')) selectedIndex = 4;
+    if (location.startsWith('/cloud-backup')) selectedIndex = 4;
 
     Widget tile({required int index, required String label, required Widget leading}) {
       final selected = selectedIndex == index;
@@ -175,9 +181,29 @@ class _AppDrawer extends StatelessWidget {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text('Lembre+', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
-                        Text('Organize seus contadores', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                      children: [
+                        Row(
+                          children: [
+                            const Text('Lembre+', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isPro ? Colors.amber : Colors.white24,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                isPro ? 'PRO' : 'FREE',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isPro ? Colors.black : Colors.white70,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Text('Organize seus contadores', style: TextStyle(fontSize: 12, color: Colors.white70)),
                       ],
                     ),
                   ),
@@ -191,9 +217,9 @@ class _AppDrawer extends StatelessWidget {
                 children: [
                   tile(index: 0, label: 'Dashboard', leading: const Text('📋', style: TextStyle(fontSize: 20))),
                   tile(index: 1, label: 'Contadores', leading: const Text('🧮', style: TextStyle(fontSize: 20))),
-                  // tile(index: 2, label: 'Relatórios', leading: const Text('📈', style: TextStyle(fontSize: 20))),
-                  tile(index: 2, label: 'Notificações', leading: const Text('🔔', style: TextStyle(fontSize: 20))),
-                  tile(index: 3, label: 'Backup', leading: const Text('🔄', style: TextStyle(fontSize: 20))),
+                  tile(index: 2, label: 'Relatórios', leading: const Text('📈', style: TextStyle(fontSize: 20))),
+                  tile(index: 3, label: 'Notificações', leading: const Text('🔔', style: TextStyle(fontSize: 20))),
+                  tile(index: 4, label: 'Backup', leading: const Text('🔄', style: TextStyle(fontSize: 20))),
                 ],
               ),
             ),
@@ -226,6 +252,87 @@ class _VersionFooter extends ConsumerWidget {
           Icon(Icons.info_outline, size: 16, color: scheme.onSurfaceVariant),
           const SizedBox(width: 6),
           Text(v, style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+        ],
+      ),
+    );
+  }
+}
+
+// Botão da coroa Pro com modal de simulação
+class _PremiumCrownButton extends ConsumerWidget {
+  const _PremiumCrownButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPro = ref.watch(premiumProvider);
+    // Em produção, só exibimos o ícone de coroa no cabeçalho se o usuário for Pro
+    if (!useSimulatedBilling && !isPro) {
+      return const SizedBox.shrink();
+    }
+    return Tooltip(
+      message: isPro ? 'Você é Pro! Obrigado pelo apoio.' : 'Seja Pro! Clique para saber mais',
+      child: IconButton(
+        icon: Icon(
+          isPro ? Icons.workspace_premium : Icons.workspace_premium_outlined,
+          color: isPro ? Colors.amber : null,
+        ),
+        onPressed: useSimulatedBilling ? () => _showPremiumDialog(context, ref) : null,
+      ),
+    );
+  }
+
+  void _showPremiumDialog(BuildContext context, WidgetRef ref) {
+    final isPro = ref.read(premiumProvider);
+    final cs = Theme.of(context).colorScheme;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: const [
+            Icon(Icons.workspace_premium, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Assinatura Lembre+'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isPro
+                  ? 'Você está utilizando a versão Lembre+ Pro! Obrigado pelo apoio.'
+                  : 'Você está utilizando a versão gratuita do Lembre+.',
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Recursos da versão Pro:\n'
+              '• Lembretes ativos ilimitados (grátis até 15)\n'
+              '• Categorias personalizadas ilimitadas\n'
+              '• Backup automático em tempo real no Google Drive',
+              style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Simular Modo Pro:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Switch(
+                  value: isPro,
+                  activeThumbColor: Colors.amber,
+                  onChanged: (val) async {
+                    await ref.read(premiumProvider.notifier).setPremium(val);
+                    if (ctx.mounted) Navigator.of(ctx).pop();
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Fechar'),
+          ),
         ],
       ),
     );

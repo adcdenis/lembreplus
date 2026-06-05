@@ -3,12 +3,20 @@ import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lembreplus/state/providers.dart';
 import 'package:lembreplus/core/cloud/cloud_config.dart';
+import 'package:lembreplus/presentation/widgets/premium_paywall_widget.dart';
 
 class CloudBackupPage extends ConsumerWidget {
   const CloudBackupPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isPro = ref.watch(premiumProvider);
+    if (!isPro) {
+      return const PremiumPaywallWidget(
+        customMessage: 'O backup na nuvem e a sincronização em tempo real pelo Google Drive são recursos exclusivos do Lembre+ Pro.',
+      );
+    }
+
     final cloudSvc = ref.watch(cloudSyncServiceProvider);
     final cloudUserAsync = ref.watch(cloudUserProvider);
     final autoSyncAsync = ref.watch(cloudAutoSyncProvider);
