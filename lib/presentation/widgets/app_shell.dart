@@ -21,11 +21,19 @@ class AppShell extends ConsumerWidget {
     });
     return LayoutBuilder(builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 900;
+        final cs = Theme.of(context).colorScheme;
         final title = Row(
-          children: const [
-            Icon(Icons.event_note),
-            SizedBox(width: 8),
-            Text('Lembre+'),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: (isWide ? cs.onPrimary : cs.onPrimary).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.event_note, size: 20, color: isWide ? cs.onPrimary : null),
+            ),
+            const SizedBox(width: 10),
+            const Text('Lembre+'),
           ],
         );
 
@@ -36,7 +44,7 @@ class AppShell extends ConsumerWidget {
             _PremiumCrownButton(),
             _ThemeToggleButton(),
             Padding(
-              padding: EdgeInsets.only(right: 8.0),
+              padding: EdgeInsets.only(right: 12.0),
               child: _ProfileAvatar(),
             ),
           ]),
@@ -51,21 +59,26 @@ class AppShell extends ConsumerWidget {
                     ? NavigationRailLabelType.none
                     : NavigationRailLabelType.all,
                 useIndicator: true,
-                indicatorColor: Theme.of(context).colorScheme.primaryContainer,
-                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                trailing: const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: _VersionFooter(),
+                minWidth: 72,
+                minExtendedWidth: 200,
+                trailing: Expanded(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: const _VersionFooter(),
+                    ),
+                  ),
                 ),
                 destinations: const [
-                  NavigationRailDestination(icon: Text('📋', style: TextStyle(fontSize: 20)), selectedIcon: Text('📋', style: TextStyle(fontSize: 20)), label: Text('Dashboard')),
-                  NavigationRailDestination(icon: Text('🧮', style: TextStyle(fontSize: 20)), selectedIcon: Text('🧮', style: TextStyle(fontSize: 20)), label: Text('Contadores')),
-                  NavigationRailDestination(icon: Text('📈', style: TextStyle(fontSize: 20)), selectedIcon: Text('📈', style: TextStyle(fontSize: 20)), label: Text('Relatórios')),
-                  NavigationRailDestination(icon: Text('🔔', style: TextStyle(fontSize: 20)), selectedIcon: Text('🔔', style: TextStyle(fontSize: 20)), label: Text('Notificações')),
-                  NavigationRailDestination(icon: Text('🔄', style: TextStyle(fontSize: 20)), selectedIcon: Text('🔄', style: TextStyle(fontSize: 20)), label: Text('Backup')),
+                  NavigationRailDestination(icon: Text('📋', style: TextStyle(fontSize: 20)), selectedIcon: Text('📋', style: TextStyle(fontSize: 22)), label: Text('Dashboard')),
+                  NavigationRailDestination(icon: Text('🧮', style: TextStyle(fontSize: 20)), selectedIcon: Text('🧮', style: TextStyle(fontSize: 22)), label: Text('Contadores')),
+                  NavigationRailDestination(icon: Text('📈', style: TextStyle(fontSize: 20)), selectedIcon: Text('📈', style: TextStyle(fontSize: 22)), label: Text('Relatórios')),
+                  NavigationRailDestination(icon: Text('🔔', style: TextStyle(fontSize: 20)), selectedIcon: Text('🔔', style: TextStyle(fontSize: 22)), label: Text('Notificações')),
+                  NavigationRailDestination(icon: Text('☁️', style: TextStyle(fontSize: 20)), selectedIcon: Text('☁️', style: TextStyle(fontSize: 22)), label: Text('Backup')),
                 ],
               ),
-              const VerticalDivider(width: 1),
+              VerticalDivider(width: 1, color: cs.outlineVariant.withValues(alpha: 0.3)),
               Expanded(child: child),
             ],
           ),
@@ -133,36 +146,72 @@ class _AppDrawer extends ConsumerWidget {
     if (location.startsWith('/backup')) selectedIndex = 4;
     if (location.startsWith('/cloud-backup')) selectedIndex = 4;
 
-    Widget tile({required int index, required String label, required Widget leading}) {
+    Widget tile({required int index, required String label, required Widget leading, String? subtitle}) {
       final selected = selectedIndex == index;
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: ListTile(
-          leading: leading,
-          title: Text(label,
-              style: TextStyle(
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              )),
-          selected: selected,
-          selectedTileColor: cs.primaryContainer,
-          tileColor: cs.surfaceContainerHigh,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          onTap: () {
-            Scaffold.maybeOf(context)?.closeDrawer();
-            onNavigateIndex(index);
-          },
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+        child: Material(
+          color: selected ? cs.primaryContainer : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () {
+              Scaffold.maybeOf(context)?.closeDrawer();
+              onNavigateIndex(index);
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: selected
+                    ? Border.all(color: cs.primary.withValues(alpha: 0.2))
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  leading,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                            fontSize: 15,
+                            color: selected ? cs.onPrimaryContainer : cs.onSurface,
+                          ),
+                        ),
+                        if (subtitle != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (selected)
+                    Icon(Icons.chevron_right, size: 18, color: cs.primary),
+                ],
+              ),
+            ),
+          ),
         ),
       );
     }
 
     return Drawer(
-      backgroundColor: cs.surface,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Header do Drawer com gradiente
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [cs.primaryContainer, cs.primary],
@@ -172,37 +221,42 @@ class _AppDrawer extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: cs.onPrimary.withValues(alpha: 0.15),
-                    child: const Icon(Icons.event_note, color: Colors.white),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: cs.onPrimary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.event_note, color: Colors.white, size: 28),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Text('Lembre+', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+                            const Text('Lembre+', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: isPro ? Colors.amber : Colors.white24,
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 isPro ? 'PRO' : 'FREE',
                                 style: TextStyle(
                                   fontSize: 10,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
                                   color: isPro ? Colors.black : Colors.white70,
                                 ),
                               ),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 4),
                         const Text('Organize seus contadores', style: TextStyle(fontSize: 12, color: Colors.white70)),
                       ],
                     ),
@@ -210,20 +264,20 @@ class _AppDrawer extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  tile(index: 0, label: 'Dashboard', leading: const Text('📋', style: TextStyle(fontSize: 20))),
-                  tile(index: 1, label: 'Contadores', leading: const Text('🧮', style: TextStyle(fontSize: 20))),
-                  tile(index: 2, label: 'Relatórios', leading: const Text('📈', style: TextStyle(fontSize: 20))),
-                  tile(index: 3, label: 'Notificações', leading: const Text('🔔', style: TextStyle(fontSize: 20))),
-                  tile(index: 4, label: 'Backup', leading: const Text('🔄', style: TextStyle(fontSize: 20))),
+                  tile(index: 0, label: 'Dashboard', subtitle: 'Visão geral', leading: const Text('📋', style: TextStyle(fontSize: 22))),
+                  tile(index: 1, label: 'Contadores', subtitle: 'Seus eventos', leading: const Text('🧮', style: TextStyle(fontSize: 22))),
+                  tile(index: 2, label: 'Relatórios', subtitle: 'Análise detalhada', leading: const Text('📈', style: TextStyle(fontSize: 22))),
+                  tile(index: 3, label: 'Notificações', subtitle: 'Lembretes agendados', leading: const Text('🔔', style: TextStyle(fontSize: 22))),
+                  tile(index: 4, label: 'Backup', subtitle: 'Local e nuvem', leading: const Text('☁️', style: TextStyle(fontSize: 22))),
                 ],
               ),
             ),
-            const Divider(height: 1),
+            Divider(color: cs.outlineVariant.withValues(alpha: 0.3)),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: _VersionFooter(),
@@ -249,9 +303,9 @@ class _VersionFooter extends ConsumerWidget {
       data: (v) => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.info_outline, size: 16, color: scheme.onSurfaceVariant),
+          Icon(Icons.info_outline, size: 14, color: scheme.onSurfaceVariant.withValues(alpha: 0.6)),
           const SizedBox(width: 6),
-          Text(v, style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+          Text(v, style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant.withValues(alpha: 0.6))),
         ],
       ),
     );
@@ -271,13 +325,18 @@ class _PremiumCrownButton extends ConsumerWidget {
     }
     return Tooltip(
       message: isPro ? 'Você é Pro! Obrigado pelo apoio.' : 'Seja Pro! Clique para saber mais',
-      child: IconButton(
-        icon: Icon(
-          isPro ? Icons.workspace_premium : Icons.workspace_premium_outlined,
-          color: isPro ? Colors.amber : null,
-        ),
-        onPressed: useSimulatedBilling ? () => _showPremiumDialog(context, ref) : null,
-      ),
+      child: isPro
+          ? _ShimmerIcon(
+              onPressed: useSimulatedBilling ? () => _showPremiumDialog(context, ref) : null,
+              child: Icon(
+                Icons.workspace_premium,
+                color: Colors.amber.shade600,
+              ),
+            )
+          : IconButton(
+              icon: const Icon(Icons.workspace_premium_outlined),
+              onPressed: useSimulatedBilling ? () => _showPremiumDialog(context, ref) : null,
+            ),
     );
   }
 
@@ -339,6 +398,64 @@ class _PremiumCrownButton extends ConsumerWidget {
   }
 }
 
+// Widget de ícone com shimmer para a coroa Pro
+class _ShimmerIcon extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onPressed;
+  const _ShimmerIcon({required this.child, this.onPressed});
+
+  @override
+  State<_ShimmerIcon> createState() => _ShimmerIconState();
+}
+
+class _ShimmerIconState extends State<_ShimmerIcon> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return ShaderMask(
+          shaderCallback: (bounds) {
+            return LinearGradient(
+              begin: Alignment(-1.0 + 2.0 * _controller.value, 0),
+              end: Alignment(-1.0 + 2.0 * _controller.value + 1.0, 0),
+              colors: const [
+                Colors.amber,
+                Colors.white,
+                Colors.amber,
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ).createShader(bounds);
+          },
+          blendMode: BlendMode.srcIn,
+          child: child,
+        );
+      },
+      child: IconButton(
+        icon: widget.child,
+        onPressed: widget.onPressed,
+      ),
+    );
+  }
+}
+
 // Botão para alternar entre tema claro e escuro
 class _ThemeToggleButton extends ConsumerWidget {
   const _ThemeToggleButton();
@@ -378,10 +495,16 @@ class _ProfileAvatar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(cloudUserProvider);
     final cs = Theme.of(context).colorScheme;
-    Widget defaultAvatar() => CircleAvatar(
-          radius: 20,
-          backgroundColor: cs.surface,
-          child: Icon(Icons.account_circle, size: 24, color: cs.onSurfaceVariant),
+    Widget defaultAvatar() => Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: cs.onPrimary.withValues(alpha: 0.3), width: 1.5),
+          ),
+          child: CircleAvatar(
+            radius: 16,
+            backgroundColor: cs.onPrimary.withValues(alpha: 0.1),
+            child: Icon(Icons.person_outline, size: 18, color: cs.onPrimary.withValues(alpha: 0.7)),
+          ),
         );
 
     return userAsync.maybeWhen(
@@ -389,10 +512,16 @@ class _ProfileAvatar extends ConsumerWidget {
         if (user == null || user.photoUrl == null) {
           return defaultAvatar();
         }
-        return CircleAvatar(
-          radius: 20,
-          backgroundImage: NetworkImage(user.photoUrl!),
-          backgroundColor: cs.surface,
+        return Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: cs.onPrimary.withValues(alpha: 0.3), width: 1.5),
+          ),
+          child: CircleAvatar(
+            radius: 16,
+            backgroundImage: NetworkImage(user.photoUrl!),
+            backgroundColor: cs.surface,
+          ),
         );
       },
       orElse: () => defaultAvatar(),

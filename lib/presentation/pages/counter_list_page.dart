@@ -140,7 +140,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                 : null;
             context.push('/counter/new', extra: selectedCat);
           },
-          child: const Text('➕', style: TextStyle(fontSize: 24)),
+          child: const Icon(Icons.add_rounded, size: 28),
         ),
       ),
       body: Padding(
@@ -150,15 +150,36 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
           children: [
             Row(
               children: [
-                const Text(
-                  'Contadores',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [scheme.primary, scheme.primary.withValues(alpha: 0.7)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.timer_rounded, color: Colors.white, size: 24),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Contadores',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                      ),
+                      Text(
+                        'Seus eventos e lembretes',
+                        style: TextStyle(color: scheme.onSurface.withValues(alpha: 0.6), fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
                 Tooltip(
                   message: _showSearch ? 'Ocultar filtro' : 'Mostrar filtro',
                   child: IconButton.filledTonal(
-                    icon: Icon(_showSearch ? Icons.search_off : Icons.search),
+                    icon: Icon(_showSearch ? Icons.search_off_rounded : Icons.search_rounded),
                     onPressed: () => setState(() => _showSearch = !_showSearch),
                   ),
                 ),
@@ -301,7 +322,7 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                   );
                   return FilterChip(
                     selected: selected,
-                    showCheckmark: true,
+                    showCheckmark: false,
                     checkmarkColor: scheme.onPrimaryContainer,
                     avatar: Icon(
                       Icons.local_offer,
@@ -390,8 +411,25 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                 );
 
                 if (filtered.isEmpty) {
-                  return const Expanded(
-                    child: Center(child: Text('Nenhum contador encontrado.')),
+                  return Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.event_busy_rounded, size: 64, color: scheme.onSurface.withValues(alpha: 0.15)),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Nenhum contador encontrado',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: scheme.onSurface.withValues(alpha: 0.5)),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Toque no + para criar um novo.',
+                            style: TextStyle(fontSize: 13, color: scheme.onSurface.withValues(alpha: 0.4)),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 }
 
@@ -455,16 +493,16 @@ ${counter.category?.isNotEmpty == true ? '🏷️ **Categoria:** ${counter.categ
                             return AnimatedInteractiveItem(
                               child: Card(
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                                 elevation: 0,
                                 child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(16),
                                 onTap: () =>
                                     context.push('/counter/${c.id}/edit'),
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
                                       color: Theme.of(
                                         context,
@@ -856,7 +894,7 @@ class _CounterBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

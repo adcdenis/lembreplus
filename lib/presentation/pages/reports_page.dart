@@ -224,32 +224,54 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Text('📈', style: TextStyle(fontSize: 18)),
-              SizedBox(width: 8),
-              Text(
-                'Relatórios',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [cs.primary, cs.primary.withValues(alpha: 0.7)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Relatórios',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                    ),
+                    Text(
+                      'Gere planilhas e PDFs dos seus eventos',
+                      style: TextStyle(color: cs.onSurface.withValues(alpha: 0.6), fontSize: 13),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          const Text('Gere relatórios detalhados dos seus contadores.'),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           // Filtros
           Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.2)),
+            ),
             clipBehavior: Clip.antiAlias,
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                initiallyExpanded: true,
+                tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                leading: Icon(Icons.filter_alt_rounded, color: cs.primary),
+                title: const Text('Filtros', style: TextStyle(fontWeight: FontWeight.w700)),
                 children: [
-                  const Text(
-                    'Filtros',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 12),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final itemWidth = (constraints.maxWidth - 12) / 2;
@@ -454,37 +476,44 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                           );
                           final filtered = _applyFilters(counters, cats);
                           final rows = _toReportRows(filtered);
-                          return Wrap(
-                            spacing: 8,
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              FilledButton.icon(
-                                onPressed: rows.isEmpty
-                                    ? null
-                                    : () => _generateAndShareXlsx(rows),
-                                icon: const Icon(Icons.grid_on),
-                                label: const Text('Gerar Excel'),
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  FilledButton.tonalIcon(
+                                    onPressed: rows.isEmpty
+                                        ? null
+                                        : () => _generateAndShareXlsx(rows),
+                                    icon: const Icon(Icons.grid_on_rounded),
+                                    label: const Text('Gerar Excel'),
+                                  ),
+                                  FilledButton.tonalIcon(
+                                    onPressed: rows.isEmpty
+                                        ? null
+                                        : () => _generateAndSharePdf(rows),
+                                    icon: const Icon(Icons.picture_as_pdf_rounded),
+                                    label: const Text('Gerar PDF'),
+                                  ),
+                                ],
                               ),
-                              FilledButton.icon(
-                                onPressed: rows.isEmpty
-                                    ? null
-                                    : () => _generateAndSharePdf(rows),
-                                icon: const Icon(Icons.picture_as_pdf),
-                                label: const Text('Gerar PDF'),
-                              ),
+                              const SizedBox(height: 12),
                               Text(
                                 'Atualizado às ${DateFormat('HH:mm').format(_now)}',
-                                style: TextStyle(color: cs.onSurfaceVariant),
+                                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
                               ),
                             ],
                           );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
+        ),
 
           const SizedBox(height: 12),
           // Prévia dos dados
@@ -499,6 +528,11 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               final filtered = _applyFilters(counters, cats);
 
               return Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.2)),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Column(
@@ -532,8 +566,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
                           return Container(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: cs.outlineVariant),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -751,7 +785,7 @@ class _CounterBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

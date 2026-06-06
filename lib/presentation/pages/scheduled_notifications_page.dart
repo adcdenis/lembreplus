@@ -44,17 +44,33 @@ class _ScheduledNotificationsPageState extends ConsumerState<ScheduledNotificati
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header
             Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => context.go('/counters'),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [scheme.primary, scheme.primary.withValues(alpha: 0.7)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 24),
                 ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'Notificações Agendadas',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Notificações',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                      ),
+                      Text(
+                        'Lembretes agendados',
+                        style: TextStyle(color: scheme.onSurface.withValues(alpha: 0.6), fontSize: 13),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -119,16 +135,21 @@ class _ScheduledNotificationsPageState extends ConsumerState<ScheduledNotificati
                   });
 
                   if (notificationItems.isEmpty) {
-                    return const Expanded(
+                    return Expanded(
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.notifications_off, size: 64, color: Colors.grey),
-                            SizedBox(height: 16),
+                            Icon(Icons.notifications_off_rounded, size: 64, color: scheme.onSurface.withValues(alpha: 0.15)),
+                            const SizedBox(height: 16),
                             Text(
                               'Nenhuma notificação agendada',
-                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: scheme.onSurface.withValues(alpha: 0.5)),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Adicione lembretes nos seus contadores.',
+                              style: TextStyle(fontSize: 13, color: scheme.onSurface.withValues(alpha: 0.4)),
                             ),
                           ],
                         ),
@@ -145,7 +166,7 @@ class _ScheduledNotificationsPageState extends ConsumerState<ScheduledNotificati
 
                         return ListView.separated(
                           itemCount: notificationItems.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
                           itemBuilder: (context, index) {
                             final item = notificationItems[index];
                             final comps = _calendarComponents(currentNow, item.scheduledDate);
@@ -159,19 +180,19 @@ class _ScheduledNotificationsPageState extends ConsumerState<ScheduledNotificati
                             return AnimatedInteractiveItem(
                               child: Card(
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(16),
                               ),
                               elevation: 0,
                               child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(16),
                                 onTap: () {
                                   context.push('/counter/${item.counter.id}/edit');
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: scheme.outlineVariant,
+                                      color: scheme.outlineVariant.withValues(alpha: 0.2),
                                     ),
                                     gradient: LinearGradient(
                                       begin: Alignment.topLeft,
@@ -187,23 +208,24 @@ class _ScheduledNotificationsPageState extends ConsumerState<ScheduledNotificati
                                             ],
                                     ),
                                   ),
-                                  padding: const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(14),
                                   child: Row(
                                     children: [
                                       Container(
-                                        padding: const EdgeInsets.all(8),
+                                        padding: const EdgeInsets.all(10),
                                         decoration: BoxDecoration(
                                           color: isFuture
                                               ? scheme.primary.withValues(alpha: 0.1)
                                               : pastColor.withValues(alpha: isDark ? 0.1 : 0.15),
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Icon(
-                                          isFuture ? Icons.notifications_active : Icons.notifications_paused,
+                                          isFuture ? Icons.notifications_active_rounded : Icons.notifications_paused_rounded,
                                           color: isFuture ? scheme.primary : (isDark ? Colors.amber.shade300 : Colors.amber.shade800),
+                                          size: 24,
                                         ),
                                       ),
-                                      const SizedBox(width: 12),
+                                      const SizedBox(width: 14),
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,49 +234,58 @@ class _ScheduledNotificationsPageState extends ConsumerState<ScheduledNotificati
                                               item.counter.name,
                                               style: const TextStyle(
                                                 fontSize: 16,
-                                                fontWeight: FontWeight.w600,
+                                                fontWeight: FontWeight.w700,
                                               ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
-                                            const SizedBox(height: 4),
+                                            const SizedBox(height: 6),
+                                            // Badge de offset
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                              decoration: BoxDecoration(
+                                                color: isFuture
+                                                    ? scheme.primary.withValues(alpha: 0.1)
+                                                    : Colors.amber.withValues(alpha: isDark ? 0.15 : 0.2),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(Icons.access_alarm_rounded, size: 12, color: isFuture ? scheme.primary : Colors.amber.shade700),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    item.offsetLabel,
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: isFuture ? scheme.primary : Colors.amber.shade700,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
                                             Row(
                                               children: [
-                                                Icon(Icons.access_alarm, size: 14, color: scheme.onSurfaceVariant),
+                                                Icon(Icons.event_outlined, size: 13, color: scheme.onSurfaceVariant),
                                                 const SizedBox(width: 4),
                                                 Text(
-                                                  'Lembrete: ${item.offsetLabel}',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: scheme.onSurfaceVariant,
-                                                  ),
+                                                  DateFormat('dd/MM/yyyy HH:mm').format(item.effectiveDate),
+                                                  style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant),
                                                 ),
                                               ],
                                             ),
-                                            const SizedBox(height: 4),
+                                            const SizedBox(height: 2),
                                             Row(
                                               children: [
-                                                Icon(Icons.event, size: 14, color: scheme.onSurfaceVariant),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  'Evento: ${DateFormat('dd/MM/yyyy HH:mm').format(item.effectiveDate)}',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: scheme.onSurfaceVariant,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Row(
-                                              children: [
-                                                Icon(Icons.notifications_none, size: 14, color: scheme.onSurfaceVariant),
+                                                Icon(Icons.notifications_none_rounded, size: 13, color: isFuture ? scheme.primary : (isDark ? Colors.amber.shade300 : Colors.amber.shade800)),
                                                 const SizedBox(width: 4),
                                                 Text(
                                                   'Disparo: ${DateFormat('dd/MM/yyyy HH:mm').format(item.scheduledDate)}',
                                                   style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
                                                     color: isFuture ? scheme.primary : (isDark ? Colors.amber.shade300 : Colors.amber.shade800),
                                                   ),
                                                 ),
@@ -319,8 +350,8 @@ class _ScheduledNotificationsPageState extends ConsumerState<ScheduledNotificati
                                         ),
                                       ),
                                       Icon(
-                                        Icons.chevron_right,
-                                        color: scheme.onSurfaceVariant,
+                                        Icons.chevron_right_rounded,
+                                        color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
                                       ),
                                     ],
                                   ),
@@ -375,7 +406,7 @@ class _TimeBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -386,7 +417,7 @@ class _TimeBox extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: tint.withValues(alpha: 0.28),
+            color: tint.withValues(alpha: 0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

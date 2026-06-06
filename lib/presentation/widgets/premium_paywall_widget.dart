@@ -19,8 +19,8 @@ class PremiumPaywallWidget extends ConsumerWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                cs.surfaceContainerHigh,
-                cs.surfaceContainerLowest,
+                cs.primaryContainer.withValues(alpha: 0.15),
+                cs.surface,
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -121,16 +121,32 @@ class PremiumPaywallWidget extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.black,
-                    elevation: 4,
-                    shadowColor: Colors.amber.withValues(alpha: 0.4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Colors.amber, Color(0xFFF57F17)], // amber -> amber.shade800
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.amber.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.black87,
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                   onPressed: () async {
                     if (useSimulatedBilling) {
                       await ref.read(premiumProvider.notifier).setPremium(!isPro);
@@ -179,6 +195,7 @@ class PremiumPaywallWidget extends ConsumerWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                ),
                 ),
               ).animate().scale(delay: 500.ms, duration: 250.ms),
               const SizedBox(height: 12),
