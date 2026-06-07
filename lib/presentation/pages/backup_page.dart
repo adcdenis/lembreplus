@@ -6,11 +6,26 @@ import 'package:share_plus/share_plus.dart';
 import 'package:lembreplus/core/text_sanitizer.dart';
 // Removida a seção de nuvem desta tela. Recursos de nuvem foram movidos para CloudBackupPage.
 
-class BackupPage extends ConsumerWidget {
+class BackupPage extends ConsumerStatefulWidget {
   const BackupPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BackupPage> createState() => _BackupPageState();
+}
+
+class _BackupPageState extends ConsumerState<BackupPage> {
+  int _refreshKey = 0;
+
+  void _refreshList() {
+    if (mounted) {
+      setState(() {
+        _refreshKey++;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final backup = ref.watch(backupServiceProvider);
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -85,6 +100,7 @@ class BackupPage extends ConsumerWidget {
                           final res = await backup.export();
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res)));
+                            _refreshList();
                           }
                         },
                       ),
@@ -106,6 +122,7 @@ class BackupPage extends ConsumerWidget {
                                 subject: subject,
                                 text: text,
                               );
+                              _refreshList();
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -125,6 +142,7 @@ class BackupPage extends ConsumerWidget {
                             final imported = await backup.import();
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(imported)));
+                              _refreshList();
                             }
                           } catch (e) {
                             if (context.mounted) {
@@ -263,6 +281,7 @@ class BackupPage extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             FutureBuilder<List<String>>(
+              key: ValueKey(_refreshKey),
               future: backup.listBackups(),
               builder: (context, snap) {
                 if (snap.connectionState == ConnectionState.waiting) {

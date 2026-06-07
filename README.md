@@ -244,3 +244,11 @@ flutter run -d emulator-5554
 Rodar flutter pub get e testar no emulador ou dispositivo: flutter run -d emulator-5554 ou flutter run -d android .
 
 flutter build apk --release
+
+- Para a playstore
+flutter build appbundle
+
+-- arquvio de flag pro free
+pasta state
+premium_provider.dart
+
