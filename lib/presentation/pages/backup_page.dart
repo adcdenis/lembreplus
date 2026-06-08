@@ -94,7 +94,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                     children: [
                       _ActionButton(
                         icon: Icons.upload_file_rounded,
-                        label: 'Exportar JSON',
+                        label: 'Gravar Backup',
                         color: cs.primary,
                         onPressed: () async {
                           final res = await backup.export();
@@ -107,7 +107,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       if (!kIsWeb)
                         _ActionButton(
                           icon: Icons.share_rounded,
-                          label: 'Exportar e Compartilhar',
+                          label: 'Compartilhar',
                           color: cs.tertiary,
                           onPressed: () async {
                             try {
@@ -134,7 +134,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                         ),
                       _ActionButton(
                         icon: Icons.download_rounded,
-                        label: 'Importar JSON',
+                        label: 'Importar dos Arquivos',
                         color: cs.secondary,
                         outlined: true,
                         onPressed: () async {
@@ -366,6 +366,48 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                               ),
                             ),
                             const SizedBox(width: 8),
+                            IconButton(
+                              icon: Icon(Icons.delete_outline_rounded, color: cs.error),
+                              tooltip: 'Excluir backup',
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Excluir backup?'),
+                                    content: Text('Deseja realmente excluir o arquivo "$filename" do dispositivo? Esta ação não pode ser desfeita.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(false),
+                                        child: const Text('Cancelar'),
+                                      ),
+                                      TextButton(
+                                        style: TextButton.styleFrom(foregroundColor: cs.error),
+                                        onPressed: () => Navigator.of(context).pop(true),
+                                        child: const Text('Excluir'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  try {
+                                    await backup.deleteBackup(path);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Backup local excluído com sucesso.')),
+                                      );
+                                      _refreshList();
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Erro ao excluir backup: $e')),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 4),
                             FilledButton.tonal(
                               style: FilledButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -400,7 +442,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                 children: [
                                   Icon(Icons.download_rounded, size: 16),
                                   SizedBox(width: 4),
-                                  Text('Importar', style: TextStyle(fontSize: 12)),
+                                  Text('Restaurar', style: TextStyle(fontSize: 12)),
                                 ],
                               ),
                             ),

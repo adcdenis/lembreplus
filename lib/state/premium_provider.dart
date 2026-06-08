@@ -6,7 +6,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 
 /// Se [isProVersion] for true, o aplicativo será compilado diretamente como a versão PRO vitalícia.
 /// Se for false, o aplicativo rodará no modo gratuito/normal (com faturamento real ou simulação em debug).
-const bool isProVersion = true;
+const bool isProVersion = false;
 
 /// Se [useSimulatedBilling] for true, o aplicativo exibirá atalhos de simulação
 /// de pagamento para facilitar os testes de desenvolvimento.
