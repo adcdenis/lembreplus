@@ -22,15 +22,39 @@ class PremiumNotifier extends StateNotifier<bool> {
   // ID canônico do produto cadastrado na Play Console para a versão Pro vitalícia
   static const String proProductId = 'lembreplus_pro_lifetime';
 
-  PremiumNotifier() : super(isProVersion);
+  PremiumNotifier() : super(isProVersion) {
+    _load();
+    _initializeIAP();
+  }
 
   static const _key = 'is_premium_pro';
 
   Future<void> _load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      state = prefs.getBool(_key) ?? false;
+      final savedPremium = prefs.getBool(_key) ?? false;
+      if (savedPremium && !state) {
+        state = true;
+      }
+
+      // Se não é premium localmente, tenta restaurar compras da Play Store
+      // para cobrir o caso onde a compra foi feita mas nunca reconhecida
+      if (!state && !isProVersion) {
+        _tryRestoreOnStartup();
+      }
     } catch (_) {}
+  }
+
+  /// Tenta restaurar compras silenciosamente na inicialização
+  Future<void> _tryRestoreOnStartup() async {
+    try {
+      final bool available = await InAppPurchase.instance.isAvailable();
+      if (available) {
+        await InAppPurchase.instance.restorePurchases();
+      }
+    } catch (_) {
+      // Falha silenciosa — o usuário pode restaurar manualmente depois
+    }
   }
 
   void _initializeIAP() {
